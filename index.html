@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Catálogo · Carrito</title>
+  <style>
+    :root{--bg:#0b1220;--card:#101b33;--muted:#8ea0c6;--txt:#eaf0ff;--accent:#5eead4;--danger:#ff6b6b;--border:rgba(255,255,255,.10)}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial; background:linear-gradient(180deg,#070b14, var(--bg)); color:var(--txt)}
+    header{position:sticky;top:0;z-index:10;background:rgba(7,11,20,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+    .wrap{max-width:1100px;margin:0 auto;padding:18px 16px}
+    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:40px;height:40px;border-radius:14px;background:radial-gradient(circle at 30% 20%, var(--accent), transparent 55%), linear-gradient(135deg,#2b2f55,#111a33); border:1px solid var(--border)}
+    h1{font-size:18px;margin:0;letter-spacing:.3px}
+    .sub{color:var(--muted);font-size:12px;margin-top:2px}
+
+    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .search{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.03);min-width:min(420px, 92vw)}
+    .search input{width:100%;border:0;outline:0;background:transparent;color:var(--txt);font-size:14px}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:14px;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--txt);cursor:pointer;user-select:none}
+    .pill strong{font-weight:700}
+    .pill:hover{border-color:rgba(94,234,212,.35)}
+
+    main .grid{display:grid;grid-template-columns:1.25fr .85fr;gap:16px;align-items:start}
+    @media (max-width: 920px){main .grid{grid-template-columns:1fr}}
+
+    .panel{border:1px solid var(--border);border-radius:18px;background:rgba(255,255,255,.03);overflow:hidden}
+    .panel h2{margin:0;padding:14px 14px;border-bottom:1px solid var(--border);font-size:14px;letter-spacing:.25px}
+    .panel .content{padding:14px}
+
+    /* products */
+    .products{display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:12px}
+    @media (max-width: 920px){.products{grid-template-columns:repeat(2, minmax(0,1fr))}}
+    @media (max-width: 520px){.products{grid-template-columns:1fr}}
+
+    .card{border:1px solid var(--border);border-radius:16px;padding:12px;background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02))}
+    .tag{display:inline-flex;align-items:center;font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
+    .title{margin:10px 0 6px;font-size:14px;font-weight:700}
+    .desc{margin:0 0 12px;color:var(--muted);font-size:12px;line-height:1.35}
+    .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .price{font-weight:800}
+    .btn{border:1px solid rgba(94,234,212,.35);background:rgba(94,234,212,.10);color:var(--txt);padding:9px 10px;border-radius:12px;cursor:pointer;font-weight:700}
+    .btn:hover{background:rgba(94,234,212,.16)}
+    .btn:active{transform:translateY(1px)}
+    .btn.secondary{border-color:var(--border);background:rgba(255,255,255,.03)}
+    .btn.danger{border-color:rgba(255,107,107,.35);background:rgba(255,107,107,.10)}
+
+    /* cart */
+    .cartList{display:flex;flex-direction:column;gap:10px}
+    .cartItem{border:1px solid var(--border);border-radius:16px;padding:12px;background:rgba(255,255,255,.03)}
+    .cartItem .name{font-weight:800;font-size:13px;margin:0 0 6px}
+    .meta{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .muted{color:var(--muted);font-size:12px}
+
+    .qty{display:inline-flex;align-items:center;gap:8px}
+    .qty button{width:34px;height:34px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--txt);cursor:pointer;font-size:16px}
+    .qty button:hover{border-color:rgba(94,234,212,.35)}
+    .qty input{width:58px;text-align:center;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--txt);padding:8px 10px;outline:0}
+
+    .totals{border-top:1px solid var(--border);margin-top:12px;padding-top:12px}
+    .totals .line{display:flex;justify-content:space-between;align-items:center;margin:6px 0}
+    .totals .grand{font-size:16px;font-weight:900}
+
+    .empty{color:var(--muted);font-size:13px;line-height:1.45;margin:0}
+    footer{color:var(--muted);font-size:12px;text-align:center;padding:18px 16px}
+    code{background:rgba(255,255,255,.06);padding:2px 6px;border-radius:8px}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Catálogo · Carrito</h1>
+          <div class="sub">Elige productos, ajusta cantidades y revisa el total.</div>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="search" role="search">
+          <span aria-hidden="true">🔎</span>
+          <input id="q" type="search" placeholder="Buscar productos…" autocomplete="off" />
+        </div>
+        <div class="pill" id="cartCount" title="Productos en el carrito">🛒 <strong>0</strong></div>
+        <button class="pill" id="resetBtn" title="Vaciar carrito">🧹 Vaciar</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="grid">
+
+      <section class="panel" aria-label="Catálogo">
+        <h2>Catálogo</h2>
+        <div class="content">
+          <div id="products" class="products"></div>
+        </div>
+      </section>
+
+      <aside class="panel" aria-label="Carrito">
+        <h2>Carrito</h2>
+        <div class="content">
+          <div id="cart" class="cartList"></div>
+
+          <div class="totals">
+            <div class="line"><span class="muted">Productos</span><span id="itemsCount" class="muted">0</span></div>
+            <div class="line"><span class="muted">Subtotal</span><span id="subtotal" class="muted">0,00 €</span></div>
+            <div class="line grand"><span>Total</span><span id="total">0,00 €</span></div>
+            <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn secondary" id="copySummary">Copiar resumen</button>
+              <button class="btn" id="exportCsv">Exportar CSV</button>
+            </div>
+            <p class="muted" style="margin:10px 0 0">*El botón “Exportar CSV” te crea un archivo que luego abres en Excel.</p>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</main>
+
+<footer>
+  Hecho para GitHub Pages. Tip: el archivo debe llamarse <code>index.html</code>.
+</footer>
+
+<script>
+  // ====== CONFIG: pon aquí tus productos ======
+  // Cambia nombres, precios y categorías. Puedes añadir tantos como quieras.
+  const PRODUCTS = [
+    { id: 'p1', name: 'Funda móvil (silicona)', category: 'Accesorios', price: 6.50, desc: 'Protección básica y ligera.' },
+    { id: 'p2', name: 'Cable USB-C rápido', category: 'Accesorios', price: 7.90, desc: 'Carga y datos de alta velocidad.' },
+    { id: 'p3', name: 'Cargador 20W', category: 'Accesorios', price: 12.90, desc: 'Compatible con la mayoría de móviles.' },
+    { id: 'p4', name: 'Impresión B/N (10 páginas)', category: 'Servicios', price: 2.00, desc: 'Pack de impresión blanco y negro.' },
+    { id: 'p5', name: 'Impresión color (5 páginas)', category: 'Servicios', price: 3.50, desc: 'Pack de impresión a color.' },
+    { id: 'p6', name: 'Plastificado A4', category: 'Servicios', price: 2.50, desc: 'Protege documentos con acabado brillante.' },
+  ];
+
+  // ====== STATE ======
+  const $ = (s) => document.querySelector(s);
+  const productsEl = $('#products');
+  const cartEl = $('#cart');
+  const qEl = $('#q');
+
+  const cartCountEl = $('#cartCount strong');
+  const itemsCountEl = $('#itemsCount');
+  const subtotalEl = $('#subtotal');
+  const totalEl = $('#total');
+
+  const STORAGE_KEY = 'cart_v1';
+
+  /** cart: { [productId]: {id, qty} } */
+  let cart = loadCart();
+
+  // ====== HELPERS ======
+  const eur = (n) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n);
+
+  function loadCart(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch { return {}; }
+  }
+
+  function saveCart(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+  }
+
+  function getProduct(id){
+    return PRODUCTS.find(p => p.id === id);
+  }
+
+  function cartItems(){
+    return Object.values(cart)
+      .map(ci => ({...ci, product: getProduct(ci.id)}))
+      .filter(x => x.product);
+  }
+
+  function countsAndTotals(){
+    const items = cartItems();
+    const distinct = items.length;
+    const units = items.reduce((a, x) => a + x.qty, 0);
+    const subtotal = items.reduce((a, x) => a + x.qty * x.product.price, 0);
+    return { distinct, units, subtotal, total: subtotal };
+  }
+
+  // ====== RENDER ======
+  function renderProducts(){
+    const q = qEl.value.trim().toLowerCase();
+    const list = PRODUCTS.filter(p => {
+      if(!q) return true;
+      return (p.name + ' ' + p.category + ' ' + (p.desc||'')).toLowerCase().includes(q);
+    });
+
+    productsEl.innerHTML = '';
+    list.forEach(p => {
+      const el = document.createElement('div');
+      el.className = 'card';
+      el.innerHTML = `
+        <div class="tag">${escapeHtml(p.category)}</div>
+        <div class="title">${escapeHtml(p.name)}</div>
+        <p class="desc">${escapeHtml(p.desc||'')}</p>
+        <div class="row">
+          <div class="price">${eur(p.price)}</div>
+          <button class="btn" data-add="${p.id}">Añadir</button>
+        </div>
+      `;
+      productsEl.appendChild(el);
+    });
+
+    // bind add buttons
+    productsEl.querySelectorAll('[data-add]').forEach(btn => {
+      btn.addEventListener('click', () => addToCart(btn.getAttribute('data-add')));
+    });
+  }
+
+  function renderCart(){
+    const items = cartItems();
+    cartEl.innerHTML = '';
+
+    if(items.length === 0){
+      cartEl.innerHTML = `
+        <p class="empty">Tu carrito está vacío. Añade productos del catálogo y verás aquí el detalle con cantidades y total.</p>
+      `;
+      updateTotals();
+      return;
+    }
+
+    items.forEach(({id, qty, product}) => {
+      const lineTotal = qty * product.price;
+      const el = document.createElement('div');
+      el.className = 'cartItem';
+      el.innerHTML = `
+        <div class="name">${escapeHtml(product.name)}</div>
+        <div class="meta">
+          <div class="muted">${escapeHtml(product.category)} · ${eur(product.price)} c/u</div>
+          <div class="muted"><strong>${eur(lineTotal)}</strong></div>
+        </div>
+        <div class="meta" style="margin-top:10px">
+          <div class="qty" aria-label="Cantidad">
+            <button data-dec="${id}" aria-label="Disminuir">−</button>
+            <input data-qty="${id}" inputmode="numeric" pattern="[0-9]*" value="${qty}" aria-label="Cantidad" />
+            <button data-inc="${id}" aria-label="Aumentar">+</button>
+          </div>
+          <button class="btn danger" data-rm="${id}">Quitar</button>
+        </div>
+      `;
+      cartEl.appendChild(el);
+    });
+
+    // bind cart controls
+    cartEl.querySelectorAll('[data-inc]').forEach(b => b.addEventListener('click', () => changeQty(b.getAttribute('data-inc'), +1)));
+    cartEl.querySelectorAll('[data-dec]').forEach(b => b.addEventListener('click', () => changeQty(b.getAttribute('data-dec'), -1)));
+    cartEl.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => removeFromCart(b.getAttribute('data-rm'))));
+
+    cartEl.querySelectorAll('[data-qty]').forEach(inp => {
+      inp.addEventListener('change', () => {
+        const id = inp.getAttribute('data-qty');
+        const n = clampInt(inp.value, 1, 999);
+        setQty(id, n);
+      });
+      inp.addEventListener('input', () => {
+        // keep only digits
+        inp.value = inp.value.replace(/[^0-9]/g, '');
+      });
+    });
+
+    updateTotals();
+  }
+
+  function updateTotals(){
+    const { distinct, units, subtotal, total } = countsAndTotals();
+    cartCountEl.textContent = String(distinct);
+    itemsCountEl.textContent = `${distinct} producto(s) · ${units} unidad(es)`;
+    subtotalEl.textContent = eur(subtotal);
+    totalEl.textContent = eur(total);
+  }
+
+  // ====== ACTIONS ======
+  function addToCart(id){
+    cart[id] = cart[id] || { id, qty: 0 };
+    cart[id].qty += 1;
+    saveCart();
+    renderCart();
+  }
+
+  function removeFromCart(id){
+    delete cart[id];
+    saveCart();
+    renderCart();
+  }
+
+  function setQty(id, qty){
+    if(!cart[id]) cart[id] = { id, qty: 0 };
+    cart[id].qty = Math.max(1, qty);
+    saveCart();
+    renderCart();
+  }
+
+  function changeQty(id, delta){
+    if(!cart[id]) return;
+    const next = cart[id].qty + delta;
+    if(next <= 0){
+      removeFromCart(id);
+      return;
+    }
+    cart[id].qty = next;
+    saveCart();
+    renderCart();
+  }
+
+  function clearCart(){
+    cart = {};
+    saveCart();
+    renderCart();
+  }
+
+  // ====== EXPORT ======
+  function cartSummaryText(){
+    const items = cartItems();
+    const { total } = countsAndTotals();
+    const lines = items.map(x => `• ${x.product.name} x${x.qty} = ${eur(x.qty * x.product.price)}`);
+    return `${lines.join('\n')}\n\nTotal: ${eur(total)}`;
+  }
+
+  async function copySummary(){
+    const text = cartSummaryText();
+    try{
+      await navigator.clipboard.writeText(text);
+      toast('Resumen copiado ✅');
+    } catch {
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      toast('Resumen copiado ✅');
+    }
+  }
+
+  function exportCsv(){
+    const items = cartItems();
+    if(items.length === 0){
+      toast('Tu carrito está vacío 🙂');
+      return;
+    }
+    // CSV simple compatible con Excel
+    const header = ['Producto','Categoría','Precio','Cantidad','Total línea'];
+    const rows = items.map(x => [
+      x.product.name,
+      x.product.category,
+      x.product.price.toFixed(2),
+      String(x.qty),
+      (x.qty * x.product.price).toFixed(2)
+    ]);
+
+    const { total } = countsAndTotals();
+    rows.push(['','','','','']);
+    rows.push(['TOTAL','','','','' + total.toFixed(2)]);
+
+    const csv = [header, ...rows]
+      .map(r => r.map(cell => '"' + String(cell).replaceAll('"','""') + '"').join(';'))
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pedido_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast('CSV descargado 📄');
+  }
+
+  // ====== UI helpers ======
+  function clampInt(v, min, max){
+    const n = parseInt(String(v||'').trim(), 10);
+    if(Number.isNaN(n)) return min;
+    return Math.min(max, Math.max(min, n));
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#039;');
+  }
+
+  function toast(msg){
+    const el = document.createElement('div');
+    el.textContent = msg;
+    el.style.position = 'fixed';
+    el.style.left = '50%';
+    el.style.bottom = '18px';
+    el.style.transform = 'translateX(-50%)';
+    el.style.padding = '10px 12px';
+    el.style.borderRadius = '14px';
+    el.style.border = '1px solid rgba(255,255,255,.14)';
+    el.style.background = 'rgba(0,0,0,.55)';
+    el.style.backdropFilter = 'blur(10px)';
+    el.style.color = 'white';
+    el.style.fontSize = '13px';
+    el.style.zIndex = 9999;
+    document.body.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; el.style.transition='opacity .25s'; }, 1200);
+    setTimeout(() => el.remove(), 1550);
+  }
+
+  // ====== INIT ======
+  qEl.addEventListener('input', renderProducts);
+  $('#resetBtn').addEventListener('click', clearCart);
+  $('#copySummary').addEventListener('click', copySummary);
+  $('#exportCsv').addEventListener('click', exportCsv);
+
+  renderProducts();
+  renderCart();
+</script>
+</body>
+</html>
