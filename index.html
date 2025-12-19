@@ -111,18 +111,18 @@
             <div class="line"><span class="muted">Productos</span><span id="itemsCount" class="muted">0</span></div>
             <div class="line"><span class="muted">Subtotal</span><span id="subtotal" class="muted">0,00 €</span></div>
             <div class="line grand"><span>Total</span><span id="total">0,00 €</span></div>
+
+            <div style="display:grid; gap:10px; margin:12px 0;">
+              <input id="customerName" placeholder="Nombre y apellidos" style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;">
+              <input id="customerPhone" placeholder="Teléfono" style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;">
+            </div>
+
             <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
-
-              <div style="display:grid; gap:10px; margin:12px 0;">
-  <input id="customerName" placeholder="Nombre y apellidos" style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;">
-  <input id="customerPhone" placeholder="Teléfono" style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;">
-</div>
-
               <button class="btn secondary" id="copySummary">Copiar resumen</button>
               <button class="btn" id="exportCsv">Exportar CSV</button>
               <button class="btn" id="submitOrder">Confirmar pedido</button>
-
             </div>
+
             <p class="muted" style="margin:10px 0 0">*El botón “Exportar CSV” te crea un archivo que luego abres en Excel.</p>
           </div>
         </div>
@@ -343,7 +343,6 @@
       await navigator.clipboard.writeText(text);
       toast('Resumen copiado ✅');
     } catch {
-      // fallback
       const ta = document.createElement('textarea');
       ta.value = text;
       document.body.appendChild(ta);
@@ -360,7 +359,6 @@
       toast('Tu carrito está vacío 🙂');
       return;
     }
-    // CSV simple compatible con Excel
     const header = ['Producto','Categoría','Precio','Cantidad','Total línea'];
     const rows = items.map(x => [
       x.product.name,
@@ -388,6 +386,56 @@
     a.remove();
     URL.revokeObjectURL(url);
     toast('CSV descargado 📄');
+  }
+
+  // ====== Google Sheets endpoint ======
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxtoRTAARYRp6-OLOJFk764BgVpZfReiecvdWatgBInR1PqvCxAz7y80Sz19AvA7SFQ1w/exec";
+
+  async function submitOrder(){
+    const items = cartItems();
+    if(items.length === 0){
+      toast("Carrito vacío 🙂");
+      return;
+    }
+
+    const name = document.querySelector("#customerName").value.trim();
+    const phone = document.querySelector("#customerPhone").value.trim();
+
+    if(!name || !phone){
+      toast("Falta nombre o teléfono");
+      return;
+    }
+
+    const totals = countsAndTotals();
+
+    const payload = {
+      customerName: name,
+      customerPhone: phone,
+      total: totals.total,
+      items: items.map(x => ({
+        id: x.id,
+        name: x.product.name,
+        price: x.product.price,
+        qty: x.qty,
+        lineTotal: x.qty * x.product.price
+      }))
+    };
+
+    try{
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "text/plain;charset=utf-8" }
+      });
+
+      toast("Pedido enviado ✅");
+      clearCart();
+      document.querySelector("#customerName").value = "";
+      document.querySelector("#customerPhone").value = "";
+    } catch (err){
+      toast("Error de conexión ❌");
+    }
   }
 
   // ====== UI helpers ======
@@ -427,70 +475,16 @@
   }
 
   // ====== INIT ======
-  qEl.addEventListener('input', renderProducts);
-  $('#resetBtn').addEventListener('click', clearCart);
-  $('#copySummary').addEventListener('click', copySummary);
-  $('#exportCsv').addEventListener('click', exportCsv);
+  window.addEventListener("DOMContentLoaded", () => {
+    qEl.addEventListener('input', renderProducts);
+    $('#resetBtn').addEventListener('click', clearCart);
+    $('#copySummary').addEventListener('click', copySummary);
+    $('#exportCsv').addEventListener('click', exportCsv);
+    document.querySelector("#submitOrder").addEventListener("click", submitOrder);
 
-  
-  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxtoRTAARYRp6-OLOJFk764BgVpZfReiecvdWatgBInR1PqvCxAz7y80Sz19AvA7SFQ1w/exec";
-
-async function submitOrder(){
-  const items = cartItems();
-  if(items.length === 0){
-    toast("Carrito vacío 🙂");
-    return;
-  }
-
-  const name = document.querySelector("#customerName").value.trim();
-  const phone = document.querySelector("#customerPhone").value.trim();
-
-  if(!name || !phone){
-    toast("Falta nombre o teléfono");
-    return;
-  }
-
-  const totals = countsAndTotals();
-
-  const payload = {
-    customerName: name,
-    customerPhone: phone,
-    total: totals.total,
-    items: items.map(x => ({
-      id: x.id,
-      name: x.product.name,
-      price: x.product.price,
-      qty: x.qty,
-      lineTotal: x.qty * x.product.price
-    }))
-  };
-
-  try{
-    await fetch(GOOGLE_SCRIPT_URL, {
-  method: "POST",
-  mode: "no-cors",
-  body: JSON.stringify(payload),
-  headers: { "Content-Type": "text/plain;charset=utf-8" }
-});
-
-toast("Pedido enviado ✅");
-clearCart();
-document.querySelector("#customerName").value = "";
-document.querySelector("#customerPhone").value = "";
- else {
-      toast("No se pudo guardar ❌");
-    }
-  } catch (err){
-    toast("Error de conexión ❌");
-  }
-}
-
-document.querySelector("#submitOrder").addEventListener("click", submitOrder);
-
-  
-  
-  renderProducts();
-  renderCart();
+    renderProducts();
+    renderCart();
+  });
 </script>
 </body>
 </html>
