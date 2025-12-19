@@ -3,19 +3,34 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- ✅ TÍTULO DE LA PESTAÑA DEL NAVEGADOR -->
   <title>Catálogo · Carrito</title>
+  
   <style>
+
+/* ✅ ESTILOS GENERALES (COLORES Y “TEMA” DE LA WEB) Aquí defines los colores base y el look (fondo, textos, bordes, botones). */
+    
     :root{--bg:#0b1220;--card:#101b33;--muted:#8ea0c6;--txt:#eaf0ff;--accent:#5eead4;--danger:#ff6b6b;--border:rgba(255,255,255,.10)}
+
+    /* ✅ REGLAS BÁSICAS PARA QUE TODO SE VEA ORDENADO */
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial; background:linear-gradient(180deg,#070b14, var(--bg)); color:var(--txt)}
+
+    /* ✅ CABECERA FIJA (BUSCADOR, ICONO DEL CARRITO, BOTÓN VACIAR) */
     header{position:sticky;top:0;z-index:10;background:rgba(7,11,20,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+
+    /* ✅ CONTENEDOR “CENTRADO” (ANCHO MÁXIMO) */
     .wrap{max-width:1100px;margin:0 auto;padding:18px 16px}
+
+    /* ✅ ESTRUCTURA DE LA PARTE SUPERIOR */
     .top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
     .brand{display:flex;gap:12px;align-items:center}
     .logo{width:40px;height:40px;border-radius:14px;background:radial-gradient(circle at 30% 20%, var(--accent), transparent 55%), linear-gradient(135deg,#2b2f55,#111a33); border:1px solid var(--border)}
     h1{font-size:18px;margin:0;letter-spacing:.3px}
     .sub{color:var(--muted);font-size:12px;margin-top:2px}
 
+    /* ✅ BUSCADOR, “PÍLDORAS” Y BOTONES DE LA CABECERA */
     .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .search{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.03);min-width:min(420px, 92vw)}
     .search input{width:100%;border:0;outline:0;background:transparent;color:var(--txt);font-size:14px}
@@ -23,18 +38,22 @@
     .pill strong{font-weight:700}
     .pill:hover{border-color:rgba(94,234,212,.35)}
 
+    /* ✅ LAYOUT PRINCIPAL: CATALOGO A LA IZQ / CARRITO A LA DER (EN MÓVIL SE APILAN) */
     main .grid{display:grid;grid-template-columns:1.25fr .85fr;gap:16px;align-items:start}
     @media (max-width: 920px){main .grid{grid-template-columns:1fr}}
 
+    /* ✅ “CAJAS” TIPO PANEL PARA CATALOGO Y CARRITO */
     .panel{border:1px solid var(--border);border-radius:18px;background:rgba(255,255,255,.03);overflow:hidden}
     .panel h2{margin:0;padding:14px 14px;border-bottom:1px solid var(--border);font-size:14px;letter-spacing:.25px}
     .panel .content{padding:14px}
 
-    /* products */
+    /* ✅ GRID DE PRODUCTOS (3 columnas / 2 / 1 según pantalla) */
     .products{display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:12px}
     @media (max-width: 920px){.products{grid-template-columns:repeat(2, minmax(0,1fr))}}
     @media (max-width: 520px){.products{grid-template-columns:1fr}}
 
+
+    /* ✅ TARJETAS DE PRODUCTO + BOTONES */
     .card{border:1px solid var(--border);border-radius:16px;padding:12px;background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02))}
     .tag{display:inline-flex;align-items:center;font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid var(--border);color:var(--muted)}
     .title{margin:10px 0 6px;font-size:14px;font-weight:700}
@@ -47,7 +66,8 @@
     .btn.secondary{border-color:var(--border);background:rgba(255,255,255,.03)}
     .btn.danger{border-color:rgba(255,107,107,.35);background:rgba(255,107,107,.10)}
 
-    /* cart */
+    
+    /* ✅ CARRITO: LISTA DE ITEMS Y CONTROLES DE CANTIDAD */
     .cartList{display:flex;flex-direction:column;gap:10px}
     .cartItem{border:1px solid var(--border);border-radius:16px;padding:12px;background:rgba(255,255,255,.03)}
     .cartItem .name{font-weight:800;font-size:13px;margin:0 0 6px}
@@ -59,16 +79,23 @@
     .qty button:hover{border-color:rgba(94,234,212,.35)}
     .qty input{width:58px;text-align:center;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--txt);padding:8px 10px;outline:0}
 
+
+    /* ✅ TOTALES (SUBTOTAL / TOTAL) */
     .totals{border-top:1px solid var(--border);margin-top:12px;padding-top:12px}
     .totals .line{display:flex;justify-content:space-between;align-items:center;margin:6px 0}
     .totals .grand{font-size:16px;font-weight:900}
 
+
+    /* ✅ PIE DE PÁGINA */
     .empty{color:var(--muted);font-size:13px;line-height:1.45;margin:0}
     footer{color:var(--muted);font-size:12px;text-align:center;padding:18px 16px}
     code{background:rgba(255,255,255,.06);padding:2px 6px;border-radius:8px}
   </style>
 </head>
 <body>
+
+  
+  <!-- ✅ CABECERA: Marca + buscador + contador de carrito + vaciar -->
 <header>
   <div class="wrap">
     <div class="top">
@@ -91,10 +118,14 @@
   </div>
 </header>
 
+
+  <!-- ✅ CUERPO: 2 PANELES: CATALOGO (izq) + CARRITO (der) -->
 <main>
   <div class="wrap">
     <div class="grid">
 
+
+      <!-- ✅ PANEL CATALOGO: aquí se “pintan” las tarjetas de producto (JS rellena #products) -->
       <section class="panel" aria-label="Catálogo">
         <h2>Catálogo</h2>
         <div class="content">
@@ -102,6 +133,8 @@
         </div>
       </section>
 
+
+      <!-- ✅ PANEL CARRITO: JS rellena #cart y calcula totales -->
       <aside class="panel" aria-label="Carrito">
         <h2>Carrito</h2>
         <div class="content">
@@ -112,11 +145,18 @@
             <div class="line"><span class="muted">Subtotal</span><span id="subtotal" class="muted">0,00 €</span></div>
             <div class="line grand"><span>Total</span><span id="total">0,00 €</span></div>
 
+              <!-- ✅ DATOS DEL CLIENTE: se envían junto al pedido -->
             <div style="display:grid; gap:10px; margin:12px 0;">
               <input id="customerName" placeholder="Nombre y apellidos" style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;">
               <input id="customerPhone" placeholder="Teléfono" style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;">
             </div>
 
+
+   <!-- ✅ BOTONES:
+                   - Copiar resumen: útil para pegar en WhatsApp
+                   - Exportar CSV: descargar archivo para Excel (manual)
+                   - Confirmar pedido: envía a Google Sheets (automático) -->
+            
             <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
               <button class="btn secondary" id="copySummary">Copiar resumen</button>
               <button class="btn" id="exportCsv">Exportar CSV</button>
@@ -132,8 +172,11 @@
   </div>
 </main>
 
+
+  <!-- ✅ PIE -->
+
 <footer>
- <code>index.html</code>.
+<code>index.html</code>
 </footer>
 
 <script>
@@ -148,7 +191,9 @@
     { id: 'p6', name: 'Plastificado A4', category: 'Servicios', price: 2.50, desc: 'Protege documentos con acabado brillante.' },
   ];
 
-  // ====== STATE ======
+  // ✅ (2) REFERENCIAS A ELEMENTOS HTML Y ESTADO:
+  // Aquí “capturamos” elementos del DOM para poder actualizar la pantalla con JS.
+  
   const $ = (s) => document.querySelector(s);
   const productsEl = $('#products');
   const cartEl = $('#cart');
@@ -159,14 +204,28 @@
   const subtotalEl = $('#subtotal');
   const totalEl = $('#total');
 
+
+    // ✅ (3) GUARDADO LOCAL DEL CARRITO:
+    // Este nombre es la “clave” en localStorage para recordar el carrito aunque cierre la web.
+  
   const STORAGE_KEY = 'cart_v1';
 
+    // ✅ (4) CARRITO EN MEMORIA (OBJETO):
+    // cart guarda { productId: {id, qty} }. Se carga desde localStorage al entrar.
+  
   /** cart: { [productId]: {id, qty} } */
   let cart = loadCart();
 
-  // ====== HELPERS ======
+    // ✅ (5) FORMATO DE MONEDA:
+    // Convierte números a “0,00 €” en español.
+  
   const eur = (n) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n);
 
+  
+    // ✅ (6) FUNCIONES DE LOCALSTORAGE:
+    // - loadCart: leer carrito guardado
+    // - saveCart: guardar carrito actualizado
+  
   function loadCart(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -179,6 +238,9 @@
   function saveCart(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
   }
+
+
+    // ✅ (7) BUSCAR PRODUCTOS Y CALCULAR TOTALES
 
   function getProduct(id){
     return PRODUCTS.find(p => p.id === id);
@@ -198,7 +260,9 @@
     return { distinct, units, subtotal, total: subtotal };
   }
 
-  // ====== RENDER ======
+    // ✅ (8) RENDER DEL CATÁLOGO:
+    // Crea las tarjetas según PRODUCTS y el texto buscado.
+
   function renderProducts(){
     const q = qEl.value.trim().toLowerCase();
     const list = PRODUCTS.filter(p => {
@@ -222,12 +286,16 @@
       productsEl.appendChild(el);
     });
 
-    // bind add buttons
+      // Botones “Añadir”: suman al carrito
     productsEl.querySelectorAll('[data-add]').forEach(btn => {
       btn.addEventListener('click', () => addToCart(btn.getAttribute('data-add')));
     });
   }
 
+
+    // ✅ (9) RENDER DEL CARRITO:
+    // Dibuja los productos añadidos + controles de cantidad + botón quitar.
+  
   function renderCart(){
     const items = cartItems();
     cartEl.innerHTML = '';
@@ -262,7 +330,8 @@
       cartEl.appendChild(el);
     });
 
-    // bind cart controls
+    
+      // Botones + / - / Quitar y edición directa del input
     cartEl.querySelectorAll('[data-inc]').forEach(b => b.addEventListener('click', () => changeQty(b.getAttribute('data-inc'), +1)));
     cartEl.querySelectorAll('[data-dec]').forEach(b => b.addEventListener('click', () => changeQty(b.getAttribute('data-dec'), -1)));
     cartEl.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => removeFromCart(b.getAttribute('data-rm'))));
@@ -282,6 +351,9 @@
     updateTotals();
   }
 
+
+      // ✅ (10) ACTUALIZA LOS TOTALES EN PANTALLA
+
   function updateTotals(){
     const { distinct, units, subtotal, total } = countsAndTotals();
     cartCountEl.textContent = String(distinct);
@@ -290,7 +362,9 @@
     totalEl.textContent = eur(total);
   }
 
-  // ====== ACTIONS ======
+    // ✅ (11) ACCIONES DEL CARRITO:
+    // Añadir, quitar, cambiar cantidad, vaciar.
+  
   function addToCart(id){
     cart[id] = cart[id] || { id, qty: 0 };
     cart[id].qty += 1;
@@ -329,7 +403,12 @@
     renderCart();
   }
 
-  // ====== EXPORT ======
+
+  
+    // ✅ (12) EXPORTACIÓN / AYUDA AL OPERADOR:
+    // - Copiar resumen (para WhatsApp)
+    // - Exportar CSV (para Excel manual)
+  
   function cartSummaryText(){
     const items = cartItems();
     const { total } = countsAndTotals();
@@ -392,8 +471,17 @@
   const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbweGJZoChMHdPSiJU2ggtM1OwQnU3TdFwaR7D1Tgo87qxBlLWOhe2aGxrLvALUJl-RtJw/exec";
 
 
+    // ✅ (14) “CANDADO” PARA EVITAR DOBLE ENVÍO:
+    // Si el usuario hace doble clic mientras está enviando, no se duplica.
+  
 let isSubmitting = false;
 
+
+    // ✅ (15) ENVÍO DEL PEDIDO A GOOGLE SHEETS:
+    // - Valida carrito y datos
+    // - Bloquea el botón (Enviando…)
+    // - Genera orderId único (sirve para deduplicar en Sheets)
+    // - Envía por POST con no-cors (evita bloqueo del navegador)
   
 async function submitOrder(){
   if (isSubmitting) return; // evita doble clic
@@ -461,7 +549,14 @@ async function submitOrder(){
   }
 }
 
-  // ====== UI helpers ======
+
+
+
+    // ✅ (16) UTILIDADES DE UI:
+    // - clampInt: asegura números dentro de rango
+    // - escapeHtml: evita que texto rompa el HTML
+    // - toast: mensajitos bonitos abajo
+
   function clampInt(v, min, max){
     const n = parseInt(String(v||'').trim(), 10);
     if(Number.isNaN(n)) return min;
@@ -497,7 +592,10 @@ async function submitOrder(){
     setTimeout(() => el.remove(), 1550);
   }
 
-  // ====== INIT ======
+
+    // ✅ (17) INICIALIZACIÓN:
+    // Aquí “enchufamos” los listeners (click, input) y pintamos catálogo + carrito al cargar.
+  
   window.addEventListener("DOMContentLoaded", () => {
     qEl.addEventListener('input', renderProducts);
     $('#resetBtn').addEventListener('click', clearCart);
