@@ -391,52 +391,75 @@
   // ====== Google Sheets endpoint ======
   const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbweGJZoChMHdPSiJU2ggtM1OwQnU3TdFwaR7D1Tgo87qxBlLWOhe2aGxrLvALUJl-RtJw/exec";
 
-  async function submitOrder(){
-    const items = cartItems();
-    if(items.length === 0){
-      toast("Carrito vacío 🙂");
-      return;
-    }
 
-    const name = document.querySelector("#customerName").value.trim();
-    const phone = document.querySelector("#customerPhone").value.trim();
+let isSubmitting = false;
 
-    if(!name || !phone){
-      toast("Falta nombre o teléfono");
-      return;
-    }
+  
+async function submitOrder(){
+  if (isSubmitting) return; // evita doble clic
 
-    const totals = countsAndTotals();
+  const btn = document.querySelector("#submitOrder");
 
-    const payload = {
-      customerName: name,
-      customerPhone: phone,
-      total: totals.total,
-      items: items.map(x => ({
-        id: x.id,
-        name: x.product.name,
-        price: x.product.price,
-        qty: x.qty,
-        lineTotal: x.qty * x.product.price
-      }))
-    };
-
-    try{
-      await fetch(GOOGLE_SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify(payload),
-        headers: { "Content-Type": "text/plain;charset=utf-8" }
-      });
-
-      toast("Pedido enviado ✅");
-      clearCart();
-      document.querySelector("#customerName").value = "";
-      document.querySelector("#customerPhone").value = "";
-    } catch (err){
-      toast("Error de conexión ❌");
-    }
+  const items = cartItems();
+  if(items.length === 0){
+    toast("Carrito vacío 🙂");
+    return;
   }
+
+  const name = document.querySelector("#customerName").value.trim();
+  const phone = document.querySelector("#customerPhone").value.trim();
+
+  if(!name || !phone){
+    toast("Falta nombre o teléfono");
+    return;
+  }
+
+  // 🔒 bloqueamos el botón
+  isSubmitting = true;
+  const prevText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Enviando…";
+
+  const totals = countsAndTotals();
+
+  // ID único del pedido (sirve para deduplicar)
+  const orderId = "W" + Date.now() + "_" + Math.random().toString(16).slice(2);
+
+  const payload = {
+    orderId,
+    customerName: name,
+    customerPhone: phone,
+    total: totals.total,
+    items: items.map(x => ({
+      id: x.id,
+      name: x.product.name,
+      price: x.product.price,
+      qty: x.qty,
+      lineTotal: x.qty * x.product.price
+    }))
+  };
+
+  try{
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      body: JSON.stringify(payload),
+      headers: { "Content-Type": "text/plain;charset=utf-8" }
+    });
+
+    toast("Pedido enviado ✅");
+    clearCart();
+    document.querySelector("#customerName").value = "";
+    document.querySelector("#customerPhone").value = "";
+  } catch (err){
+    toast("Error de conexión ❌");
+  } finally {
+    // 🔓 desbloqueamos
+    isSubmitting = false;
+    btn.disabled = false;
+    btn.textContent = prevText;
+  }
+}
 
   // ====== UI helpers ======
   function clampInt(v, min, max){
