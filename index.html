@@ -84,7 +84,14 @@
   display:block;
 }
 
-    
+
+    /* Para mostrar el stock bonito (unidades en existencia) */
+    .stockline{display:flex;justify-content:space-between;align-items:center;margin:8px 0 10px}
+    .stock{font-size:12px;color:var(--muted)}
+    .badgeOut{font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,107,107,.35);background:rgba(255,107,107,.10);color:var(--txt)}
+    .btn[disabled]{opacity:.45;cursor:not-allowed}
+
+
     
     /* ✅ CARRITO: LISTA DE ITEMS Y CONTROLES DE CANTIDAD */
     .cartList{display:flex;flex-direction:column;gap:10px}
@@ -207,12 +214,12 @@
   // ====== CONFIG: pon aquí tus productos ======
   // Cambia nombres, precios y categorías. Puedes añadir tantos como quieras.
   const PRODUCTS = [
-  { id: 'p1', name: 'Funda móvil (silicona)', category: 'Accesorios', price: 6.50, desc: 'Protección básica y ligera.', img: 'img/placeholder2.jpg' },
-  { id: 'p2', name: 'Cable USB-C rápido', category: 'Accesorios', price: 7.90, desc: 'Carga y datos de alta velocidad.', img: 'img/placeholder.jpg' },
-  { id: 'p3', name: 'Cargador 20W', category: 'Accesorios', price: 12.90, desc: 'Compatible con la mayoría de móviles.', img: 'img/placeholder.jpg' },
-  { id: 'p4', name: 'Impresión B/N (10 páginas)', category: 'Servicios', price: 2.00, desc: 'Pack de impresión blanco y negro.', img: 'img/placeholder.jpg' },
-  { id: 'p5', name: 'Impresión color (5 páginas)', category: 'Servicios', price: 3.50, desc: 'Pack de impresión a color.', img: 'img/placeholder.jpg' },
-  { id: 'p6', name: 'Plastificado A4', category: 'Servicios', price: 2.50, desc: 'Protege documentos con acabado brillante.', img: 'img/placeholder.jpg' },
+  { id: 'p1', name: 'Funda móvil (silicona)', category: 'Accesorios', price: 6.50, desc: 'Protección básica y ligera.', img: 'img/placeholder2.jpg', stock: 12 },
+  { id: 'p2', name: 'Cable USB-C rápido', category: 'Accesorios', price: 7.90, desc: 'Carga y datos de alta velocidad.', img: 'img/placeholder.jpg', stock: 12 },
+  { id: 'p3', name: 'Cargador 20W', category: 'Accesorios', price: 12.90, desc: 'Compatible con la mayoría de móviles.', img: 'img/placeholder.jpg', stock: 12 },
+  { id: 'p4', name: 'Impresión B/N (10 páginas)', category: 'Servicios', price: 2.00, desc: 'Pack de impresión blanco y negro.', img: 'img/placeholder.jpg', stock: 12 },
+  { id: 'p5', name: 'Impresión color (5 páginas)', category: 'Servicios', price: 3.50, desc: 'Pack de impresión a color.', img: 'img/placeholder.jpg', stock: 12 },
+  { id: 'p6', name: 'Plastificado A4', category: 'Servicios', price: 2.50, desc: 'Protege documentos con acabado brillante.', img: 'img/placeholder.jpg', stock: 12 },
 ];
 
   // ✅ (2) REFERENCIAS A ELEMENTOS HTML Y ESTADO:
@@ -264,12 +271,32 @@
   }
 
 
-    // ✅ (7) BUSCAR PRODUCTOS Y CALCULAR TOTALES
+    // ✅ (7) BUSCAR PRODUCTOS Y CALCULAR TOTALES (SE AÑADIO PARA VER UNIDADES EN EXISTENCIA)
 
   function getProduct(id){
     return PRODUCTS.find(p => p.id === id);
   }
 
+
+  
+
+function stockFor(id){
+  const p = getProduct(id);
+  const s = Number(p?.stock);
+  return Number.isFinite(s) ? s : 0;
+}
+
+function qtyInCart(id){
+  return cart[id]?.qty || 0;
+}
+
+function canAddMore(id){
+  return qtyInCart(id) < stockFor(id);
+}
+  
+
+
+  
   function cartItems(){
     return Object.values(cart)
       .map(ci => ({...ci, product: getProduct(ci.id)}))
@@ -300,16 +327,30 @@
       el.className = 'card';
 
       
-      el.innerHTML = `
+const inCart = qtyInCart(p.id);
+const stock = stockFor(p.id);
+const remaining = Math.max(0, stock - inCart);
+const out = stock <= 0;
+
+el.innerHTML = `
   <div class="pimg">
-    <img src="${escapeHtml(p.img || 'img/placeholder.jpg')}" alt="${escapeHtml(p.name)}" loading="lazy">
+    <img src="${escapeHtml(p.img || 'img/placeholder.png')}" alt="${escapeHtml(p.name)}" loading="lazy">
   </div>
+
   <div class="tag">${escapeHtml(p.category)}</div>
   <div class="title">${escapeHtml(p.name)}</div>
   <p class="desc">${escapeHtml(p.desc||'')}</p>
+
+  <div class="stockline">
+    <div class="stock">Stock: <strong>${out ? 0 : remaining}</strong></div>
+    ${out ? `<span class="badgeOut">Agotado</span>` : ``}
+  </div>
+
   <div class="row">
     <div class="price">${eur(p.price)}</div>
-    <button class="btn" data-add="${p.id}">Añadir</button>
+    <button class="btn" data-add="${p.id}" ${out || remaining<=0 ? 'disabled' : ''}>
+      ${out || remaining<=0 ? 'Sin stock' : 'Añadir'}
+    </button>
   </div>
 `;
 
@@ -336,6 +377,7 @@
         <p class="empty">Tu carrito está vacío. Añade productos del catálogo y verás aquí el detalle con cantidades y total.</p>
       `;
       updateTotals();
+      renderProducts();
       return;
     }
 
@@ -353,7 +395,7 @@
           <div class="qty" aria-label="Cantidad">
             <button data-dec="${id}" aria-label="Disminuir">−</button>
             <input data-qty="${id}" inputmode="numeric" pattern="[0-9]*" value="${qty}" aria-label="Cantidad" />
-            <button data-inc="${id}" aria-label="Aumentar">+</button>
+            <button data-inc="${id}" aria-label="Aumentar" ${qty >= stockFor(id) ? 'disabled' : ''}>+</button>
           </div>
           <button class="btn danger" data-rm="${id}">Quitar</button>
         </div>
@@ -370,8 +412,9 @@
     cartEl.querySelectorAll('[data-qty]').forEach(inp => {
       inp.addEventListener('change', () => {
         const id = inp.getAttribute('data-qty');
-        const n = clampInt(inp.value, 1, 999);
-        setQty(id, n);
+        const max = stockFor(id) || 1;
+        const n = clampInt(inp.value, 1, max);
+          setQty(id, n);
       });
       inp.addEventListener('input', () => {
         // keep only digits
@@ -380,6 +423,7 @@
     });
 
     updateTotals();
+    renderProducts();
   }
 
 
@@ -397,11 +441,25 @@
     // Añadir, quitar, cambiar cantidad, vaciar.
   
   function addToCart(id){
-    cart[id] = cart[id] || { id, qty: 0 };
-    cart[id].qty += 1;
-    saveCart();
-    renderCart();
+  const stock = stockFor(id);
+  if(stock <= 0){
+    toast("Producto sin stock ❌");
+    return;
   }
+
+  const current = qtyInCart(id);
+  if(current >= stock){
+    toast("No hay más unidades disponibles 🙂");
+    return;
+  }
+
+  cart[id] = cart[id] || { id, qty: 0 };
+  cart[id].qty += 1;
+  saveCart();
+  renderProducts(); // 👈 importante: actualiza botones/stock en catálogo
+  renderCart();
+}
+  
 
   function removeFromCart(id){
     delete cart[id];
@@ -410,29 +468,56 @@
   }
 
   function setQty(id, qty){
-    if(!cart[id]) cart[id] = { id, qty: 0 };
-    cart[id].qty = Math.max(1, qty);
-    saveCart();
-    renderCart();
+  const max = stockFor(id);
+  if(max <= 0){
+    removeFromCart(id);
+    toast("Producto sin stock ❌");
+    return;
   }
+  const safe = Math.min(Math.max(1, qty), max);
+  cart[id] = cart[id] || { id, qty: 0 };
+  cart[id].qty = safe;
+  saveCart();
+  renderProducts();
+  renderCart();
+}
 
   function changeQty(id, delta){
-    if(!cart[id]) return;
-    const next = cart[id].qty + delta;
-    if(next <= 0){
-      removeFromCart(id);
-      return;
-    }
-    cart[id].qty = next;
-    saveCart();
-    renderCart();
+  if(!cart[id]) return;
+
+  const max = stockFor(id);
+  if(max <= 0){
+    removeFromCart(id);
+    toast("Producto sin stock ❌");
+    return;
   }
 
-  function clearCart(){
-    cart = {};
-    saveCart();
-    renderCart();
+  const next = cart[id].qty + delta;
+
+  if(next <= 0){
+    removeFromCart(id);
+    return;
   }
+
+  if(next > max){
+    cart[id].qty = max;
+    toast("No hay más unidades disponibles 🙂");
+  } else {
+    cart[id].qty = next;
+  }
+
+  saveCart();
+  renderProducts();
+  renderCart();
+}
+
+  
+  function clearCart(){
+  cart = {};
+  saveCart();
+  renderProducts();
+  renderCart();
+}
 
 
   
