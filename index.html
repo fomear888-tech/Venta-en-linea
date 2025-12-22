@@ -90,6 +90,13 @@
     .empty{color:var(--muted);font-size:13px;line-height:1.45;margin:0}
     footer{color:var(--muted);font-size:12px;text-align:center;padding:18px 16px}
     code{background:rgba(255,255,255,.06);padding:2px 6px;border-radius:8px}
+
+  
+/* Para el carrito */
+#cartPanel {
+  scroll-margin-top: 90px;
+}
+    
   </style>
 </head>
 <body>
@@ -135,7 +142,7 @@
 
 
       <!-- ✅ PANEL CARRITO: JS rellena #cart y calcula totales -->
-      <aside class="panel" aria-label="Carrito">
+      <aside class="panel" aria-label="Carrito" id="cartPanel">
         <h2>Carrito</h2>
         <div class="content">
           <div id="cart" class="cartList"></div>
@@ -596,16 +603,28 @@ async function submitOrder(){
     // ✅ (17) INICIALIZACIÓN:
     // Aquí “enchufamos” los listeners (click, input) y pintamos catálogo + carrito al cargar.
   
-  window.addEventListener("DOMContentLoaded", () => {
-    qEl.addEventListener('input', renderProducts);
-    $('#resetBtn').addEventListener('click', clearCart);
-    $('#copySummary').addEventListener('click', copySummary);
-    $('#exportCsv').addEventListener('click', exportCsv);
-    document.querySelector("#submitOrder").addEventListener("click", submitOrder);
+ window.addEventListener("DOMContentLoaded", () => {
+  qEl.addEventListener('input', renderProducts);
+  $('#resetBtn').addEventListener('click', clearCart);
+  $('#copySummary').addEventListener('click', copySummary);
+  $('#exportCsv').addEventListener('click', exportCsv);
+  document.querySelector("#submitOrder").addEventListener("click", submitOrder);
 
-    renderProducts();
-    renderCart();
+  // 🛒 NUEVO
+  document.querySelector("#cartCount").addEventListener("click", () => {
+    const cart = document.querySelector("#cartPanel");
+    if (!cart) return;
+
+    cart.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
   });
+
+  renderProducts();
+  renderCart();
+});
+  
 </script>
 </body>
 </html>
