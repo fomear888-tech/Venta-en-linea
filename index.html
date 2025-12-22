@@ -207,7 +207,7 @@
   // ====== CONFIG: pon aquí tus productos ======
   // Cambia nombres, precios y categorías. Puedes añadir tantos como quieras.
   const PRODUCTS = [
-  { id: 'p1', name: 'Funda móvil (silicona)', category: 'Accesorios', price: 6.50, desc: 'Protección básica y ligera.', img: 'img/placeholder.jpg' },
+  { id: 'p1', name: 'Funda móvil (silicona)', category: 'Accesorios', price: 6.50, desc: 'Protección básica y ligera.', img: 'img/placeholder2.jpg' },
   { id: 'p2', name: 'Cable USB-C rápido', category: 'Accesorios', price: 7.90, desc: 'Carga y datos de alta velocidad.', img: 'img/placeholder.jpg' },
   { id: 'p3', name: 'Cargador 20W', category: 'Accesorios', price: 12.90, desc: 'Compatible con la mayoría de móviles.', img: 'img/placeholder.jpg' },
   { id: 'p4', name: 'Impresión B/N (10 páginas)', category: 'Servicios', price: 2.00, desc: 'Pack de impresión blanco y negro.', img: 'img/placeholder.jpg' },
@@ -302,7 +302,7 @@
       
       el.innerHTML = `
   <div class="pimg">
-    <img src="${escapeHtml(p.img || 'img/placeholder.png')}" alt="${escapeHtml(p.name)}" loading="lazy">
+    <img src="${escapeHtml(p.img || 'img/placeholder.jpg')}" alt="${escapeHtml(p.name)}" loading="lazy">
   </div>
   <div class="tag">${escapeHtml(p.category)}</div>
   <div class="title">${escapeHtml(p.name)}</div>
