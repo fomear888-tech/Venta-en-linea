@@ -165,9 +165,7 @@
                    - Confirmar pedido: envía a Google Sheets (automático) -->
             
             <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
-              <button class="btn secondary" id="copySummary">Copiar resumen</button>
-              <button class="btn" id="exportCsv">Exportar CSV</button>
-              <button class="btn" id="submitOrder">Confirmar pedido</button>
+            <button class="btn" id="submitOrder">Confirmar pedido</button>
             </div>
 
             <p class="muted" style="margin:10px 0 0">*El botón “Exportar CSV” te crea un archivo que luego abres en Excel.</p>
@@ -412,68 +410,8 @@
 
 
   
-    // ✅ (12) EXPORTACIÓN / AYUDA AL OPERADOR:
-    // - Copiar resumen (para WhatsApp)
-    // - Exportar CSV (para Excel manual)
+
   
-  function cartSummaryText(){
-    const items = cartItems();
-    const { total } = countsAndTotals();
-    const lines = items.map(x => `• ${x.product.name} x${x.qty} = ${eur(x.qty * x.product.price)}`);
-    return `${lines.join('\n')}\n\nTotal: ${eur(total)}`;
-  }
-
-  async function copySummary(){
-    const text = cartSummaryText();
-    try{
-      await navigator.clipboard.writeText(text);
-      toast('Resumen copiado ✅');
-    } catch {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
-      toast('Resumen copiado ✅');
-    }
-  }
-
-  function exportCsv(){
-    const items = cartItems();
-    if(items.length === 0){
-      toast('Tu carrito está vacío 🙂');
-      return;
-    }
-    const header = ['Producto','Categoria','Precio','Cantidad','Total linea'];
-    const rows = items.map(x => [
-      x.product.name,
-      x.product.category,
-      x.product.price.toFixed(2),
-      String(x.qty),
-      (x.qty * x.product.price).toFixed(2)
-    ]);
-
-    const { total } = countsAndTotals();
-    rows.push(['','','','','']);
-    rows.push(['TOTAL','','','','' + total.toFixed(2)]);
-
-    const csv = [header, ...rows]
-      .map(r => r.map(cell => '"' + String(cell).replaceAll('"','""') + '"').join(';'))
-      .join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `pedido_${new Date().toISOString().slice(0,10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    toast('CSV descargado 📄');
-  }
-
   // ====== Google Sheets endpoint ======
   const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyfRCBjBN3zZ0cz8j2W0E2ONQ3qm-3xuFG44nRUaFqLWQ05SSl8t0Qu0BS2cz3zt554DQ/exec";
 
@@ -606,8 +544,6 @@ async function submitOrder(){
  window.addEventListener("DOMContentLoaded", () => {
   qEl.addEventListener('input', renderProducts);
   $('#resetBtn').addEventListener('click', clearCart);
-  $('#copySummary').addEventListener('click', copySummary);
-  $('#exportCsv').addEventListener('click', exportCsv);
   document.querySelector("#submitOrder").addEventListener("click", submitOrder);
 
   // 🛒 NUEVO
