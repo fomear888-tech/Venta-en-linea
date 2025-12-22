@@ -66,6 +66,25 @@
     .btn.secondary{border-color:var(--border);background:rgba(255,255,255,.03)}
     .btn.danger{border-color:rgba(255,107,107,.35);background:rgba(255,107,107,.10)}
 
+  
+/* ✅ IMÁGENES DE PRODUCTO */
+.pimg{
+  width:100%;
+  aspect-ratio: 4 / 3;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:rgba(255,255,255,.03);
+  overflow:hidden;
+  margin-bottom:10px;
+}
+.pimg img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+    
     
     /* ✅ CARRITO: LISTA DE ITEMS Y CONTROLES DE CANTIDAD */
     .cartList{display:flex;flex-direction:column;gap:10px}
@@ -188,13 +207,13 @@
   // ====== CONFIG: pon aquí tus productos ======
   // Cambia nombres, precios y categorías. Puedes añadir tantos como quieras.
   const PRODUCTS = [
-    { id: 'p1', name: 'Funda móvil (silicona)', category: 'Accesorios', price: 6.50, desc: 'Protección básica y ligera.' },
-    { id: 'p2', name: 'Cable USB-C rápido', category: 'Accesorios', price: 7.90, desc: 'Carga y datos de alta velocidad.' },
-    { id: 'p3', name: 'Cargador 20W', category: 'Accesorios', price: 12.90, desc: 'Compatible con la mayoría de móviles.' },
-    { id: 'p4', name: 'Impresión B/N (10 páginas)', category: 'Servicios', price: 2.00, desc: 'Pack de impresión blanco y negro.' },
-    { id: 'p5', name: 'Impresión color (5 páginas)', category: 'Servicios', price: 3.50, desc: 'Pack de impresión a color.' },
-    { id: 'p6', name: 'Plastificado A4', category: 'Servicios', price: 2.50, desc: 'Protege documentos con acabado brillante.' },
-  ];
+  { id: 'p1', name: 'Funda móvil (silicona)', category: 'Accesorios', price: 6.50, desc: 'Protección básica y ligera.', img: 'img/funda.jpg' },
+  { id: 'p2', name: 'Cable USB-C rápido', category: 'Accesorios', price: 7.90, desc: 'Carga y datos de alta velocidad.', img: 'img/cable-usbc.jpg' },
+  { id: 'p3', name: 'Cargador 20W', category: 'Accesorios', price: 12.90, desc: 'Compatible con la mayoría de móviles.', img: 'img/cargador-20w.jpg' },
+  { id: 'p4', name: 'Impresión B/N (10 páginas)', category: 'Servicios', price: 2.00, desc: 'Pack de impresión blanco y negro.', img: 'img/impresion-bn.jpg' },
+  { id: 'p5', name: 'Impresión color (5 páginas)', category: 'Servicios', price: 3.50, desc: 'Pack de impresión a color.', img: 'img/impresion-color.jpg' },
+  { id: 'p6', name: 'Plastificado A4', category: 'Servicios', price: 2.50, desc: 'Protege documentos con acabado brillante.', img: 'img/plastificado.jpg' },
+];
 
   // ✅ (2) REFERENCIAS A ELEMENTOS HTML Y ESTADO:
   // Aquí “capturamos” elementos del DOM para poder actualizar la pantalla con JS.
@@ -279,15 +298,22 @@
     list.forEach(p => {
       const el = document.createElement('div');
       el.className = 'card';
+
+      
       el.innerHTML = `
-        <div class="tag">${escapeHtml(p.category)}</div>
-        <div class="title">${escapeHtml(p.name)}</div>
-        <p class="desc">${escapeHtml(p.desc||'')}</p>
-        <div class="row">
-          <div class="price">${eur(p.price)}</div>
-          <button class="btn" data-add="${p.id}">Añadir</button>
-        </div>
-      `;
+  <div class="pimg">
+    <img src="${escapeHtml(p.img || 'img/placeholder.jpg')}" alt="${escapeHtml(p.name)}" loading="lazy">
+  </div>
+  <div class="tag">${escapeHtml(p.category)}</div>
+  <div class="title">${escapeHtml(p.name)}</div>
+  <p class="desc">${escapeHtml(p.desc||'')}</p>
+  <div class="row">
+    <div class="price">${eur(p.price)}</div>
+    <button class="btn" data-add="${p.id}">Añadir</button>
+  </div>
+`;
+
+      
       productsEl.appendChild(el);
     });
 
