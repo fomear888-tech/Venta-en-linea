@@ -211,11 +211,13 @@
 </footer>
 
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
   const SUPABASE_URL = "https://pujzkraozoqbriqnlikf.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_D7A6JAiqiXAaPRYsaF6ZBQ_1hCE1UcN"; // la publishable (anon), NO la secret
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const SUPABASE_ANON_KEY = "sb_publishable_D7A6JAiqiXAaPRYsaF6ZBQ_1hCE1UcN";
+
+  // 👇 cliente real (le ponemos otro nombre para evitar líos)
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
   
   
@@ -240,9 +242,7 @@
 
   // ====== CARGAR PRODUCTOS (TABLA: products) ======
   async function loadProductsFromSupabase() {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
+    const { data, error } = await sb.from("products").select("*")
       .order("name", { ascending: true });
 
     if (error) {
@@ -256,7 +256,7 @@
       name: row.name,
       category: row.category || "",
       price: Number(row.price) || 0,
-      desc: row.desc || "",
+      desc: row["desc"] || "",
       img: row.img || "img/placeholder.jpg",
       stock: Number(row.stock) || 0
     }));
@@ -267,7 +267,7 @@
 
   // ====== TIEMPO REAL (TABLA: products) ======
   function subscribeRealtimeProducts() {
-    supabase
+    sb
       .channel("realtime-products")
       .on(
         "postgres_changes",
@@ -484,7 +484,7 @@
         qty: x.qty
       }));
 
-      const { data: orderId, error } = await supabase.rpc(
+      const { data: orderId, error } = await sb.rpc(
         "create_order_and_discount_stock",
         {
           p_customer_name: name,
