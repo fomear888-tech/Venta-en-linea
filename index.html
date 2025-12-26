@@ -210,19 +210,87 @@
 <code>© 2026 · Mas Envíos · Todos los derechos reservados</code>
 </footer>
 
-<script>
-  // ====== CONFIG: pon aquí tus productos ======
-  // Cambia nombres, precios y categorías. Puedes añadir tantos como quieras.
-  const PRODUCTS = [
-  { id: 'p1', name: 'Funda móvil (silicona)', category: 'Accesorios', price: 6.50, desc: 'Protección básica y ligera.', img: 'img/placeholder2.jpg', stock: 12 },
-  { id: 'p2', name: 'Cable USB-C rápido', category: 'Accesorios', price: 7.90, desc: 'Carga y datos de alta velocidad.', img: 'img/placeholder.jpg', stock: 12 },
-  { id: 'p3', name: 'Cargador 20W', category: 'Accesorios', price: 12.90, desc: 'Compatible con la mayoría de móviles.', img: 'img/placeholder.jpg', stock: 12 },
-  { id: 'p4', name: 'Impresión B/N (10 páginas)', category: 'Servicios', price: 2.00, desc: 'Pack de impresión blanco y negro.', img: 'img/placeholder.jpg', stock: 12 },
-  { id: 'p5', name: 'Impresión color (5 páginas)', category: 'Servicios', price: 3.50, desc: 'Pack de impresión a color.', img: 'img/placeholder.jpg', stock: 12 },
-  { id: 'p6', name: 'Plastificado A4', category: 'Servicios', price: 2.50, desc: 'Protege documentos con acabado brillante.', img: 'img/placeholder.jpg', stock: 12 },
- { id: 'p7', name: 'Plastificado A5', category: 'Servicios', price: 3.00, desc: 'Protege documentos con acabado brillante.', img: 'img/placeholder.jpg', stock: 12 },
-];
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://pujzkraozoqbriqnlikf.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_D7A6JAiqiXAaPRYsaF6ZBQ_1hCE1UcN"; // la publishable (anon), NO la secret
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+  
+  
+
+<script>
+
+let PRODUCTS = [];
+  
+  // ====== CONFIG: pon aquí tus productos ======
+
+
+// ====== CARGAR PRODUCTOS DESDE SUPABASE ======
+async function loadProductsFromSupabase() {
+  const { data, error } = await supabase
+    .from("productos")
+    .select("*")
+    .order("nombre", { ascending: true });
+
+  if (error) {
+    console.error(error);
+    toast("Error cargando productos ❌");
+    return;
+  }
+
+  // Mapea Supabase -> formato que tu web ya entiende
+  PRODUCTS = (data || []).map(row => ({
+    id: row.identificacion ?? row["identificación"],          // por si aún tiene acento
+    name: row.nombre,
+    category: row.categoria ?? row["categoría"],
+    price: Number(row.precio) || 0,
+    desc: row.descripcion || "",                              // si existe (opcional)
+    img: row.imagen || "img/placeholder.jpg",                 // si no hay, usa placeholder
+    stock: Number(row.existencias) || 0
+  }));
+
+  renderProducts();
+  renderCart();
+}
+  
+
+// ====== TIEMPO REAL (actualiza stock en pantalla) ======
+function subscribeRealtimeProducts() {
+  supabase
+    .channel("realtime-productos")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "productos" },
+      (payload) => {
+        const row = payload.new || payload.old;
+        const id = row.identificacion ?? row["identificación"];
+
+        // Si cambió existencias, actualiza en memoria y repinta
+        const p = PRODUCTS.find(x => x.id === id);
+        if (p && payload.new) {
+          p.stock = Number(payload.new.existencias) || 0;
+          // si cambiaste precio/categoría/nombre, también se reflejaría:
+          p.price = Number(payload.new.precio) || p.price;
+          p.name = payload.new.nombre || p.name;
+          p.category = payload.new.categoria ?? payload.new["categoría"] ?? p.category;
+          p.img = payload.new.imagen || p.img;
+
+          renderProducts();
+          renderCart();
+        } else {
+          // si insertaste o borraste productos, recargamos lista completa
+          loadProductsFromSupabase();
+        }
+      }
+    )
+    .subscribe();
+}
+
+
+
+  
   // ✅ (2) REFERENCIAS A ELEMENTOS HTML Y ESTADO:
   // Aquí “capturamos” elementos del DOM para poder actualizar la pantalla con JS.
   
@@ -245,8 +313,7 @@
     // ✅ (4) CARRITO EN MEMORIA (OBJETO):
     // cart guarda { productId: {id, qty} }. Se carga desde localStorage al entrar.
   
-  /** cart: { [productId]: {id, qty} } */
-  let cart = loadCart();
+
 
     // ✅ (5) FORMATO DE MONEDA:
     // Convierte números a “0,00 €” en español.
@@ -272,8 +339,13 @@
   }
 
 
+    /** cart: { [productId]: {id, qty} } */
+  let cart = loadCart();
+
+
     // ✅ (7) BUSCAR PRODUCTOS Y CALCULAR TOTALES (SE AÑADIO PARA VER UNIDADES EN EXISTENCIA)
 
+  
   function getProduct(id){
     return PRODUCTS.find(p => p.id === id);
   }
@@ -658,19 +730,15 @@ async function submitOrder(){
   $('#resetBtn').addEventListener('click', clearCart);
   document.querySelector("#submitOrder").addEventListener("click", submitOrder);
 
-  // 🛒 NUEVO
   document.querySelector("#cartCount").addEventListener("click", () => {
     const cart = document.querySelector("#cartPanel");
     if (!cart) return;
-
-    cart.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
+    cart.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  renderProducts();
-  renderCart();
+  // ✅ Cargar desde Supabase + activar tiempo real
+  loadProductsFromSupabase();
+  subscribeRealtimeProducts();
 });
   
 </script>
