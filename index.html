@@ -219,82 +219,10 @@
 </script>
   
   
-
 <script>
-
-let PRODUCTS = [];
-  
-  // ====== CONFIG: pon aquí tus productos ======
-
-
-// ====== CARGAR PRODUCTOS DESDE SUPABASE ======
-async function loadProductsFromSupabase() {
-  const { data, error } = await supabase
-    .from("productos")
-    .select("*")
-    .order("nombre", { ascending: true });
-
-  if (error) {
-    console.error(error);
-    toast("Error cargando productos ❌");
-    return;
-  }
-
-  // Mapea Supabase -> formato que tu web ya entiende
-  PRODUCTS = (data || []).map(row => ({
-    id: row.identificacion ?? row["identificación"],          // por si aún tiene acento
-    name: row.nombre,
-    category: row.categoria ?? row["categoría"],
-    price: Number(row.precio) || 0,
-    desc: row.descripcion || "",                              // si existe (opcional)
-    img: row.imagen || "img/placeholder.jpg",                 // si no hay, usa placeholder
-    stock: Number(row.existencias) || 0
-  }));
-
-  renderProducts();
-  renderCart();
-}
-  
-
-// ====== TIEMPO REAL (actualiza stock en pantalla) ======
-function subscribeRealtimeProducts() {
-  supabase
-    .channel("realtime-productos")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "productos" },
-      (payload) => {
-        const row = payload.new || payload.old;
-        const id = row.identificacion ?? row["identificación"];
-
-        // Si cambió existencias, actualiza en memoria y repinta
-        const p = PRODUCTS.find(x => x.id === id);
-        if (p && payload.new) {
-          p.stock = Number(payload.new.existencias) || 0;
-          // si cambiaste precio/categoría/nombre, también se reflejaría:
-          p.price = Number(payload.new.precio) || p.price;
-          p.name = payload.new.nombre || p.name;
-          p.category = payload.new.categoria ?? payload.new["categoría"] ?? p.category;
-          p.img = payload.new.imagen || p.img;
-
-          renderProducts();
-          renderCart();
-        } else {
-          // si insertaste o borraste productos, recargamos lista completa
-          loadProductsFromSupabase();
-        }
-      }
-    )
-    .subscribe();
-}
-
-
-
-  
-  // ✅ (2) REFERENCIAS A ELEMENTOS HTML Y ESTADO:
-  // Aquí “capturamos” elementos del DOM para poder actualizar la pantalla con JS.
-  
   const $ = (s) => document.querySelector(s);
+
+  let PRODUCTS = [];
   const productsEl = $('#products');
   const cartEl = $('#cart');
   const qEl = $('#q');
@@ -304,27 +232,55 @@ function subscribeRealtimeProducts() {
   const subtotalEl = $('#subtotal');
   const totalEl = $('#total');
 
-
-    // ✅ (3) GUARDADO LOCAL DEL CARRITO:
-    // Este nombre es la “clave” en localStorage para recordar el carrito aunque cierre la web.
-  
   const STORAGE_KEY = 'cart_v1';
+  let cart = loadCart();
 
-    // ✅ (4) CARRITO EN MEMORIA (OBJETO):
-    // cart guarda { productId: {id, qty} }. Se carga desde localStorage al entrar.
-  
+  const eur = (n) =>
+    new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n);
 
+  // ====== CARGAR PRODUCTOS (TABLA: products) ======
+  async function loadProductsFromSupabase() {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .order("name", { ascending: true });
 
-    // ✅ (5) FORMATO DE MONEDA:
-    // Convierte números a “0,00 €” en español.
-  
-  const eur = (n) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n);
+    if (error) {
+      console.error(error);
+      toast("Error cargando productos ❌");
+      return;
+    }
 
-  
-    // ✅ (6) FUNCIONES DE LOCALSTORAGE:
-    // - loadCart: leer carrito guardado
-    // - saveCart: guardar carrito actualizado
-  
+    PRODUCTS = (data || []).map(row => ({
+      id: row.id,
+      name: row.name,
+      category: row.category || "",
+      price: Number(row.price) || 0,
+      desc: row.desc || "",
+      img: row.img || "img/placeholder.jpg",
+      stock: Number(row.stock) || 0
+    }));
+
+    renderProducts();
+    renderCart();
+  }
+
+  // ====== TIEMPO REAL (TABLA: products) ======
+  function subscribeRealtimeProducts() {
+    supabase
+      .channel("realtime-products")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products" },
+        () => {
+          // para evitar líos, recargamos lista
+          loadProductsFromSupabase();
+        }
+      )
+      .subscribe();
+  }
+
+  // ====== LOCALSTORAGE ======
   function loadCart(){
     try{
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -333,43 +289,13 @@ function subscribeRealtimeProducts() {
       return parsed && typeof parsed === 'object' ? parsed : {};
     } catch { return {}; }
   }
+  function saveCart(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(cart)); }
 
-  function saveCart(){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
-  }
+  // ====== HELPERS ======
+  function getProduct(id){ return PRODUCTS.find(p => p.id === id); }
+  function stockFor(id){ return Number(getProduct(id)?.stock) || 0; }
+  function qtyInCart(id){ return cart[id]?.qty || 0; }
 
-
-    /** cart: { [productId]: {id, qty} } */
-  let cart = loadCart();
-
-
-    // ✅ (7) BUSCAR PRODUCTOS Y CALCULAR TOTALES (SE AÑADIO PARA VER UNIDADES EN EXISTENCIA)
-
-  
-  function getProduct(id){
-    return PRODUCTS.find(p => p.id === id);
-  }
-
-
-  
-
-function stockFor(id){
-  const p = getProduct(id);
-  const s = Number(p?.stock);
-  return Number.isFinite(s) ? s : 0;
-}
-
-function qtyInCart(id){
-  return cart[id]?.qty || 0;
-}
-
-function canAddMore(id){
-  return qtyInCart(id) < stockFor(id);
-}
-  
-
-
-  
   function cartItems(){
     return Object.values(cart)
       .map(ci => ({...ci, product: getProduct(ci.id)}))
@@ -384,9 +310,7 @@ function canAddMore(id){
     return { distinct, units, subtotal, total: subtotal };
   }
 
-    // ✅ (8) RENDER DEL CATÁLOGO:
-    // Crea las tarjetas según PRODUCTS y el texto buscado.
-
+  // ====== RENDER ======
   function renderProducts(){
     const q = qEl.value.trim().toLowerCase();
     const list = PRODUCTS.filter(p => {
@@ -399,56 +323,45 @@ function canAddMore(id){
       const el = document.createElement('div');
       el.className = 'card';
 
-      
-const inCart = qtyInCart(p.id);
-const stock = stockFor(p.id);
-const remaining = Math.max(0, stock - inCart);
-const out = stock <= 0;
+      const inCart = qtyInCart(p.id);
+      const stock = stockFor(p.id);
+      const remaining = Math.max(0, stock - inCart);
+      const out = stock <= 0;
 
-el.innerHTML = `
-  <div class="pimg">
-    <img src="${escapeHtml(p.img || 'img/placeholder.png')}" alt="${escapeHtml(p.name)}" loading="lazy">
-  </div>
+      el.innerHTML = `
+        <div class="pimg">
+          <img src="${escapeHtml(p.img)}" alt="${escapeHtml(p.name)}" loading="lazy">
+        </div>
+        <div class="tag">${escapeHtml(p.category)}</div>
+        <div class="title">${escapeHtml(p.name)}</div>
+        <p class="desc">${escapeHtml(p.desc||'')}</p>
 
-  <div class="tag">${escapeHtml(p.category)}</div>
-  <div class="title">${escapeHtml(p.name)}</div>
-  <p class="desc">${escapeHtml(p.desc||'')}</p>
+        <div class="stockline">
+          <div class="stock">Unidades disponibles: <strong>${out ? 0 : remaining}</strong></div>
+          ${out ? `<span class="badgeOut">Agotado</span>` : ``}
+        </div>
 
-  <div class="stockline">
-    <div class="stock">Unidades disponibles: <strong>${out ? 0 : remaining}</strong></div>
-    ${out ? `<span class="badgeOut">Agotado</span>` : ``}
-  </div>
-
-  <div class="row">
-    <div class="price">${eur(p.price)}</div>
-    <button class="btn" data-add="${p.id}" ${out || remaining<=0 ? 'disabled' : ''}>
-      ${out || remaining<=0 ? 'Sin stock' : 'Añadir'}
-    </button>
-  </div>
-`;
-
-      
+        <div class="row">
+          <div class="price">${eur(p.price)}</div>
+          <button class="btn" data-add="${p.id}" ${out || remaining<=0 ? 'disabled' : ''}>
+            ${out || remaining<=0 ? 'Sin stock' : 'Añadir'}
+          </button>
+        </div>
+      `;
       productsEl.appendChild(el);
     });
 
-      // Botones “Añadir”: suman al carrito
     productsEl.querySelectorAll('[data-add]').forEach(btn => {
       btn.addEventListener('click', () => addToCart(btn.getAttribute('data-add')));
     });
   }
 
-
-    // ✅ (9) RENDER DEL CARRITO:
-    // Dibuja los productos añadidos + controles de cantidad + botón quitar.
-  
   function renderCart(){
     const items = cartItems();
     cartEl.innerHTML = '';
 
     if(items.length === 0){
-      cartEl.innerHTML = `
-        <p class="empty">Tu carrito está vacío. Añade productos del catálogo y verás aquí el detalle con cantidades y total.</p>
-      `;
+      cartEl.innerHTML = `<p class="empty">Tu carrito está vacío.</p>`;
       updateTotals();
       renderProducts();
       return;
@@ -465,10 +378,10 @@ el.innerHTML = `
           <div class="muted"><strong>${eur(lineTotal)}</strong></div>
         </div>
         <div class="meta" style="margin-top:10px">
-          <div class="qty" aria-label="Cantidad">
-            <button data-dec="${id}" aria-label="Disminuir">−</button>
-            <input data-qty="${id}" inputmode="numeric" pattern="[0-9]*" value="${qty}" aria-label="Cantidad" />
-            <button data-inc="${id}" aria-label="Aumentar" ${qty >= stockFor(id) ? 'disabled' : ''}>+</button>
+          <div class="qty">
+            <button data-dec="${id}">−</button>
+            <input data-qty="${id}" inputmode="numeric" pattern="[0-9]*" value="${qty}" />
+            <button data-inc="${id}" ${qty >= stockFor(id) ? 'disabled' : ''}>+</button>
           </div>
           <button class="btn danger" data-rm="${id}">Quitar</button>
         </div>
@@ -476,31 +389,23 @@ el.innerHTML = `
       cartEl.appendChild(el);
     });
 
-    
-      // Botones + / - / Quitar y edición directa del input
     cartEl.querySelectorAll('[data-inc]').forEach(b => b.addEventListener('click', () => changeQty(b.getAttribute('data-inc'), +1)));
     cartEl.querySelectorAll('[data-dec]').forEach(b => b.addEventListener('click', () => changeQty(b.getAttribute('data-dec'), -1)));
     cartEl.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => removeFromCart(b.getAttribute('data-rm'))));
 
     cartEl.querySelectorAll('[data-qty]').forEach(inp => {
+      inp.addEventListener('input', () => inp.value = inp.value.replace(/[^0-9]/g, ''));
       inp.addEventListener('change', () => {
         const id = inp.getAttribute('data-qty');
         const max = stockFor(id) || 1;
         const n = clampInt(inp.value, 1, max);
-          setQty(id, n);
-      });
-      inp.addEventListener('input', () => {
-        // keep only digits
-        inp.value = inp.value.replace(/[^0-9]/g, '');
+        setQty(id, n);
       });
     });
 
     updateTotals();
     renderProducts();
   }
-
-
-      // ✅ (10) ACTUALIZA LOS TOTALES EN PANTALLA
 
   function updateTotals(){
     const { distinct, units, subtotal, total } = countsAndTotals();
@@ -510,29 +415,18 @@ el.innerHTML = `
     totalEl.textContent = eur(total);
   }
 
-    // ✅ (11) ACCIONES DEL CARRITO:
-    // Añadir, quitar, cambiar cantidad, vaciar.
-  
+  // ====== CARRITO ======
   function addToCart(id){
-  const stock = stockFor(id);
-  if(stock <= 0){
-    toast("Producto sin stock ❌");
-    return;
-  }
+    const stock = stockFor(id);
+    const current = qtyInCart(id);
+    if(stock <= 0) return toast("Producto sin stock ❌");
+    if(current >= stock) return toast("No hay más unidades 🙂");
 
-  const current = qtyInCart(id);
-  if(current >= stock){
-    toast("No hay más unidades disponibles 🙂");
-    return;
+    cart[id] = cart[id] || { id, qty: 0 };
+    cart[id].qty += 1;
+    saveCart();
+    renderCart();
   }
-
-  cart[id] = cart[id] || { id, qty: 0 };
-  cart[id].qty += 1;
-  saveCart();
-  renderProducts(); // 👈 importante: actualiza botones/stock en catálogo
-  renderCart();
-}
-  
 
   function removeFromCart(id){
     delete cart[id];
@@ -541,151 +435,89 @@ el.innerHTML = `
   }
 
   function setQty(id, qty){
-  const max = stockFor(id);
-  if(max <= 0){
-    removeFromCart(id);
-    toast("Producto sin stock ❌");
-    return;
+    const max = stockFor(id);
+    const safe = Math.min(Math.max(1, qty), max);
+    cart[id] = cart[id] || { id, qty: 0 };
+    cart[id].qty = safe;
+    saveCart();
+    renderCart();
   }
-  const safe = Math.min(Math.max(1, qty), max);
-  cart[id] = cart[id] || { id, qty: 0 };
-  cart[id].qty = safe;
-  saveCart();
-  renderProducts();
-  renderCart();
-}
 
   function changeQty(id, delta){
-  if(!cart[id]) return;
-
-  const max = stockFor(id);
-  if(max <= 0){
-    removeFromCart(id);
-    toast("Producto sin stock ❌");
-    return;
+    if(!cart[id]) return;
+    const max = stockFor(id);
+    const next = cart[id].qty + delta;
+    if(next <= 0) return removeFromCart(id);
+    cart[id].qty = Math.min(next, max);
+    saveCart();
+    renderCart();
   }
 
-  const next = cart[id].qty + delta;
-
-  if(next <= 0){
-    removeFromCart(id);
-    return;
-  }
-
-  if(next > max){
-    cart[id].qty = max;
-    toast("No hay más unidades disponibles 🙂");
-  } else {
-    cart[id].qty = next;
-  }
-
-  saveCart();
-  renderProducts();
-  renderCart();
-}
-
-  
   function clearCart(){
-  cart = {};
-  saveCart();
-  renderProducts();
-  renderCart();
-}
-
-
-  
-
-  
-  // ====== Google Sheets endpoint ======
-  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyfRCBjBN3zZ0cz8j2W0E2ONQ3qm-3xuFG44nRUaFqLWQ05SSl8t0Qu0BS2cz3zt554DQ/exec";
-
-
-    // ✅ (14) “CANDADO” PARA EVITAR DOBLE ENVÍO:
-    // Si el usuario hace doble clic mientras está enviando, no se duplica.
-  
-let isSubmitting = false;
-
-
-    // ✅ (15) ENVÍO DEL PEDIDO A GOOGLE SHEETS:
-    // - Valida carrito y datos
-    // - Bloquea el botón (Enviando…)
-    // - Genera orderId único (sirve para deduplicar en Sheets)
-    // - Envía por POST con no-cors (evita bloqueo del navegador)
-  
-async function submitOrder(){
-  if (isSubmitting) return; // evita doble clic
-
-  const btn = document.querySelector("#submitOrder");
-
-  const items = cartItems();
-  if(items.length === 0){
-    toast("Carrito vacío 🙂");
-    return;
+    cart = {};
+    saveCart();
+    renderCart();
   }
 
-  const name = document.querySelector("#customerName").value.trim();
-  const phone = document.querySelector("#customerPhone").value.trim();
+  // ====== SUBMIT (DESCUENTA STOCK CON RPC) ======
+  let isSubmitting = false;
 
-  if(!name || !phone){
-    toast("Falta nombre o teléfono");
-    return;
+  async function submitOrder(){
+    if (isSubmitting) return;
+
+    const btn = $("#submitOrder");
+    const items = cartItems();
+    if(items.length === 0) return toast("Carrito vacío 🙂");
+
+    const name = $("#customerName").value.trim();
+    const phone = $("#customerPhone").value.trim();
+    if(!name || !phone) return toast("Falta nombre o teléfono");
+
+    isSubmitting = true;
+    const prevText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Confirmando…";
+
+    try{
+      const dbItems = items.map(x => ({
+        product_id: x.id,
+        qty: x.qty
+      }));
+
+      const { data: orderId, error } = await supabase.rpc(
+        "create_order_and_discount_stock",
+        {
+          p_customer_name: name,
+          p_customer_phone: phone,
+          p_items: dbItems
+        }
+      );
+
+      if (error) {
+        console.error(error);
+        toast("No se pudo confirmar ❌ " + (error.message || ""));
+        return;
+      }
+
+      toast("Pedido confirmado ✅ Stock actualizado");
+      clearCart();
+      $("#customerName").value = "";
+      $("#customerPhone").value = "";
+
+      // refrescamos productos para ver el stock nuevo
+      loadProductsFromSupabase();
+
+    } catch (err){
+      console.error(err);
+      toast("Error de conexión ❌");
+    } finally {
+      isSubmitting = false;
+      btn.disabled = false;
+      btn.textContent = prevText;
+    }
   }
 
-  // 🔒 bloqueamos el botón
-  isSubmitting = true;
-  const prevText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = "Enviando…";
-
-  const totals = countsAndTotals();
-
-  // ID único del pedido (sirve para deduplicar)
-  const orderId = "W" + Date.now() + "_" + Math.random().toString(16).slice(2);
-
-  const payload = {
-    orderId,
-    customerName: name,
-    customerPhone: phone,
-    total: totals.total,
-    items: items.map(x => ({
-      id: x.id,
-      name: x.product.name,
-      price: x.product.price,
-      qty: x.qty,
-      lineTotal: x.qty * x.product.price
-    }))
-  };
-
-  try{
-    await fetch(GOOGLE_SCRIPT_URL, {
-      method: "POST",
-      mode: "no-cors",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "text/plain;charset=utf-8" }
-    });
-
-    toast("Pedido enviado ✅");
-    clearCart();
-    document.querySelector("#customerName").value = "";
-    document.querySelector("#customerPhone").value = "";
-  } catch (err){
-    toast("Error de conexión ❌");
-  } finally {
-    // 🔓 desbloqueamos
-    isSubmitting = false;
-    btn.disabled = false;
-    btn.textContent = prevText;
-  }
-}
-
-
-
-
-    // ✅ (16) UTILIDADES DE UI:
-    // - clampInt: asegura números dentro de rango
-    // - escapeHtml: evita que texto rompa el HTML
-    // - toast: mensajitos bonitos abajo
-
+  // ====== UI UTILS ======
   function clampInt(v, min, max){
     const n = parseInt(String(v||'').trim(), 10);
     if(Number.isNaN(n)) return min;
@@ -721,26 +553,22 @@ async function submitOrder(){
     setTimeout(() => el.remove(), 1550);
   }
 
+  // ====== INIT ======
+  window.addEventListener("DOMContentLoaded", () => {
+    qEl.addEventListener('input', renderProducts);
+    $('#resetBtn').addEventListener('click', clearCart);
+    $('#submitOrder').addEventListener('click', submitOrder);
 
-    // ✅ (17) INICIALIZACIÓN:
-    // Aquí “enchufamos” los listeners (click, input) y pintamos catálogo + carrito al cargar.
-  
- window.addEventListener("DOMContentLoaded", () => {
-  qEl.addEventListener('input', renderProducts);
-  $('#resetBtn').addEventListener('click', clearCart);
-  document.querySelector("#submitOrder").addEventListener("click", submitOrder);
+    $('#cartCount').addEventListener('click', () => {
+      $('#cartPanel')?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
 
-  document.querySelector("#cartCount").addEventListener("click", () => {
-    const cart = document.querySelector("#cartPanel");
-    if (!cart) return;
-    cart.scrollIntoView({ behavior: "smooth", block: "start" });
+    loadProductsFromSupabase();
+    subscribeRealtimeProducts();
   });
-
-  // ✅ Cargar desde Supabase + activar tiempo real
-  loadProductsFromSupabase();
-  subscribeRealtimeProducts();
-});
-  
 </script>
+
+
+  
 </body>
 </html>
