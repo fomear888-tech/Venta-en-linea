@@ -1,12 +1,15 @@
 const Stripe = require("stripe");
 
 module.exports = async (req, res) => {
-  // CORS para permitir llamadas desde tu GitHub Pages
-  res.setHeader("Access-Control-Allow-Origin", process.env.SITE_URL);
+  const allowedOrigin = process.env.SITE_URL
+    ? new URL(process.env.SITE_URL).origin
+    : "*";
+
+  res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
+  res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // Preflight
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Método no permitido" });
 
