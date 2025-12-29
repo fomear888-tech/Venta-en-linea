@@ -204,6 +204,52 @@
 </main>
 
 
+
+
+<!-- ✅ ADMIN (solo tú) -->
+<section class="panel" id="adminPanel" style="max-width:1100px;margin:16px auto;display:none;">
+  <h2>Admin · Productos e imágenes</h2>
+  <div class="content" style="display:grid;gap:12px;">
+
+    <div id="adminAuthBox" style="display:grid;gap:10px;">
+      <div class="muted">Acceso admin (solo para ti). Usa <code>?admin=1</code> en la URL.</div>
+      <input id="adminEmail" placeholder="Email" style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;">
+      <input id="adminPass" type="password" placeholder="Contraseña" style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;">
+      <button class="btn" id="adminLoginBtn">Entrar</button>
+    </div>
+
+<div id="adminToolsBox" style="display:none; gap:12px;">
+      <div class="muted">Modo admin activo ✅</div>
+
+      <div style="display:grid;gap:10px;">
+        <label class="muted">Producto</label>
+        <select id="adminProduct" style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;"></select>
+      </div>
+
+      <div style="display:grid;gap:10px;">
+        <label class="muted">Imagen (JPG/PNG/WebP)</label>
+        <input id="adminFile" type="file" accept="image/*"
+          style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;">
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" id="adminUploadBtn">Subir y asignar</button>
+        <button class="btn secondary" id="adminRefreshBtn">Recargar productos</button>
+        <button class="btn danger" id="adminLogoutBtn">Salir</button>
+      </div>
+
+      <div class="muted" id="adminStatus"></div>
+    </div>
+
+  </div>
+</section>
+
+
+
+
+  
+
+
   <!-- ✅ PIE -->
 
 <footer>
@@ -212,6 +258,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  
 <script>
   const SUPABASE_URL = "https://pujzkraozoqbriqnlikf.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_D7A6JAiqiXAaPRYsaF6ZBQ_1hCE1UcN";
@@ -222,6 +269,158 @@
   
   
 <script>
+
+async function isAdmin(){
+  const { data: { user } } = await sb.auth.getUser();
+  if(!user) return false;
+
+  const { data, error } = await sb
+    .from('admins')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if(error) return false;
+  return !!data;
+}
+
+
+
+function wantsAdminUI(){
+  return new URLSearchParams(location.search).get('admin') === '1';
+}
+
+async function showAdminPanel(){
+  const panel = document.getElementById('adminPanel');
+  if(!panel) return;
+
+  // Solo si entras con ?admin=1
+  if(!wantsAdminUI()){
+    panel.style.display = 'none';
+    return;
+  }
+
+  panel.style.display = 'block';
+
+  const authBox  = document.getElementById('adminAuthBox');
+  const toolsBox = document.getElementById('adminToolsBox');
+
+  const ok = await isAdmin();
+
+  // Si es admin: muestra herramientas. Si no: muestra login
+  if(ok){
+    authBox.style.display = 'none';
+    toolsBox.style.display = 'grid';
+    fillAdminProducts();
+  } else {
+    toolsBox.style.display = 'none';
+    authBox.style.display = 'grid';
+  }
+}
+
+async function adminLogin(){
+  const email = document.getElementById('adminEmail')?.value.trim();
+  const pass  = document.getElementById('adminPass')?.value.trim();
+  if(!email || !pass) return toast("Pon email y contraseña");
+
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if(error){
+    console.error(error);
+    return toast("Login falló ❌");
+  }
+  toast("Login OK ✅");
+  await loadProductsFromSupabase();
+  await showAdminPanel();
+}
+
+async function adminLogout(){
+  await sb.auth.signOut();
+  toast("Sesión cerrada 👋");
+  await showAdminPanel();
+}
+
+function fillAdminProducts(){
+  const sel = document.getElementById('adminProduct');
+  if(!sel) return;
+  if(!PRODUCTS || PRODUCTS.length === 0) { sel.innerHTML = ''; return; }
+
+  sel.innerHTML = '';
+  PRODUCTS.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = `${p.name} (${p.id})`;
+    sel.appendChild(opt);
+  });
+}
+
+async function adminUploadAndAssign(){
+  const status = document.getElementById('adminStatus');
+  const sel = document.getElementById('adminProduct');
+  const fileInput = document.getElementById('adminFile');
+  const btn = document.getElementById('adminUploadBtn');
+
+  if(!sel?.value) return toast("Selecciona un producto");
+  const productId = sel.value;
+
+  const file = fileInput?.files?.[0];
+  if(!file) return toast("Selecciona una imagen");
+  if(file.size > 3 * 1024 * 1024) return toast("Imagen muy grande (máx 3MB)");
+
+  btn.disabled = true;
+  const prev = btn.textContent;
+  btn.textContent = "Subiendo…";
+  if(status) status.textContent = "";
+
+  try{
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `products/${productId}.${ext}`;
+
+    const { error: upErr } = await sb.storage
+      .from('product-images')
+      .upload(path, file, { upsert: true, contentType: file.type });
+
+    if(upErr){
+      console.error(upErr);
+      toast("Error subiendo imagen ❌");
+      if(status) status.textContent = upErr.message || String(upErr);
+      return;
+    }
+
+    const { data: pub } = sb.storage.from('product-images').getPublicUrl(path);
+    const publicUrl = pub?.publicUrl;
+    if(!publicUrl) return toast("No pude obtener URL pública ❌");
+
+    const { error: updErr } = await sb
+      .from('products')
+      .update({ img: publicUrl })
+      .eq('id', productId);
+
+    if(updErr){
+      console.error(updErr);
+      toast("Error guardando en products ❌");
+      if(status) status.textContent = updErr.message || String(updErr);
+      return;
+    }
+
+    toast("Imagen asignada ✅");
+    if(status) status.textContent = "OK: " + publicUrl;
+
+    await loadProductsFromSupabase();
+
+  } finally {
+    btn.disabled = false;
+    btn.textContent = prev;
+    if(fileInput) fileInput.value = "";
+  }
+}
+
+
+
+
+  
+
+
+  
   const $ = (s) => document.querySelector(s);
 
   let PRODUCTS = [];
@@ -263,6 +462,7 @@
 
     renderProducts();
     renderCart();
+    fillAdminProducts();
   }
 
   // ====== TIEMPO REAL (TABLA: products) ======
@@ -565,7 +765,24 @@
 
     loadProductsFromSupabase();
     subscribeRealtimeProducts();
+
+
+    // Admin (solo si entras con ?admin=1)
+showAdminPanel();
+
+document.getElementById('adminLoginBtn')?.addEventListener('click', adminLogin);
+document.getElementById('adminLogoutBtn')?.addEventListener('click', adminLogout);
+document.getElementById('adminUploadBtn')?.addEventListener('click', adminUploadAndAssign);
+
+document.getElementById('adminRefreshBtn')?.addEventListener('click', async () => {
+  await loadProductsFromSupabase();
+  fillAdminProducts();
+  toast("Productos recargados ✅");
+});
+
+    
   });
+  
 </script>
 
 
