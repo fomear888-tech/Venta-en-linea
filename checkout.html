@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pagar</title>
+  <script async src="https://js.stripe.com/v3/"></script>
+  <style>
+    body{font-family:system-ui;margin:0;padding:24px;background:#0b1220;color:#eaf0ff}
+    .card{max-width:520px;margin:auto;background:#101b33;padding:18px;border-radius:14px}
+    button{padding:12px 16px;border:0;border-radius:10px;cursor:pointer;font-weight:700}
+    #embedded{margin-top:14px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Pago seguro</h2>
+    <p>Tarjeta (modo prueba).</p>
+
+    <button id="payBtn">Pagar ahora</button>
+    <div id="error" style="margin-top:12px;color:#ff6b6b"></div>
+    <div id="embedded"></div>
+  </div>
+
+  <script>
+    const BACKEND_BASE = "https://venta-en-linea.vercel.app"; // tu Vercel
+
+    document.getElementById("payBtn").addEventListener("click", async () => {
+      const errorBox = document.getElementById("error");
+      errorBox.textContent = "";
+
+      try {
+        const res = await fetch(`${BACKEND_BASE}/api/create-checkout-session`, {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({
+            items: [{ name: "Pedido de prueba", amount_cents: 990, qty: 1 }]
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Error creando sesión");
+
+        const stripe = Stripe(data.publishableKey);
+        const checkout = await stripe.initEmbeddedCheckout({ clientSecret: data.clientSecret });
+        checkout.mount("#embedded");
+
+      } catch (e) {
+        errorBox.textContent = e.message;
+      }
+    });
+  </script>
+</body>
+</html>
