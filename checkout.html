@@ -46,7 +46,8 @@
         checkout.mount("#embedded");
 
       } catch (e) {
-        errorBox.textContent = e.message;
+        errorBox.textContent = "No se pudo iniciar el pago. Revisa configuración de Stripe.";
+console.error(e);
       }
     });
   </script>
