@@ -9,6 +9,7 @@
     body{font-family:system-ui;margin:0;padding:24px;background:#0b1220;color:#eaf0ff}
     .card{max-width:520px;margin:auto;background:#101b33;padding:18px;border-radius:14px}
     button{padding:12px 16px;border:0;border-radius:10px;cursor:pointer;font-weight:700}
+    button:disabled{opacity:.6;cursor:not-allowed}
     #embedded{margin-top:14px}
   </style>
 </head>
@@ -24,10 +25,19 @@
 
   <script>
     const BACKEND_BASE = "https://venta-en-linea.vercel.app"; // tu Vercel
+    let startingCheckout = false;
 
     document.getElementById("payBtn").addEventListener("click", async () => {
+      if (startingCheckout) return; // anti doble click
+      startingCheckout = true;
+
+      const btn = document.getElementById("payBtn");
       const errorBox = document.getElementById("error");
       errorBox.textContent = "";
+
+      btn.disabled = true;
+      const prevText = btn.textContent;
+      btn.textContent = "Cargando…";
 
       try {
         const res = await fetch(`${BACKEND_BASE}/api/create-checkout-session`, {
@@ -45,9 +55,13 @@
         const checkout = await stripe.initEmbeddedCheckout({ clientSecret: data.clientSecret });
         checkout.mount("#embedded");
 
+        // OJO: aquí ya no reactivamos el botón, porque ya estás en checkout embebido.
       } catch (e) {
+        console.error(e);
         errorBox.textContent = "No se pudo iniciar el pago. Revisa configuración de Stripe.";
-console.error(e);
+        startingCheckout = false;
+        btn.disabled = false;
+        btn.textContent = prevText;
       }
     });
   </script>
