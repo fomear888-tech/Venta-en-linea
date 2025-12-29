@@ -17,7 +17,7 @@
 <body>
   <div class="card">
     <h2>Pago seguro</h2>
-    <p class="muted">Cargando opciones de pago…</p>
+    <p class="muted" id="loadingText">Cargando opciones de pago…</p>
 
     <!-- Botón opcional: solo sirve si hubo error y quieres reintentar -->
     <button id="retryBtn" style="display:none;">Reintentar</button>
@@ -54,6 +54,8 @@
         const stripe = Stripe(data.publishableKey);
         const checkout = await stripe.initEmbeddedCheckout({ clientSecret: data.clientSecret });
         checkout.mount("#embedded");
+        document.getElementById("loadingText").style.display = "none";
+
 
       } catch (e) {
         console.error(e);
