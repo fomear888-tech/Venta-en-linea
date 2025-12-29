@@ -66,6 +66,16 @@
     .btn.secondary{border-color:var(--border);background:rgba(255,255,255,.03)}
     .btn.danger{border-color:rgba(255,107,107,.35);background:rgba(255,107,107,.10)}
 
+.btn.pay{
+  border-color: rgba(94,234,212,.55);
+  background: linear-gradient(180deg, rgba(94,234,212,.28), rgba(94,234,212,.12));
+}
+.btn.pay:hover{ filter: brightness(1.05); }
+.btn.pay[aria-disabled="true"]{
+  opacity:.45;
+  pointer-events:none;
+}
+    
   
 /* ✅ IMÁGENES DE PRODUCTO */
 .pimg{
@@ -191,8 +201,9 @@
                    - Confirmar pedido: envía a Google Sheets (automático) -->
             
             <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
-            <button class="btn" id="submitOrder">Confirmar pedido</button>
-            </div>
+  <a class="btn pay" id="payBtn" href="./checkout.html">💳 Pagar</a>
+  <button class="btn" id="submitOrder">Confirmar pedido</button>
+</div>
 
             <p class="muted" style="margin:10px 0 0">Asegurese de ingresar los datos correctamente</p>
           </div>
@@ -569,6 +580,7 @@ async function adminUploadAndAssign(){
       cartEl.innerHTML = `<p class="empty">Tu carrito está vacío.</p>`;
       updateTotals();
       renderProducts();
+      updatePayButton();
       return;
     }
 
@@ -618,7 +630,24 @@ async function adminUploadAndAssign(){
     itemsCountEl.textContent = `${distinct} producto(s) · ${units} unidad(es)`;
     subtotalEl.textContent = eur(subtotal);
     totalEl.textContent = eur(total);
+
+      updatePayButton();
   }
+
+
+function updatePayButton(){
+  const btn = document.getElementById('payBtn');
+  if(!btn) return;
+
+  const { distinct } = countsAndTotals();
+  const canPay = distinct > 0;
+
+  btn.setAttribute('aria-disabled', canPay ? 'false' : 'true');
+  btn.title = canPay ? 'Ir a pagar' : 'Añade productos al carrito para pagar';
+  btn.tabIndex = canPay ? 0 : -1;
+}
+
+  
 
   // ====== CARRITO ======
   function addToCart(id){
@@ -770,6 +799,7 @@ async function adminUploadAndAssign(){
 
     loadProductsFromSupabase();
     subscribeRealtimeProducts();
+    updatePayButton();
 
 
     // Admin (solo si entras con ?admin=1)
