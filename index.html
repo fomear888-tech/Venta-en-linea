@@ -648,6 +648,7 @@ function updatePayButton(){
   btn.setAttribute('aria-disabled', canPay ? 'false' : 'true');
   btn.title = canPay ? 'Ir a pagar' : 'Añade productos al carrito para pagar';
   btn.tabIndex = canPay ? 0 : -1;
+  btn.style.pointerEvents = canPay ? "auto" : "none";
 }
 
   
@@ -807,15 +808,16 @@ function updatePayButton(){
 
 
     document.getElementById("payBtn").addEventListener("click", (e) => {
-  const { distinct, total } = countsAndTotals();
+  const btn = e.currentTarget;
+  const disabled = btn.getAttribute("aria-disabled") === "true";
 
-  if (distinct <= 0) {
+  if (disabled) {
     e.preventDefault();
     toast("Añade productos antes de pagar 🙂");
     return;
   }
 
-  // redondeo a 2 decimales para evitar cosas tipo 10.00000004
+  const { total } = countsAndTotals();
   const safeTotal = Math.round(total * 100) / 100;
   localStorage.setItem("checkout_total_eur", safeTotal.toString());
 });
