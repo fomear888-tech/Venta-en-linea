@@ -19,9 +19,18 @@ export default async function handler(req, res) {
 
     const supabaseUrl = process.env.SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
     if (!supabaseUrl || !serviceKey) {
       return res.status(500).json({ error: "Missing Supabase env vars" });
+    }
+
+    const siteUrl = process.env.SITE_URL;
+    if (!siteUrl) {
+      return res.status(500).json({ error: "Missing SITE_URL env var" });
+    }
+
+    const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
+    if (!publishableKey) {
+      return res.status(500).json({ error: "Missing STRIPE_PUBLISHABLE_KEY env var" });
     }
 
     // ✅ 1) VALIDAR STOCK REAL EN SERVIDOR + recalcular total desde BD
@@ -90,7 +99,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Invalid total" });
     }
 
-    // ✅ total final seguro
     const totalCents = computedTotalCents;
 
     // ✅ 2) Guardar pedido pendiente en Supabase
@@ -136,11 +144,11 @@ export default async function handler(req, res) {
           quantity: 1,
         },
       ],
-      return_url: `${process.env.SITE_URL}/pago-ok.html`,
+      return_url: `${siteUrl}/pago-ok.html`,
       metadata: { pending_order_id: pendingOrderId },
     });
 
-    // ✅ 4) Guardar stripe_session_id
+    // ✅ 4) Guardar stripe_session_id (opcional pero recomendado)
     await fetch(`${supabaseUrl}/rest/v1/pending_orders?id=eq.${pendingOrderId}`, {
       method: "PATCH",
       headers: {
@@ -151,8 +159,9 @@ export default async function handler(req, res) {
       body: JSON.stringify({ stripe_session_id: session.id }),
     });
 
+    // ✅ 5) Respuesta final
     return res.status(200).json({
-      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+      publishableKey,
       clientSecret: session.client_secret,
     });
   } catch (err) {
