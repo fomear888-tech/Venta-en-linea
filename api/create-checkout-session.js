@@ -154,7 +154,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-06-
     },
   ],
   return_url: `${siteUrl}/pago-ok.html`,
-  cancel_url: `${siteUrl}/checkout.html`,
   metadata: { pending_order_id: pendingOrderId },
 });
 
