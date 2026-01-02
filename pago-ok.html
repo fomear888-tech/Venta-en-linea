@@ -9,7 +9,13 @@
   <h2>✅ Pago completado</h2>
   <p>Pago confirmado. Ya puedes volver al catálogo.</p>
 
-  <!-- ✅ SIEMPRE vuelve a Vercel -->
+  <script>
+    localStorage.removeItem("checkout_total_eur");
+    localStorage.removeItem("checkout_customer_name");
+    localStorage.removeItem("checkout_customer_phone");
+    localStorage.removeItem("checkout_items");
+  </script>
+
   <a href="https://venta-en-linea.vercel.app/">Volver al catálogo</a>
 </body>
 </html>
