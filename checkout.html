@@ -34,7 +34,8 @@
     const BACKEND_BASE = "https://venta-en-linea.vercel.app";
     let startingCheckout = false;
 
-    const totalEur = Number(localStorage.getItem("checkout_total_eur") || 0);
+    const totalEur = Math.round(Number(localStorage.getItem("checkout_total_eur") || 0) * 100) / 100;
+
 
     // Mostrar importe (si existe el elemento)
     const payAmountEl = document.getElementById("payAmount");
@@ -67,7 +68,7 @@
           headers: {"Content-Type":"application/json"},
           body: JSON.stringify({
             items: [{
-              name: "Pedido web",
+              name: "Pedido Mas Envíos",
               amount_cents: Math.round(totalEur * 100),
               qty: 1
             }]
