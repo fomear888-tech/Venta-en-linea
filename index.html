@@ -202,7 +202,6 @@
             
             <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
   <a class="btn pay" id="payBtn" href="./checkout.html" role="button" aria-disabled="true">💳 Pagar</a>
-  <button class="btn" id="submitOrder">Confirmar pedido</button>
 </div>
 
             <p class="muted" style="margin:10px 0 0">Asegurese de ingresar los datos correctamente</p>
@@ -795,7 +794,6 @@ function updatePayButton(){
   window.addEventListener("DOMContentLoaded", () => {
     qEl.addEventListener('input', renderProducts);
     $('#resetBtn').addEventListener('click', clearCart);
-    $('#submitOrder').addEventListener('click', submitOrder);
 
     $('#cartCount').addEventListener('click', () => {
       $('#cartPanel')?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -810,16 +808,34 @@ function updatePayButton(){
     document.getElementById("payBtn").addEventListener("click", (e) => {
   const btn = e.currentTarget;
   const disabled = btn.getAttribute("aria-disabled") === "true";
-
   if (disabled) {
     e.preventDefault();
     toast("Añade productos antes de pagar 🙂");
     return;
   }
 
+  const name = (document.getElementById("customerName")?.value || "").trim();
+  const phone = (document.getElementById("customerPhone")?.value || "").trim();
+  if(!name || !phone){
+    e.preventDefault();
+    toast("Falta nombre o teléfono");
+    return;
+  }
+
+  const items = cartItems().map(x => ({
+    product_id: x.id,
+    name: x.product.name,
+    qty: x.qty,
+    unit_price: x.product.price
+  }));
+
   const { total } = countsAndTotals();
   const safeTotal = Math.round(total * 100) / 100;
+
   localStorage.setItem("checkout_total_eur", safeTotal.toString());
+  localStorage.setItem("checkout_customer_name", name);
+  localStorage.setItem("checkout_customer_phone", phone);
+  localStorage.setItem("checkout_items", JSON.stringify(items));
 });
 
 
