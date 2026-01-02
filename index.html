@@ -696,32 +696,6 @@ function updatePayButton(){
     renderCart();
   }
 
-  // ====== SUBMIT (DESCUENTA STOCK CON RPC) ======
-
-
-      if (error) {
-        console.error(error);
-        toast("No se pudo confirmar ❌ " + (error.message || ""));
-        return;
-      }
-
-      toast("Pedido confirmado ✅ Stock actualizado");
-      clearCart();
-      $("#customerName").value = "";
-      $("#customerPhone").value = "";
-
-      // refrescamos productos para ver el stock nuevo
-      loadProductsFromSupabase();
-
-    } catch (err){
-      console.error(err);
-      toast("Error de conexión ❌");
-    } finally {
-      isSubmitting = false;
-      btn.disabled = false;
-      btn.textContent = prevText;
-    }
-  }
 
   // ====== UI UTILS ======
   function clampInt(v, min, max){
