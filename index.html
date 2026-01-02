@@ -201,7 +201,7 @@
                    - Confirmar pedido: envía a Google Sheets (automático) -->
             
             <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
-  <a class="btn pay" id="payBtn" href="./checkout.html">💳 Pagar</a>
+  <a class="btn pay" id="payBtn" href="./checkout.html" role="button" aria-disabled="true">💳 Pagar</a>
   <button class="btn" id="submitOrder">Confirmar pedido</button>
 </div>
 
@@ -806,9 +806,18 @@ function updatePayButton(){
 
 
 
-    document.getElementById("payBtn").addEventListener("click", () => {
-  const { total } = countsAndTotals(); // total en euros
-  localStorage.setItem("checkout_total_eur", total.toString());
+    document.getElementById("payBtn").addEventListener("click", (e) => {
+  const { distinct, total } = countsAndTotals();
+
+  if (distinct <= 0) {
+    e.preventDefault();
+    toast("Añade productos antes de pagar 🙂");
+    return;
+  }
+
+  // redondeo a 2 decimales para evitar cosas tipo 10.00000004
+  const safeTotal = Math.round(total * 100) / 100;
+  localStorage.setItem("checkout_total_eur", safeTotal.toString());
 });
 
 
