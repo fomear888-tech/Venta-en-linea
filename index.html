@@ -277,9 +277,12 @@
   // 👇 cliente real (le ponemos otro nombre para evitar líos)
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
-  
+
+
+ 
   
 <script>
+
 
 async function isAdmin(){
   const { data: { user } } = await sb.auth.getUser();
@@ -800,6 +803,13 @@ function updatePayButton(){
     loadProductsFromSupabase();
     subscribeRealtimeProducts();
     updatePayButton();
+
+
+
+    document.getElementById("payBtn").addEventListener("click", () => {
+  const { total } = countsAndTotals(); // total en euros
+  localStorage.setItem("checkout_total_eur", total.toString());
+});
 
 
     // Admin (solo si entras con ?admin=1)
