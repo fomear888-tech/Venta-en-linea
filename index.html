@@ -509,6 +509,67 @@ async function adminUploadAndAssign(){
   }
   function saveCart(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(cart)); }
 
+
+
+function reconcileCartWithStock(showToast = true) {
+  let changed = false;
+  const removed = [];
+  const adjusted = [];
+
+  for (const id of Object.keys(cart)) {
+    const stock = stockFor(id);
+    const qty = cart[id]?.qty || 0;
+
+    // Si el producto ya ni existe en PRODUCTS o stock = 0 => fuera
+    if (!getProduct(id) || stock <= 0) {
+      delete cart[id];
+      changed = true;
+      removed.push(id);
+      continue;
+    }
+
+    // Si el cliente lleva más de lo que hay, lo ajustamos
+    if (qty > stock) {
+      cart[id].qty = stock;
+      changed = true;
+      adjusted.push({ id, from: qty, to: stock });
+    }
+
+    // Si quedó en 0 por cualquier razón => fuera
+    if ((cart[id]?.qty || 0) <= 0) {
+      delete cart[id];
+      changed = true;
+      removed.push(id);
+    }
+  }
+
+  if (changed) saveCart();
+
+  if (showToast && changed) {
+    if (removed.length) toast("Algunos productos se agotaron y se quitaron del carrito 🧹");
+    else toast("Ajusté cantidades según stock disponible ✅");
+  }
+
+  return { changed, removed, adjusted };
+}
+
+// Revalidación “de verdad”: recarga desde Supabase y luego reconcilia
+async function validateCartBeforePay() {
+  await loadProductsFromSupabase();        // trae stock actual
+  const result = reconcileCartWithStock(true);
+  renderCart();                            // repinta con el carrito ya ajustado
+
+  // Si después de ajustar quedó vacío, no dejes pagar
+  const { distinct } = countsAndTotals();
+  if (distinct <= 0) return { ok: false, reason: "empty" };
+
+  return { ok: true, result };
+}
+
+
+
+  
+
   // ====== HELPERS ======
   function getProduct(id){ return PRODUCTS.find(p => p.id === id); }
   function stockFor(id){ return Number(getProduct(id)?.stock) || 0; }
@@ -748,23 +809,31 @@ function updatePayButton(){
 
 
 
-    document.getElementById("payBtn").addEventListener("click", (e) => {
+    document.getElementById("payBtn").addEventListener("click", async (e) => {
+  e.preventDefault(); // 🚫 no navegues todavía
+
   const btn = e.currentTarget;
   const disabled = btn.getAttribute("aria-disabled") === "true";
   if (disabled) {
-    e.preventDefault();
     toast("Añade productos antes de pagar 🙂");
     return;
   }
 
   const name = (document.getElementById("customerName")?.value || "").trim();
   const phone = (document.getElementById("customerPhone")?.value || "").trim();
-  if(!name || !phone){
-    e.preventDefault();
+  if (!name || !phone) {
     toast("Falta nombre o teléfono");
     return;
   }
 
+  // ✅ 1) Validar stock real antes de pagar
+  const check = await validateCartBeforePay();
+  if (!check.ok) {
+    toast("Se actualizó el stock y tu carrito quedó vacío 🙂");
+    return;
+  }
+
+  // ✅ 2) Construir items ya con stock actualizado
   const items = cartItems().map(x => ({
     product_id: x.id,
     name: x.product.name,
@@ -779,6 +848,9 @@ function updatePayButton(){
   localStorage.setItem("checkout_customer_name", name);
   localStorage.setItem("checkout_customer_phone", phone);
   localStorage.setItem("checkout_items", JSON.stringify(items));
+
+  // ✅ 3) Ahora sí, ir a pagar
+  location.href = "./checkout.html";
 });
 
 
