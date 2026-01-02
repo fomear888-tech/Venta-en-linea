@@ -101,7 +101,7 @@ if (!Array.isArray(items) || items.length === 0) {
       if (loadingText) loadingText.style.display = "none";
     } catch (e) {
       console.error("CHECKOUT ERROR:", e);
-      if (errorBox) errorBox.textContent = "No se pudo iniciar el pago. Revisa configuración de Stripe.";
+      if (errorBox) errorBox.textContent = "No se pudo iniciar el pago.";
       startingCheckout = false;
       if (retryBtn) retryBtn.style.display = "inline-block";
       if (loadingText) loadingText.style.display = "none";
