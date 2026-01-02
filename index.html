@@ -485,18 +485,19 @@ async function adminUploadAndAssign(){
 
   // ====== TIEMPO REAL (TABLA: products) ======
   function subscribeRealtimeProducts() {
-    sb
-      .channel("realtime-products")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "products" },
-        () => {
-          // para evitar líos, recargamos lista
-          loadProductsFromSupabase();
-        }
-      )
-      .subscribe();
-  }
+  sb
+    .channel("realtime-products")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "products" },
+      async () => {
+  await loadProductsFromSupabase();   // carga stock
+  const r = reconcileCartWithStock(false);
+  if (r.changed) renderCart();        // solo si cambió algo
+}
+    )
+    .subscribe();
+}
 
   // ====== LOCALSTORAGE ======
   function loadCart(){
@@ -510,6 +511,11 @@ async function adminUploadAndAssign(){
   function saveCart(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(cart)); }
 
 
+
+  function getProduct(id){ return PRODUCTS.find(p => p.id === id); }
+  function stockFor(id){ return Number(getProduct(id)?.stock) || 0; }
+
+  
 
 function reconcileCartWithStock(showToast = true) {
   let changed = false;
@@ -571,8 +577,6 @@ async function validateCartBeforePay() {
   
 
   // ====== HELPERS ======
-  function getProduct(id){ return PRODUCTS.find(p => p.id === id); }
-  function stockFor(id){ return Number(getProduct(id)?.stock) || 0; }
   function qtyInCart(id){ return cart[id]?.qty || 0; }
 
   function cartItems(){
@@ -795,18 +799,19 @@ function updatePayButton(){
   }
 
   // ====== INIT ======
-  window.addEventListener("DOMContentLoaded", () => {
-    qEl.addEventListener('input', renderProducts);
-    $('#resetBtn').addEventListener('click', clearCart);
+  window.addEventListener("DOMContentLoaded", async () => {
+  qEl.addEventListener('input', renderProducts);
+  $('#resetBtn').addEventListener('click', clearCart);
 
-    $('#cartCount').addEventListener('click', () => {
-      $('#cartPanel')?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+  $('#cartCount').addEventListener('click', () => {
+    $('#cartPanel')?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 
-    loadProductsFromSupabase();
-    subscribeRealtimeProducts();
-    updatePayButton();
-
+  await loadProductsFromSupabase();        // ✅ esperar productos reales
+  reconcileCartWithStock(false);           // ✅ ahora sí, con stock real
+  renderCart();                            // ✅ repinta con carrito ajustado
+  subscribeRealtimeProducts();
+  updatePayButton();
 
 
     document.getElementById("payBtn").addEventListener("click", async (e) => {
