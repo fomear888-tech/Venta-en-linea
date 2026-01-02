@@ -697,38 +697,7 @@ function updatePayButton(){
   }
 
   // ====== SUBMIT (DESCUENTA STOCK CON RPC) ======
-  let isSubmitting = false;
 
-  async function submitOrder(){
-    if (isSubmitting) return;
-
-    const btn = $("#submitOrder");
-    const items = cartItems();
-    if(items.length === 0) return toast("Carrito vacío 🙂");
-
-    const name = $("#customerName").value.trim();
-    const phone = $("#customerPhone").value.trim();
-    if(!name || !phone) return toast("Falta nombre o teléfono");
-
-    isSubmitting = true;
-    const prevText = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = "Confirmando…";
-
-    try{
-      const dbItems = items.map(x => ({
-        product_id: x.id,
-        qty: x.qty
-      }));
-
-      const { data: orderId, error } = await sb.rpc(
-        "create_order_and_discount_stock",
-        {
-          p_customer_name: name,
-          p_customer_phone: phone,
-          p_items: dbItems
-        }
-      );
 
       if (error) {
         console.error(error);
