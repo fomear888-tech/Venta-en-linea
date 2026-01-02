@@ -64,7 +64,7 @@
   </div>
 
   <script>
-  const BACKEND_BASE = "https://venta-en-linea.vercel.app";
+  const BACKEND_BASE = "";
   let startingCheckout = false;
 
 
@@ -121,7 +121,7 @@ if (!Array.isArray(items) || items.length === 0) {
   return;
 }
 
-      const res = await fetch(`${BACKEND_BASE}/api/create-checkout-session`, {
+      const res = await fetch(`/api/create-checkout-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
