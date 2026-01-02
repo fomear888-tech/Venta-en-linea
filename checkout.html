@@ -13,6 +13,25 @@
     button:disabled{opacity:.6;cursor:not-allowed}
     #embedded{margin-top:14px}
     .muted{opacity:.8;font-size:13px}
+
+
+.back-link {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.back-link a {
+  color: #8ea0c6;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.back-link a:hover {
+  color: #5eead4;
+}
+
+    
   </style>
 </head>
 <body>
@@ -27,6 +46,21 @@
 
     <div id="error" style="margin-top:12px;color:#ff6b6b"></div>
     <div id="embedded"></div>
+
+<p class="back-link">
+  <a
+    href="https://venta-en-linea.vercel.app/"
+    onclick="
+      localStorage.removeItem('checkout_total_eur');
+      localStorage.removeItem('checkout_customer_name');
+      localStorage.removeItem('checkout_customer_phone');
+      localStorage.removeItem('checkout_items');
+    "
+  >
+    ← Volver al catálogo
+  </a>
+</p>
+    
   </div>
 
   <script>
