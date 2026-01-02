@@ -2,6 +2,6 @@
   "name": "venta-en-linea-backend",
   "private": true,
   "dependencies": {
-    "stripe": "^16.0.0"
+    "stripe": "^16.0.0",
   }
 }
