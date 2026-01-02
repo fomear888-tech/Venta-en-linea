@@ -19,13 +19,32 @@ export default async function handler(req, res) {
     return res.status(405).send("Method Not Allowed");
   }
 
+  // 🔒 Validar variables de entorno críticas
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return res.status(500).send("Missing STRIPE_SECRET_KEY");
+  }
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    return res.status(500).send("Missing STRIPE_WEBHOOK_SECRET");
+  }
+  if (!process.env.SUPABASE_URL) {
+    return res.status(500).send("Missing SUPABASE_URL");
+  }
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return res.status(500).send("Missing SUPABASE_SERVICE_ROLE_KEY");
+  }
+
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
     apiVersion: "2024-06-20",
   });
 
   const sig = req.headers["stripe-signature"];
-  let event;
 
+if (!sig) {
+  return res.status(400).send("Missing stripe-signature header");
+}
+  
+  let event;
+  
   try {
     const rawBody = await readRawBody(req);
     event = stripe.webhooks.constructEvent(
@@ -62,7 +81,11 @@ export default async function handler(req, res) {
           }
         );
 
-        const [pending] = await pendingRes.json();
+        if (!pendingRes.ok) {
+  const txt = await pendingRes.text();
+  throw new Error("Pending fetch failed: " + txt);
+}
+const [pending] = await pendingRes.json();
         if (!pending) throw new Error("Pending order not found");
 
         // 2️⃣ Crear pedido REAL y descontar stock (RPC)
