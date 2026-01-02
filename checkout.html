@@ -30,94 +30,69 @@
   </div>
 
   <script>
-    const BACKEND_BASE = "https://venta-en-linea.vercel.app";
-    let startingCheckout = false;
+  const BACKEND_BASE = "https://venta-en-linea.vercel.app";
+  let startingCheckout = false;
 
-    const totalEur = Math.round(Number(localStorage.getItem("checkout_total_eur") || 0) * 100) / 100;
+  const totalEur = Math.round(Number(localStorage.getItem("checkout_total_eur") || 0) * 100) / 100;
 
-    // ✅ Leer datos guardados desde index.html
-    const customerName  = (localStorage.getItem("checkout_customer_name") || "").trim();
-    const customerPhone = (localStorage.getItem("checkout_customer_phone") || "").trim();
+  const payAmountEl = document.getElementById("payAmount");
+  if (payAmountEl) payAmountEl.textContent = `Importe a pagar: ${totalEur.toFixed(2)} €`;
 
-    let items = [];
+  async function startCheckout() {
+    const errorBox = document.getElementById("error");
+    const retryBtn = document.getElementById("retryBtn");
+    const loadingText = document.getElementById("loadingText");
+
+    if (totalEur <= 0) {
+      if (loadingText) loadingText.style.display = "none";
+      if (errorBox) errorBox.textContent = "No hay importe válido para pagar.";
+      if (retryBtn) retryBtn.style.display = "inline-block";
+      return;
+    }
+
+    if (startingCheckout) return;
+    startingCheckout = true;
+
+    if (errorBox) errorBox.textContent = "";
+    if (retryBtn) retryBtn.style.display = "none";
+
     try {
-      const itemsRaw = localStorage.getItem("checkout_items") || "[]";
-      items = JSON.parse(itemsRaw);
-      if (!Array.isArray(items)) items = [];
-    } catch {
-      items = [];
+      const customerName  = (localStorage.getItem("checkout_customer_name") || "").trim();
+      const customerPhone = (localStorage.getItem("checkout_customer_phone") || "").trim();
+      const items = JSON.parse(localStorage.getItem("checkout_items") || "[]");
+
+      const res = await fetch(`${BACKEND_BASE}/api/create-checkout-session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer: { name: customerName, phone: customerPhone },
+          items,
+          total_eur: totalEur
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Error HTTP ${res.status}`);
+
+      const stripe = Stripe(data.publishableKey);
+      const checkout = await stripe.initEmbeddedCheckout({ clientSecret: data.clientSecret });
+      checkout.mount("#embedded");
+
+      if (loadingText) loadingText.style.display = "none";
+    } catch (e) {
+      console.error("CHECKOUT ERROR:", e);
+      if (errorBox) errorBox.textContent = "No se pudo iniciar el pago. Revisa configuración de Stripe.";
+      startingCheckout = false;
+      if (retryBtn) retryBtn.style.display = "inline-block";
+      if (loadingText) loadingText.style.display = "none";
     }
+  }
 
-    // Mostrar importe
-    const payAmountEl = document.getElementById("payAmount");
-    if (payAmountEl) {
-      payAmountEl.textContent = `Importe a pagar: ${totalEur.toFixed(2)} €`;
-    }
+  window.addEventListener("DOMContentLoaded", () => {
+    startCheckout();
+    document.getElementById("retryBtn")?.addEventListener("click", startCheckout);
+  });
+</script>
 
-    async function startCheckout(){
-      const errorBox = document.getElementById("error");
-      const retryBtn = document.getElementById("retryBtn");
-      const loadingText = document.getElementById("loadingText");
-
-      // ✅ Validaciones
-      if (totalEur <= 0) {
-        if (loadingText) loadingText.style.display = "none";
-        if (errorBox) errorBox.textContent = "No hay importe válido para pagar.";
-        if (retryBtn) retryBtn.style.display = "inline-block";
-        return;
-      }
-      if (!customerName || !customerPhone) {
-        if (loadingText) loadingText.style.display = "none";
-        if (errorBox) errorBox.textContent = "Faltan datos del cliente (nombre/teléfono). Vuelve al catálogo.";
-        if (retryBtn) retryBtn.style.display = "inline-block";
-        return;
-      }
-      if (!items.length) {
-        if (loadingText) loadingText.style.display = "none";
-        if (errorBox) errorBox.textContent = "El carrito está vacío. Vuelve al catálogo.";
-        if (retryBtn) retryBtn.style.display = "inline-block";
-        return;
-      }
-
-      if (startingCheckout) return;
-      startingCheckout = true;
-
-      if (errorBox) errorBox.textContent = "";
-      if (retryBtn) retryBtn.style.display = "none";
-
-      try {
-        const res = await fetch(`${BACKEND_BASE}/api/create-checkout-session`, {
-          method: "POST",
-          headers: {"Content-Type":"application/json"},
-          body: JSON.stringify({
-            customer: { name: customerName, phone: customerPhone },
-            items, // [{product_id,name,qty,unit_price}]
-            total_eur: totalEur
-          })
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Error creando sesión");
-
-        const stripe = Stripe(data.publishableKey);
-        const checkout = await stripe.initEmbeddedCheckout({ clientSecret: data.clientSecret });
-        checkout.mount("#embedded");
-
-        if (loadingText) loadingText.style.display = "none";
-
-      } catch (e) {
-        console.error(e);
-        if (errorBox) errorBox.textContent = "No se pudo iniciar el pago. Revisa configuración de Stripe.";
-        startingCheckout = false;
-        if (retryBtn) retryBtn.style.display = "inline-block";
-        if (loadingText) loadingText.style.display = "none";
-      }
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-      startCheckout();
-      document.getElementById("retryBtn")?.addEventListener("click", startCheckout);
-    });
-  </script>
 </body>
 </html>
