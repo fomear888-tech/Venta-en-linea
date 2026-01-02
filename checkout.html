@@ -49,7 +49,7 @@
 
 <p class="back-link">
   <a
-    href="https://venta-en-linea.vercel.app/"
+    href="/"
     onclick="
       localStorage.removeItem('checkout_total_eur');
       localStorage.removeItem('checkout_customer_name');
@@ -67,12 +67,18 @@
   const BACKEND_BASE = "https://venta-en-linea.vercel.app";
   let startingCheckout = false;
 
-  const totalEur = Math.round(Number(localStorage.getItem("checkout_total_eur") || 0) * 100) / 100;
 
-  const payAmountEl = document.getElementById("payAmount");
-  if (payAmountEl) payAmountEl.textContent = `Importe a pagar: ${totalEur.toFixed(2)} €`;
+    
+const payAmountEl = document.getElementById("payAmount");
+
 
   async function startCheckout() {
+
+
+const totalEur = Math.round(Number(localStorage.getItem("checkout_total_eur") || 0) * 100) / 100;
+if (payAmountEl) payAmountEl.textContent = `Importe a pagar: ${totalEur.toFixed(2)} €`;
+
+    
     const errorBox = document.getElementById("error");
     const retryBtn = document.getElementById("retryBtn");
     const loadingText = document.getElementById("loadingText");
@@ -146,6 +152,19 @@ if (!Array.isArray(items) || items.length === 0) {
     startCheckout();
     document.getElementById("retryBtn")?.addEventListener("click", startCheckout);
   });
+
+
+function clearCheckoutDraft() {
+    localStorage.removeItem("checkout_total_eur");
+    localStorage.removeItem("checkout_customer_name");
+    localStorage.removeItem("checkout_customer_phone");
+    localStorage.removeItem("checkout_items");
+  }
+
+  // Se dispara cuando sales de la página (incluye volver atrás con teclado)
+  window.addEventListener("pagehide", clearCheckoutDraft);
+    
+    
 </script>
 
 </body>
