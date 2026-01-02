@@ -5,12 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Pagar</title>
 
-<p id="payAmount" class="muted"></p>
-
-
-
-
-  
   <script async src="https://js.stripe.com/v3/"></script>
   <style>
     body{font-family:system-ui;margin:0;padding:24px;background:#0b1220;color:#eaf0ff}
@@ -24,9 +18,12 @@
 <body>
   <div class="card">
     <h2>Pago seguro</h2>
+
+    <!-- ✅ AQUÍ va el importe (en el BODY, no en el HEAD) -->
+    <p id="payAmount" class="muted"></p>
+
     <p class="muted" id="loadingText">Cargando opciones de pago…</p>
 
-    <!-- Botón opcional: solo sirve si hubo error y quieres reintentar -->
     <button id="retryBtn" style="display:none;">Reintentar</button>
 
     <div id="error" style="margin-top:12px;color:#ff6b6b"></div>
@@ -34,44 +31,46 @@
   </div>
 
   <script>
-
-
-const totalEur = Number(localStorage.getItem("checkout_total_eur") || 0);
-
-if (totalEur <= 0) {
-  document.getElementById("error").textContent =
-    "No hay importe válido para pagar.";
-  throw new Error("Total inválido");
-}
-
-
-
-    const payAmountEl = document.getElementById("payAmount");
-if (payAmountEl) {
-  payAmountEl.textContent = `Importe a pagar: ${totalEur.toFixed(2)} €`;
-}
-
-
-
-    
     const BACKEND_BASE = "https://venta-en-linea.vercel.app";
     let startingCheckout = false;
 
+    const totalEur = Number(localStorage.getItem("checkout_total_eur") || 0);
+
+    // Mostrar importe (si existe el elemento)
+    const payAmountEl = document.getElementById("payAmount");
+    if (payAmountEl) {
+      payAmountEl.textContent = `Importe a pagar: ${totalEur.toFixed(2)} €`;
+    }
+
     async function startCheckout(){
+      const errorBox = document.getElementById("error");
+      const retryBtn = document.getElementById("retryBtn");
+      const loadingText = document.getElementById("loadingText");
+
+      // ✅ si no hay total, no arrancamos Stripe
+      if (totalEur <= 0) {
+        if (loadingText) loadingText.style.display = "none";
+        if (errorBox) errorBox.textContent = "No hay importe válido para pagar.";
+        if (retryBtn) retryBtn.style.display = "inline-block";
+        return;
+      }
+
       if (startingCheckout) return;
       startingCheckout = true;
 
-      const errorBox = document.getElementById("error");
-      const retryBtn = document.getElementById("retryBtn");
-      errorBox.textContent = "";
-      retryBtn.style.display = "none";
+      if (errorBox) errorBox.textContent = "";
+      if (retryBtn) retryBtn.style.display = "none";
 
       try {
         const res = await fetch(`${BACKEND_BASE}/api/create-checkout-session`, {
           method: "POST",
           headers: {"Content-Type":"application/json"},
           body: JSON.stringify({
-            items: [{ name: "Pedido de prueba", amount_cents: Math.round(totalEur * 100), qty: 1 }]
+            items: [{
+              name: "Pedido web",
+              amount_cents: Math.round(totalEur * 100),
+              qty: 1
+            }]
           })
         });
 
@@ -81,21 +80,20 @@ if (payAmountEl) {
         const stripe = Stripe(data.publishableKey);
         const checkout = await stripe.initEmbeddedCheckout({ clientSecret: data.clientSecret });
         checkout.mount("#embedded");
-        document.getElementById("loadingText").style.display = "none";
 
+        if (loadingText) loadingText.style.display = "none";
 
       } catch (e) {
         console.error(e);
-        errorBox.textContent = "No se pudo iniciar el pago. Revisa configuración de Stripe.";
+        if (errorBox) errorBox.textContent = "No se pudo iniciar el pago. Revisa configuración de Stripe.";
         startingCheckout = false;
-        retryBtn.style.display = "inline-block";
+        if (retryBtn) retryBtn.style.display = "inline-block";
       }
     }
 
-    // ✅ Arrancar automáticamente al entrar en la página
     window.addEventListener("DOMContentLoaded", () => {
       startCheckout();
-      document.getElementById("retryBtn").addEventListener("click", startCheckout);
+      document.getElementById("retryBtn")?.addEventListener("click", startCheckout);
     });
   </script>
 </body>
