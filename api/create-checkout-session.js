@@ -57,7 +57,7 @@ export default async function handler(req, res) {
         },
         quantity: 1
       }],
-      return_url: `${process.env.FRONTEND_BASE_URL}/pago-ok.html`,
+      return_url: `${process.env.SITE_URL}/pago-ok.html`,
       metadata: {
         pending_order_id: pendingOrderId
       }
