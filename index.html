@@ -324,6 +324,22 @@ function wantsAdminUI(){
   return new URLSearchParams(location.search).get('admin') === '1';
 }
 
+
+
+// 🔐 Cierra la sesión si NO estás en ?admin=1
+async function autoLogoutIfNotAdminPage() {
+  if (!wantsAdminUI()) {
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) {
+      await sb.auth.signOut();
+      console.log("Admin session closed automatically ✅");
+    }
+  }
+}
+
+
+  
+
 async function showAdminPanel(){
   const panel = document.getElementById('adminPanel');
   if(!panel) return;
@@ -333,6 +349,9 @@ async function showAdminPanel(){
     panel.style.display = 'none';
     return;
   }
+
+
+  
 
   panel.style.display = 'block';
 
@@ -884,8 +903,21 @@ function updatePayButton(){
 });
 
 
+
+      // 🔐 AUTO LOGOUT SI NO ESTÁS EN ?admin=1
+  await autoLogoutIfNotAdminPage();
+
     // Admin (solo si entras con ?admin=1)
-showAdminPanel();
+await showAdminPanel();
+
+
+// 🔒 Si estás en admin, al salir/cambiar de página se cierra sesión
+if (wantsAdminUI()) {
+  window.addEventListener("pagehide", async () => {
+    await sb.auth.signOut();
+  });
+}
+    
 
 document.getElementById('adminLoginBtn')?.addEventListener('click', adminLogin);
 document.getElementById('adminLogoutBtn')?.addEventListener('click', adminLogout);
