@@ -6,7 +6,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" });
+    if (!process.env.STRIPE_SECRET_KEY) {
+  return res.status(500).json({ error: "Missing STRIPE_SECRET_KEY env var" });
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" });
 
     const { customer, items } = req.body || {};
 
@@ -35,6 +39,11 @@ export default async function handler(req, res) {
 
     // ✅ 1) VALIDAR STOCK REAL EN SERVIDOR + recalcular total desde BD
     const ids = [...new Set(items.map(i => String(i.product_id)))];
+
+    if (ids.length === 0) {
+  return res.status(400).json({ error: "Empty items" });
+}
+    
     const inList = ids.map(id => `"${id}"`).join(",");
 
     const stockRes = await fetch(
@@ -132,21 +141,22 @@ export default async function handler(req, res) {
 
     // ✅ 3) Crear sesión de Stripe
     const session = await stripe.checkout.sessions.create({
-      ui_mode: "embedded",
-      mode: "payment",
-      line_items: [
-        {
-          price_data: {
-            currency: "eur",
-            product_data: { name: "Pedido Mas Envíos" },
-            unit_amount: totalCents,
-          },
-          quantity: 1,
-        },
-      ],
-      return_url: `${siteUrl}/pago-ok.html`,
-      metadata: { pending_order_id: pendingOrderId },
-    });
+  ui_mode: "embedded",
+  mode: "payment",
+  line_items: [
+    {
+      price_data: {
+        currency: "eur",
+        product_data: { name: "Pedido Mas Envíos" },
+        unit_amount: totalCents,
+      },
+      quantity: 1,
+    },
+  ],
+  return_url: `${siteUrl}/pago-ok.html`,
+  cancel_url: `${siteUrl}/checkout.html`,
+  metadata: { pending_order_id: pendingOrderId },
+});
 
     // ✅ 4) Guardar stripe_session_id (opcional pero recomendado)
     await fetch(`${supabaseUrl}/rest/v1/pending_orders?id=eq.${pendingOrderId}`, {
