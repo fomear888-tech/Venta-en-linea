@@ -61,10 +61,23 @@
       const customerPhone = (localStorage.getItem("checkout_customer_phone") || "").trim();
       const items = JSON.parse(localStorage.getItem("checkout_items") || "[]");
 
-      if (!Array.isArray(items) || items.length === 0) {
+
+      
+ // 🔒 Validar datos del cliente
+if (!customerName || !customerPhone) {
+  if (loadingText) loadingText.style.display = "none";
+  if (errorBox) errorBox.textContent = "Faltan el nombre o el teléfono.";
+  if (retryBtn) retryBtn.style.display = "inline-block";
+  startingCheckout = false;
+  return;
+}
+
+// 🛒 Validar carrito
+if (!Array.isArray(items) || items.length === 0) {
   if (loadingText) loadingText.style.display = "none";
   if (errorBox) errorBox.textContent = "El carrito está vacío o no es válido.";
   if (retryBtn) retryBtn.style.display = "inline-block";
+  startingCheckout = false;
   return;
 }
 
