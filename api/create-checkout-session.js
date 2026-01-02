@@ -27,10 +27,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-06-
       return res.status(500).json({ error: "Missing Supabase env vars" });
     }
 
-    const siteUrl = process.env.SITE_URL;
-    if (!siteUrl) {
-      return res.status(500).json({ error: "Missing SITE_URL env var" });
-    }
+    const siteUrl = (process.env.SITE_URL || "").replace(/\/$/, "");
+if (!siteUrl) {
+  return res.status(500).json({ error: "Missing SITE_URL env var" });
+}
 
     const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY;
     if (!publishableKey) {
