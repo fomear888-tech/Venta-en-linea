@@ -190,8 +190,29 @@
 
               <!-- ✅ DATOS DEL CLIENTE: se envían junto al pedido -->
             <div style="display:grid; gap:10px; margin:12px 0;">
-              <input id="customerName" placeholder="Nombre y apellidos" style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;">
-              <input id="customerPhone" placeholder="Teléfono" style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;">
+
+
+              
+              <input
+  id="customerName"
+  name="customerName"
+  type="text"
+  autocomplete="name"
+  placeholder="Nombre y apellidos"
+  style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;"
+>
+
+<input
+  id="customerPhone"
+  name="customerPhone"
+  type="tel"
+  inputmode="tel"
+  autocomplete="tel"
+  placeholder="Teléfono"
+  style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;"
+>
+
+              
             </div>
 
 
