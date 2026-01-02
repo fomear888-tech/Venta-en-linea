@@ -493,7 +493,11 @@ async function adminUploadAndAssign(){
       async () => {
   await loadProductsFromSupabase();   // carga stock
   const r = reconcileCartWithStock(false);
-  if (r.changed) renderCart();        // solo si cambió algo
+
+  if (r.changed) {
+    renderCart();        // repinta
+    updatePayButton();   // asegura el botón pagar
+  }
 }
     )
     .subscribe();
