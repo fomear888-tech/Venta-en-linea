@@ -61,6 +61,13 @@
       const customerPhone = (localStorage.getItem("checkout_customer_phone") || "").trim();
       const items = JSON.parse(localStorage.getItem("checkout_items") || "[]");
 
+      if (!Array.isArray(items) || items.length === 0) {
+  if (loadingText) loadingText.style.display = "none";
+  if (errorBox) errorBox.textContent = "El carrito está vacío o no es válido.";
+  if (retryBtn) retryBtn.style.display = "inline-block";
+  return;
+}
+
       const res = await fetch(`${BACKEND_BASE}/api/create-checkout-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
