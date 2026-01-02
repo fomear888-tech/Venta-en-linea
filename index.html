@@ -437,12 +437,13 @@ async function adminUploadAndAssign(){
       .from('product-images')
       .upload(path, file, { upsert: true, contentType: file.type });
 
-    if(upErr){
-      console.error(upErr);
-      toast("Error subiendo imagen ❌");
-      if(status) status.textContent = upErr.message || String(upErr);
-      return;
-    }
+    if (upErr) {
+  console.error(upErr);
+  const msg = upErr.message || JSON.stringify(upErr);
+  toast("Error subiendo imagen ❌ " + msg);
+  if (status) status.textContent = msg;
+  return;
+}
 
     const { data: pub } = sb.storage.from('product-images').getPublicUrl(path);
     const publicUrl = pub?.publicUrl;
