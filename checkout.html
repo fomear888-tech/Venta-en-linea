@@ -19,7 +19,6 @@
   <div class="card">
     <h2>Pago seguro</h2>
 
-    <!-- ✅ AQUÍ va el importe (en el BODY, no en el HEAD) -->
     <p id="payAmount" class="muted"></p>
 
     <p class="muted" id="loadingText">Cargando opciones de pago…</p>
@@ -36,8 +35,20 @@
 
     const totalEur = Math.round(Number(localStorage.getItem("checkout_total_eur") || 0) * 100) / 100;
 
+    // ✅ Leer datos guardados desde index.html
+    const customerName  = (localStorage.getItem("checkout_customer_name") || "").trim();
+    const customerPhone = (localStorage.getItem("checkout_customer_phone") || "").trim();
 
-    // Mostrar importe (si existe el elemento)
+    let items = [];
+    try {
+      const itemsRaw = localStorage.getItem("checkout_items") || "[]";
+      items = JSON.parse(itemsRaw);
+      if (!Array.isArray(items)) items = [];
+    } catch {
+      items = [];
+    }
+
+    // Mostrar importe
     const payAmountEl = document.getElementById("payAmount");
     if (payAmountEl) {
       payAmountEl.textContent = `Importe a pagar: ${totalEur.toFixed(2)} €`;
@@ -48,10 +59,22 @@
       const retryBtn = document.getElementById("retryBtn");
       const loadingText = document.getElementById("loadingText");
 
-      // ✅ si no hay total, no arrancamos Stripe
+      // ✅ Validaciones
       if (totalEur <= 0) {
         if (loadingText) loadingText.style.display = "none";
         if (errorBox) errorBox.textContent = "No hay importe válido para pagar.";
+        if (retryBtn) retryBtn.style.display = "inline-block";
+        return;
+      }
+      if (!customerName || !customerPhone) {
+        if (loadingText) loadingText.style.display = "none";
+        if (errorBox) errorBox.textContent = "Faltan datos del cliente (nombre/teléfono). Vuelve al catálogo.";
+        if (retryBtn) retryBtn.style.display = "inline-block";
+        return;
+      }
+      if (!items.length) {
+        if (loadingText) loadingText.style.display = "none";
+        if (errorBox) errorBox.textContent = "El carrito está vacío. Vuelve al catálogo.";
         if (retryBtn) retryBtn.style.display = "inline-block";
         return;
       }
@@ -67,11 +90,9 @@
           method: "POST",
           headers: {"Content-Type":"application/json"},
           body: JSON.stringify({
-            items: [{
-              name: "Pedido Mas Envíos",
-              amount_cents: Math.round(totalEur * 100),
-              qty: 1
-            }]
+            customer: { name: customerName, phone: customerPhone },
+            items, // [{product_id,name,qty,unit_price}]
+            total_eur: totalEur
           })
         });
 
@@ -89,6 +110,7 @@
         if (errorBox) errorBox.textContent = "No se pudo iniciar el pago. Revisa configuración de Stripe.";
         startingCheckout = false;
         if (retryBtn) retryBtn.style.display = "inline-block";
+        if (loadingText) loadingText.style.display = "none";
       }
     }
 
