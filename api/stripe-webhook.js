@@ -1,5 +1,37 @@
 import Stripe from "stripe";
 
+
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+async function sendTicketEmail({ to, name, ticketNumber, ticketUrl, total }) {
+  const subject = `Tu ticket ${ticketNumber}`;
+  const html = `
+  <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; line-height:1.4; color:#111">
+    <h2>Gracias por tu compra${name ? `, ${name}` : ""} 😊</h2>
+    <p>Tu ticket <b>${ticketNumber}</b> está listo.</p>
+    <p>Total: <b>${Number(total || 0).toFixed(2)} €</b> (IVA incluido)</p>
+    <p>
+      <a href="${ticketUrl}" style="display:inline-block;padding:10px 14px;border:1px solid #ddd;border-radius:10px;text-decoration:none">
+        Ver / imprimir ticket
+      </a>
+    </p>
+    <p style="color:#555;font-size:12px">
+      Si necesitas factura con NIF, responde a este correo solicitándola.
+    </p>
+  </div>`;
+
+  await resend.emails.send({
+    from: process.env.FROM_EMAIL || "Tickets <onboarding@resend.dev>",
+    to,
+    subject,
+    html,
+  });
+}
+
+
+
 export const config = {
   api: {
     bodyParser: false, // ⚠️ obligatorio para verificar Stripe
@@ -110,6 +142,32 @@ const [pending] = await pendingRes.json();
           const txt = await rpcRes.text();
           throw new Error("RPC failed: " + txt);
         }
+
+
+
+// 2️⃣.1 Enviar ticket por EMAIL
+const email = session.customer_details?.email;
+const name = session.customer_details?.name || pending.customer_name;
+const ticketUrl = `${process.env.PUBLIC_BASE_URL}/api/ticket?session_id=${session.id}`;
+
+if (email) {
+  try {
+    await sendTicketEmail({
+      to: email,
+      name,
+      ticketNumber: "TICKET_GENERADO_POR_TU_RPC", // ahora te explico esto
+      ticketUrl,
+      total: session.amount_total / 100,
+    });
+  } catch (e) {
+    console.error("Email failed:", e);
+    // ⚠️ MUY IMPORTANTE: NO romper el webhook
+  }
+}
+
+
+
+        
 
         // 3️⃣ Marcar pending_order como pagado
         await fetch(
