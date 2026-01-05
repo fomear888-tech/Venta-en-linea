@@ -65,6 +65,13 @@ export default async function handler(req, res) {
     return res.status(500).send("Missing SUPABASE_SERVICE_ROLE_KEY");
   }
 
+  if (!process.env.RESEND_API_KEY) {
+  console.error("Missing RESEND_API_KEY");
+}
+if (!process.env.PUBLIC_BASE_URL) {
+  console.error("Missing PUBLIC_BASE_URL");
+}
+
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
     apiVersion: "2024-06-20",
   });
@@ -152,19 +159,19 @@ const ticketUrl = `${process.env.PUBLIC_BASE_URL}/api/ticket?session_id=${sessio
 
 if (email) {
   try {
+    console.log("Intentando enviar email a:", email);
+
     await sendTicketEmail({
       to: email,
       name,
-      ticketNumber: "TICKET_GENERADO_POR_TU_RPC", // ahora te explico esto
+      ticketNumber: "TICKET_GENERADO_POR_TU_RPC",
       ticketUrl,
       total: session.amount_total / 100,
     });
   } catch (e) {
     console.error("Email failed:", e);
-    // ⚠️ MUY IMPORTANTE: NO romper el webhook
   }
 }
-
 
 
         
