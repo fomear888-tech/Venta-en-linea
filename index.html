@@ -182,6 +182,14 @@
 }
 
 
+    /* ✅ Ocultar secciones hasta que el usuario elija */
+#servicesInfo,
+#catalogo{
+  display: none;
+}
+
+
+
     /* ✅ FORZAR INPUTS EN MODO BLANCO (para que los estilos inline oscuros no dominen) */
 input, select, textarea{
   background:#ffffff !important;
@@ -1030,6 +1038,29 @@ function updatePayButton(){
     setTimeout(() => el.remove(), 1550);
   }
 
+
+
+
+// ✅ HOME: mostrar secciones al hacer clic
+document.getElementById("servicesBlock")?.addEventListener("click", () => {
+  document.getElementById("servicesInfo").style.display = "block";
+  document.getElementById("catalogo").style.display = "none";
+  document.getElementById("servicesInfo").scrollIntoView({ behavior: "smooth" });
+});
+
+document.getElementById("productsBlock")?.addEventListener("click", () => {
+  document.getElementById("catalogo").style.display = "grid";
+  document.getElementById("servicesInfo").style.display = "none";
+  document.getElementById("catalogo").scrollIntoView({ behavior: "smooth" });
+});
+
+
+
+
+
+
+
+  
   // ====== INIT ======
   window.addEventListener("DOMContentLoaded", async () => {
   qEl.addEventListener('input', renderProducts);
