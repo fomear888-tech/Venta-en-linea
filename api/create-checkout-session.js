@@ -148,8 +148,6 @@ const session = await stripe.checkout.sessions.create({
   customer_creation: "always",
 
 
-  customer_update: { name: "auto" },
-
   
 
   line_items: [
