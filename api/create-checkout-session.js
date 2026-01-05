@@ -139,10 +139,14 @@ if (!siteUrl) {
     const [pending] = await insertRes.json();
     const pendingOrderId = pending.id;
 
-    // ✅ 3) Crear sesión de Stripe
-    const session = await stripe.checkout.sessions.create({
+// ✅ 3) Crear sesión de Stripe
+const session = await stripe.checkout.sessions.create({
   ui_mode: "embedded",
   mode: "payment",
+
+  // 🔑 ESTO ES LO IMPORTANTE
+  customer_creation: "always",
+
   line_items: [
     {
       price_data: {
