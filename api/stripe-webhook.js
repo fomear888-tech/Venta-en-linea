@@ -178,6 +178,9 @@ const [pending] = await pendingRes.json();
 
 // 2️⃣.1 Enviar ticket por EMAIL
 const email = await getBestEmailFromSession(stripe, session);
+
+console.log("Email detectado:", email);
+        
 const name = session.customer_details?.name || pending.customer_name;
 const ticketUrl = `${process.env.PUBLIC_BASE_URL}/api/ticket?session_id=${session.id}`;
 
