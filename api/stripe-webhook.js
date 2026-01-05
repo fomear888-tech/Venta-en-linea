@@ -1,7 +1,15 @@
 import Stripe from "stripe";
 import { Resend } from "resend";
 
+export const config = { api: { bodyParser: false } };
+
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+async function readRawBody(req) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks);
+}
 
 async function sendTicketEmail({ to, name, ticketNumber, ticketUrl, total }) {
   const subject = `Tu ticket ${ticketNumber}`;
@@ -21,11 +29,11 @@ async function sendTicketEmail({ to, name, ticketNumber, ticketUrl, total }) {
     </div>`;
 
   return resend.emails.send({
-  from: "onboarding@resend.dev",
-  to,
-  subject,
-  html,
-});
+    from: process.env.FROM_EMAIL || "Tickets <onboarding@resend.dev>",
+    to,
+    subject,
+    html,
+  });
 }
 
 async function getBestEmailFromSession(stripe, session) {
@@ -40,32 +48,14 @@ async function getBestEmailFromSession(stripe, session) {
     const cus = await stripe.customers.retrieve(cusId);
     if (cus?.email) return cus.email;
   }
-
   return null;
 }
 
-export const config = {
-  api: { bodyParser: false },
-};
-
-async function readRawBody(req) {
-  const chunks = [];
-  for await (const chunk of req) chunks.push(Buffer.from(chunk));
-  return Buffer.concat(chunks);
-}
-
 export default async function handler(req, res) {
+  console.log("WEBHOOK VERSION: 2026-01-05 v3");
 
-export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
-  console.log("WEBHOOK VERSION: 2026-01-05 v2"); // ✅ AQUI
-
-  // ... el resto de tu código
-
-  
-  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
-  
   if (!process.env.STRIPE_SECRET_KEY) return res.status(500).send("Missing STRIPE_SECRET_KEY");
   if (!process.env.STRIPE_WEBHOOK_SECRET) return res.status(500).send("Missing STRIPE_WEBHOOK_SECRET");
   if (!process.env.SUPABASE_URL) return res.status(500).send("Missing SUPABASE_URL");
@@ -96,10 +86,10 @@ export default async function handler(req, res) {
         const supabaseUrl = process.env.SUPABASE_URL;
         const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-        const pendingRes = await fetch(`${supabaseUrl}/rest/v1/pending_orders?id=eq.${pendingOrderId}`, {
-          headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
-        });
-
+        const pendingRes = await fetch(
+          `${supabaseUrl}/rest/v1/pending_orders?id=eq.${pendingOrderId}`,
+          { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } }
+        );
         if (!pendingRes.ok) throw new Error("Pending fetch failed: " + (await pendingRes.text()));
         const [pending] = await pendingRes.json();
         if (!pending) throw new Error("Pending order not found");
@@ -113,7 +103,6 @@ export default async function handler(req, res) {
             p_items: pending.items,
           }),
         });
-
         if (!rpcRes.ok) throw new Error("RPC failed: " + (await rpcRes.text()));
 
         // EMAIL
@@ -127,27 +116,17 @@ export default async function handler(req, res) {
         if (!process.env.RESEND_API_KEY) {
           console.error("Missing RESEND_API_KEY - skipping email");
         } else if (email) {
-          try {
-            console.log("Intentando enviar email a:", email);
-
-            
-            const result = await sendTicketEmail({
-  to: email,
-  name,
-  ticketNumber: "TICKET_GENERADO_POR_TU_RPC",
-  ticketUrl,
-  total: session.amount_total / 100,
-});
-
-            
-
-console.log("RESEND RESULT:", result);
-          } catch (e) {
-            console.error("Email failed:", e);
-          }
+          const result = await sendTicketEmail({
+            to: email,
+            name,
+            ticketNumber: "TICKET_GENERADO_POR_TU_RPC",
+            ticketUrl,
+            total: session.amount_total / 100,
+          });
+          console.log("RESEND RESULT:", result);
         }
 
-        // Marcar pending como pagado
+        // marcar pending como pagado
         await fetch(`${supabaseUrl}/rest/v1/pending_orders?id=eq.${pendingOrderId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json", apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
