@@ -11,14 +11,32 @@
 
 /* ✅ ESTILOS GENERALES (COLORES Y “TEMA” DE LA WEB) Aquí defines los colores base y el look (fondo, textos, bordes, botones). */
     
-    :root{--bg:#0b1220;--card:#101b33;--muted:#8ea0c6;--txt:#eaf0ff;--accent:#5eead4;--danger:#ff6b6b;--border:rgba(255,255,255,.10)}
-
+    :root{
+  --bg:#ffffff;
+  --card:#ffffff;
+  --muted:#6b7280;
+  --txt:#111827;
+  --accent:#10b981;      /* verde elegante */
+  --danger:#ef4444;
+  --border:rgba(0,0,0,.08)
+}
     /* ✅ REGLAS BÁSICAS PARA QUE TODO SE VEA ORDENADO */
     *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial; background:linear-gradient(180deg,#070b14, var(--bg)); color:var(--txt)}
+    body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;
+  background:#f9fafb;
+  color:var(--txt)
+}
 
     /* ✅ CABECERA FIJA (BUSCADOR, ICONO DEL CARRITO, BOTÓN VACIAR) */
-    header{position:sticky;top:0;z-index:10;background:rgba(7,11,20,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+    header{
+  position:sticky;
+  top:0;
+  z-index:10;
+  background:#ffffff;
+  border-bottom:1px solid var(--border)
+} border-bottom:1px solid var(--border)
 
     /* ✅ CONTENEDOR “CENTRADO” (ANCHO MÁXIMO) */
     .wrap{max-width:1100px;margin:0 auto;padding:18px 16px}
@@ -32,9 +50,9 @@
 
     /* ✅ BUSCADOR, “PÍLDORAS” Y BOTONES DE LA CABECERA */
     .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .search{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.03);min-width:min(420px, 92vw)}
+    .search{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:14px;background:#ffffff;min-width:min(420px, 92vw)}
     .search input{width:100%;border:0;outline:0;background:transparent;color:var(--txt);font-size:14px}
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:14px;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--txt);cursor:pointer;user-select:none}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:14px;border:1px solid var(--border);background:#ffffff;color:var(--txt);cursor:pointer;user-select:none}
     .pill strong{font-weight:700}
     .pill:hover{border-color:rgba(94,234,212,.35)}
 
@@ -43,9 +61,20 @@
     @media (max-width: 920px){main .grid{grid-template-columns:1fr}}
 
     /* ✅ “CAJAS” TIPO PANEL PARA CATALOGO Y CARRITO */
-    .panel{border:1px solid var(--border);border-radius:18px;background:rgba(255,255,255,.03);overflow:hidden}
+    .panel{
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:#ffffff;
+  overflow:hidden;
+}
     .panel h2{margin:0;padding:14px 14px;border-bottom:1px solid var(--border);font-size:14px;letter-spacing:.25px}
     .panel .content{padding:14px}
+
+
+    /*sombra para las cajas*/
+    .panel, .card{
+  box-shadow: 0 6px 18px rgba(0,0,0,.04);
+}
 
     /* ✅ GRID DE PRODUCTOS (3 columnas / 2 / 1 según pantalla) */
     .products{display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:12px}
@@ -83,7 +112,7 @@
   aspect-ratio: 4 / 3;
   border-radius:14px;
   border:1px solid var(--border);
-  background:rgba(255,255,255,.03);
+  background:#ffffff;
   overflow:hidden;
   margin-bottom:10px;
 }
@@ -105,7 +134,12 @@
     
     /* ✅ CARRITO: LISTA DE ITEMS Y CONTROLES DE CANTIDAD */
     .cartList{display:flex;flex-direction:column;gap:10px}
-    .cartItem{border:1px solid var(--border);border-radius:16px;padding:12px;background:rgba(255,255,255,.03)}
+    .cartItem{
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:12px;
+  background:#ffffff;
+}
     .cartItem .name{font-weight:800;font-size:13px;margin:0 0 6px}
     .meta{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
     .muted{color:var(--muted);font-size:12px}
@@ -131,6 +165,14 @@
 /* Para el carrito */
 #cartPanel {
   scroll-margin-top: 90px;
+}
+
+
+    /* ✅ FORZAR INPUTS EN MODO BLANCO (para que los estilos inline oscuros no dominen) */
+input, select, textarea{
+  background:#ffffff !important;
+  color:#111827 !important;
+  border:1px solid rgba(0,0,0,.12) !important;
 }
     
   </style>
