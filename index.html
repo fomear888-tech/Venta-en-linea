@@ -277,6 +277,43 @@ input, select, textarea{
 
 html{ scroll-behavior:smooth; }
 
+
+
+/* ✅ Modo pantalla inicial */
+#homeScreen{ display:block; }
+
+/* Ocultas contenido hasta elegir */
+#servicesInfo, #catalogo{ display:none; }
+
+/* Los recuadros grandes parecen “botones” */
+.homeCard{
+  cursor:pointer;
+  transition: transform .08s ease, box-shadow .12s ease;
+}
+.homeCard:hover{ box-shadow:0 10px 26px rgba(0,0,0,.08); }
+.homeCard:active{ transform: translateY(1px); }
+
+/* Botón volver */
+.backBar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin: 12px 0 16px;
+}
+.backBtn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:#ffffff;
+  color:var(--txt);
+  cursor:pointer;
+  font-weight:800;
+}
+.backBtn:hover{ border-color: rgba(16,185,129,.35); }
+
     
     
     
@@ -325,7 +362,7 @@ html{ scroll-behavior:smooth; }
       Aquí puedes mostrar información: citas, trámites, impresiones, fotocopias, etc.
       (Solo informativo, sin compra).
     </p>
-    <a class="go" href="#servicesInfo">📌 Ver servicios</a>
+
   </div>
 
   <div class="homeCard" id="productsBlock">
@@ -333,7 +370,7 @@ html{ scroll-behavior:smooth; }
     <p>
       Aquí está el catálogo con el carrito y el pago.
     </p>
-    <a class="go" href="#catalogo">🛍️ Ir a productos</a>
+    
   </div>
 </section>
 
@@ -343,34 +380,31 @@ html{ scroll-behavior:smooth; }
 <main>
   <div class="wrap">
 
-    <!-- ✅ PANEL SERVICIOS (solo info) -->
-    <section class="panel" id="servicesInfo" aria-label="Servicios">
-      <h2>Servicios</h2>
-      <div class="content">
-        <p class="empty" style="margin:0;">
-          📄 Citas (Seguridad Social, SEPE, Extranjería) · 🖨️ Impresiones y fotocopias · 📩 Escaneo y envío de documentos ·
-          💳 Recargas / accesorios (según tu negocio).
-        </p>
-        <p class="muted" style="margin:10px 0 0;">
-          Para solicitar un servicio, contáctanos por WhatsApp o en el local. (Aquí no se compra, solo info.)
-        </p>
-      </div>
-    </section>
+   <!-- ✅ BLOQUES DE INICIO: SERVICIOS / PRODUCTOS -->
+<section class="wrap homeBlocks" id="homeScreen" aria-label="Inicio">
 
-    <div style="height:16px"></div>
+  <div class="homeCard" id="servicesBlock">
+    <h2>Servicios</h2>
+    <p>
+      Aquí puedes mostrar información: citas, trámites, impresiones, fotocopias, etc.
+      (Solo informativo, sin compra).
+    </p>
+    <p class="muted" style="margin-top:10px;">
+      Haz clic para ver la información.
+    </p>
+  </div>
 
-    <!-- ✅ PRODUCTOS (CATÁLOGO + CARRITO) -->
-    <div class="grid" id="catalogo">
+  <div class="homeCard" id="productsBlock">
+    <h2>Productos</h2>
+    <p>
+      Aquí está el catálogo con el carrito y el pago.
+    </p>
+    <p class="muted" style="margin-top:10px;">
+      Haz clic para ver el catálogo.
+    </p>
+  </div>
 
-
-      <!-- ✅ PANEL CATALOGO: aquí se “pintan” las tarjetas de producto (JS rellena #products) -->
-      <section class="panel" aria-label="Catálogo">
-        <h2>Catálogo</h2>
-        <div class="content">
-          <div id="products" class="products"></div>
-        </div>
-      </section>
-
+</section>
 
       <!-- ✅ PANEL CARRITO: JS rellena #cart y calcula totales -->
       <aside class="panel" aria-label="Carrito" id="cartPanel">
