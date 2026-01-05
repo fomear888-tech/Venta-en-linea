@@ -315,7 +315,25 @@ html{ scroll-behavior:smooth; }
 }
 .backBtn:hover{ border-color: rgba(16,185,129,.35); }
 
-    
+
+    /* ✅ Oculta acciones del header cuando NO estás en Productos */
+#headerActions.hidden{
+  display:none !important;
+}
+
+
+
+.logo{ display:none; } /* opcional: por si queda algo viejo */
+
+.logoImg{
+  width:40px;
+  height:40px;
+  border-radius:14px;
+  object-fit:cover;
+  border:1px solid var(--border);
+  background:#fff;
+}
+
     
     
   </style>
@@ -328,13 +346,14 @@ html{ scroll-behavior:smooth; }
   <div class="wrap">
     <div class="top">
       <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
+        <img class="logoImg" src="img/logo-masenvios.png" alt="Mas Envíos">
         <div>
           <h1>Catálogo · Carrito</h1>
           <div class="sub">Elige productos, ajusta cantidades y revisa el total.</div>
         </div>
       </div>
-      <div class="actions">
+      <div class="actions" id="headerActions">
+
         <div class="search" role="search">
           <span aria-hidden="true">🔎</span>
           <input id="q" type="search" placeholder="Buscar productos…" autocomplete="off" />
@@ -1071,12 +1090,26 @@ function updatePayButton(){
 
 
 
-// ✅ HOME: mostrar secciones al hacer clic
+  function setHeaderCatalogMode(isCatalogVisible){
+  const actions = document.getElementById("headerActions");
+  if(!actions) return;
+
+  actions.classList.toggle("hidden", !isCatalogVisible);
+}
+
+
+  
+
 // ✅ HOME: mostrar secciones al hacer clic
 function showHome(){
   document.getElementById("homeScreen").style.display = "grid";
   document.getElementById("servicesInfo").style.display = "none";
   document.getElementById("catalogo").style.display = "none";
+
+
+  setHeaderCatalogMode(false); // 👈 ocultar buscador/carrito/vaciar
+
+  
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -1084,13 +1117,23 @@ document.getElementById("servicesBlock")?.addEventListener("click", () => {
   document.getElementById("homeScreen").style.display = "none";
   document.getElementById("servicesInfo").style.display = "block";
   document.getElementById("catalogo").style.display = "none";
+
+
+  setHeaderCatalogMode(false); // 👈 ocultar acciones
+
+  
   document.getElementById("servicesInfo").scrollIntoView({ behavior: "smooth" });
 });
 
+
+  
 document.getElementById("productsBlock")?.addEventListener("click", () => {
   document.getElementById("homeScreen").style.display = "none";
   document.getElementById("catalogo").style.display = "block";
   document.getElementById("servicesInfo").style.display = "none";
+
+  setHeaderCatalogMode(true); // 👈 mostrar buscador/carrito/vaciar
+  
   document.getElementById("catalogo").scrollIntoView({ behavior: "smooth" });
 });
 
