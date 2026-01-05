@@ -23,10 +23,10 @@ async function sendTicketEmail({ to, name, ticketNumber, ticketUrl, total }) {
   </div>`;
 
   await resend.emails.send({
-  from: "Tickets <onboarding@resend.dev>",
-  to: email,
-  subject,
-  html,
+    from: "Tickets <onboarding@resend.dev>",
+    to, // ✅ aquí va "to"
+    subject,
+    html,
   });
 }
 
@@ -55,20 +55,21 @@ export default async function handler(req, res) {
 
 
 async function getBestEmailFromSession(stripe, session) {
-  // 1) lo que venga directo
-  const direct = session?.customer_details?.email;
-  if (direct) return direct;
+  // 1) Lo más directo (normalmente viene aquí)
+  const e1 = session?.customer_details?.email;
+  if (e1) return e1;
 
-  // 2) volver a pedir la sesión completa a Stripe
-  try {
-    const full = await stripe.checkout.sessions.retrieve(session.id);
-    const e2 = full?.customer_details?.email;
-    if (e2) return e2;
-  } catch (e) {
-    console.error("Could not retrieve full session:", e?.message || e);
+  // 2) A veces viene en customer_email
+  const e2 = session?.customer_email;
+  if (e2) return e2;
+
+  // 3) Si hay "customer", lo buscamos en Stripe Customer
+  const cusId = session?.customer;
+  if (cusId) {
+    const cus = await stripe.customers.retrieve(cusId);
+    if (cus?.email) return cus.email;
   }
 
-  // 3) si tampoco, null
   return null;
 }
 
@@ -178,9 +179,8 @@ const [pending] = await pendingRes.json();
 
 // 2️⃣.1 Enviar ticket por EMAIL
 const email = await getBestEmailFromSession(stripe, session);
-
 console.log("Email detectado:", email);
-        
+
 const name = session.customer_details?.name || pending.customer_name;
 const ticketUrl = `${process.env.PUBLIC_BASE_URL}/api/ticket?session_id=${session.id}`;
 
