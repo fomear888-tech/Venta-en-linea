@@ -106,8 +106,7 @@ export default async function handler(req, res) {
         if (!rpcRes.ok) throw new Error("RPC failed: " + (await rpcRes.text()));
 
         // EMAIL
-        const email = await getBestEmailFromSession(stripe, session);
-        console.log("Email detectado:", email);
+        const email = "fomear888@gmail.com";
 
         const name = session.customer_details?.name || pending.customer_name;
         const baseUrl = (process.env.PUBLIC_BASE_URL || `https://${req.headers.host}`).replace(/\/$/, "");
