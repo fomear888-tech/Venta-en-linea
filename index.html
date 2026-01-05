@@ -35,8 +35,8 @@
   top:0;
   z-index:10;
   background:#ffffff;
-  border-bottom:1px solid var(--border)
-} border-bottom:1px solid var(--border)
+  border-bottom:1px solid var(--border);
+}
 
     /* ✅ CONTENEDOR “CENTRADO” (ANCHO MÁXIMO) */
     .wrap{max-width:1100px;margin:0 auto;padding:18px 16px}
@@ -71,7 +71,8 @@
     .pill:hover{border-color:rgba(94,234,212,.35)}
 
     /* ✅ LAYOUT PRINCIPAL: CATALOGO A LA IZQ / CARRITO A LA DER (EN MÓVIL SE APILAN) */
-    main .grid{display:grid;grid-template-columns:1.25fr .85fr;gap:16px;align-items:start}
+    .grid{display:grid;grid-template-columns:1.25fr .85fr;gap:16px;align-items:start}
+@media (max-width: 920px){.grid{grid-template-columns:1fr}}
     @media (max-width: 920px){main .grid{grid-template-columns:1fr}}
 
     /* ✅ “CAJAS” TIPO PANEL PARA CATALOGO Y CARRITO */
@@ -354,26 +355,6 @@ html{ scroll-behavior:smooth; }
 
 
 
-  <!-- ✅ BLOQUES DE INICIO: SERVICIOS / PRODUCTOS -->
-<section class="wrap homeBlocks" aria-label="Inicio">
-  <div class="homeCard" id="servicesBlock">
-    <h2>Servicios</h2>
-    <p>
-      Aquí puedes mostrar información: citas, trámites, impresiones, fotocopias, etc.
-      (Solo informativo, sin compra).
-    </p>
-
-  </div>
-
-  <div class="homeCard" id="productsBlock">
-    <h2>Productos</h2>
-    <p>
-      Aquí está el catálogo con el carrito y el pago.
-    </p>
-    
-  </div>
-</section>
-
 
 
   <!-- ✅ CUERPO: 2 PANELES: CATALOGO (izq) + CARRITO (der) -->
@@ -406,58 +387,72 @@ html{ scroll-behavior:smooth; }
 
 </section>
 
-      <!-- ✅ PANEL CARRITO: JS rellena #cart y calcula totales -->
-      <aside class="panel" aria-label="Carrito" id="cartPanel">
-        <h2>Carrito</h2>
-        <div class="content">
-          <div id="cart" class="cartList"></div>
 
-          <div class="totals">
-            <div class="line"><span class="muted">Productos</span><span id="itemsCount" class="muted">0</span></div>
-            <div class="line"><span class="muted">Subtotal</span><span id="subtotal" class="muted">0,00 €</span></div>
-            <div class="line grand"><span>Total</span><span id="total">0,00 €</span></div>
+<section class="panel" id="servicesInfo" aria-label="Servicios">
+  <h2>Servicios</h2>
+  <div class="content">
+    <div class="backBar">
+      <button class="backBtn" id="backHomeFromServices">← Volver</button>
+    </div>
 
-              <!-- ✅ DATOS DEL CLIENTE: se envían junto al pedido -->
-            <div style="display:grid; gap:10px; margin:12px 0;">
-
-
-              
-              <input
-  id="customerName"
-  name="customerName"
-  type="text"
-  autocomplete="name"
-  placeholder="Nombre y apellidos"
-  style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;"
->
-
-<input
-  id="customerPhone"
-  name="customerPhone"
-  type="tel"
-  inputmode="tel"
-  autocomplete="tel"
-  placeholder="Teléfono"
-  style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;"
->
-
-              
-            </div>
+    <p class="empty" style="margin:0;">
+      📄 Citas (Seguridad Social, SEPE, Extranjería) · 🖨️ Impresiones y fotocopias · 📩 Escaneo y envío de documentos · 💳 Recargas / accesorios.
+      <br><br>
+      Para solicitar un servicio, contáctanos por WhatsApp o en el local. (Aquí no se compra, solo info.)
+    </p>
+  </div>
+</section>
 
 
-   <!-- ✅ BOTONES:
-                   - Copiar resumen: útil para pegar en WhatsApp
-                   - Exportar CSV: descargar archivo para Excel (manual)
-                   - Confirmar pedido: envía a Google Sheets (automático) -->
-            
-            <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
-  <a class="btn pay" id="payBtn" href="/checkout.html" role="button" aria-disabled="true">💳 Pagar</a>
+
+
+
+    <div id="catalogo">
+
+  <div class="backBar">
+    <button class="backBtn" id="backHomeFromProducts">← Volver</button>
+  </div>
+
+  <div class="grid">
+
+    <!-- ✅ PANEL CATALOGO -->
+    <section class="panel" aria-label="Catálogo">
+      <h2>Catálogo</h2>
+      <div class="content">
+        <div id="products" class="products"></div>
+      </div>
+    </section>
+
+    <!-- ✅ PANEL CARRITO -->
+    <aside class="panel" aria-label="Carrito" id="cartPanel">
+      <h2>Carrito</h2>
+      <div class="content">
+        <div id="cart" class="cartList"></div>
+
+        <div class="totals">
+          <div class="line"><span class="muted">Productos</span><span id="itemsCount" class="muted">0</span></div>
+          <div class="line"><span class="muted">Subtotal</span><span id="subtotal" class="muted">0,00 €</span></div>
+          <div class="line grand"><span>Total</span><span id="total">0,00 €</span></div>
+
+          <div style="display:grid; gap:10px; margin:12px 0;">
+            <input id="customerName" name="customerName" type="text" autocomplete="name" placeholder="Nombre y apellidos">
+            <input id="customerPhone" name="customerPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Teléfono">
+          </div>
+
+          <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+            <a class="btn pay" id="payBtn" href="/checkout.html" role="button" aria-disabled="true">💳 Pagar</a>
+          </div>
+
+          <p class="muted" style="margin:10px 0 0">Asegúrese de ingresar los datos correctamente</p>
+        </div>
+      </div>
+    </aside>
+
+  </div>
 </div>
 
-            <p class="muted" style="margin:10px 0 0">Asegurese de ingresar los datos correctamente</p>
-          </div>
-        </div>
-      </aside>
+
+    
 
     </div>
   </div>
@@ -470,6 +465,7 @@ html{ scroll-behavior:smooth; }
 <section class="panel" id="adminPanel" style="max-width:1100px;margin:16px auto;display:none;">
   <h2>Admin · Productos e imágenes</h2>
   <div class="content" style="display:grid;gap:12px;">
+    
 
     <div id="adminAuthBox" style="display:grid;gap:10px;">
       <div class="muted">Acceso admin (solo para ti). Usa <code>?admin=1</code> en la URL.</div>
@@ -1076,17 +1072,32 @@ function updatePayButton(){
 
 
 // ✅ HOME: mostrar secciones al hacer clic
+// ✅ HOME: mostrar secciones al hacer clic
+function showHome(){
+  document.getElementById("homeScreen").style.display = "grid";
+  document.getElementById("servicesInfo").style.display = "none";
+  document.getElementById("catalogo").style.display = "none";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 document.getElementById("servicesBlock")?.addEventListener("click", () => {
+  document.getElementById("homeScreen").style.display = "none";
   document.getElementById("servicesInfo").style.display = "block";
   document.getElementById("catalogo").style.display = "none";
   document.getElementById("servicesInfo").scrollIntoView({ behavior: "smooth" });
 });
 
 document.getElementById("productsBlock")?.addEventListener("click", () => {
-  document.getElementById("catalogo").style.display = "grid";
+  document.getElementById("homeScreen").style.display = "none";
+  document.getElementById("catalogo").style.display = "block";
   document.getElementById("servicesInfo").style.display = "none";
   document.getElementById("catalogo").scrollIntoView({ behavior: "smooth" });
 });
+
+// ✅ Botones volver
+document.getElementById("backHomeFromServices")?.addEventListener("click", showHome);
+document.getElementById("backHomeFromProducts")?.addEventListener("click", showHome);
+
 
 
 
@@ -1153,6 +1164,7 @@ document.getElementById("productsBlock")?.addEventListener("click", () => {
 
   // ✅ 3) Ahora sí, ir a pagar
   location.href = "./checkout.html";
+
 });
 
 
@@ -1182,6 +1194,8 @@ document.getElementById('adminRefreshBtn')?.addEventListener('click', async () =
   toast("Productos recargados ✅");
 });
 
+
+    showHome(); // ✅ al iniciar, muestra solo los 2 bloques
     
   });
   
