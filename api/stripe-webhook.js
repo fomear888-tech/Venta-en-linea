@@ -51,6 +51,30 @@ export default async function handler(req, res) {
     return res.status(405).send("Method Not Allowed");
   }
 
+
+
+
+async function getBestEmailFromSession(stripe, session) {
+  // 1) lo que venga directo
+  const direct = session?.customer_details?.email;
+  if (direct) return direct;
+
+  // 2) volver a pedir la sesión completa a Stripe
+  try {
+    const full = await stripe.checkout.sessions.retrieve(session.id);
+    const e2 = full?.customer_details?.email;
+    if (e2) return e2;
+  } catch (e) {
+    console.error("Could not retrieve full session:", e?.message || e);
+  }
+
+  // 3) si tampoco, null
+  return null;
+}
+
+
+  
+
   // 🔒 Validar variables de entorno críticas
   if (!process.env.STRIPE_SECRET_KEY) {
     return res.status(500).send("Missing STRIPE_SECRET_KEY");
@@ -153,7 +177,7 @@ const [pending] = await pendingRes.json();
 
 
 // 2️⃣.1 Enviar ticket por EMAIL
-const email = session.customer_details?.email;
+const email = await getBestEmailFromSession(stripe, session);
 const name = session.customer_details?.name || pending.customer_name;
 const ticketUrl = `${process.env.PUBLIC_BASE_URL}/api/ticket?session_id=${session.id}`;
 
