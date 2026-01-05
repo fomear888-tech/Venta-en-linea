@@ -21,11 +21,11 @@ async function sendTicketEmail({ to, name, ticketNumber, ticketUrl, total }) {
     </div>`;
 
   return resend.emails.send({
-    from: process.env.FROM_EMAIL || "Tickets <onboarding@resend.dev>",
-    to,
-    subject,
-    html,
-  });
+  from: "onboarding@resend.dev",
+  to,
+  subject,
+  html,
+});
 }
 
 async function getBestEmailFromSession(stripe, session) {
@@ -55,8 +55,17 @@ async function readRawBody(req) {
 }
 
 export default async function handler(req, res) {
+
+export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
+  console.log("WEBHOOK VERSION: 2026-01-05 v2"); // ✅ AQUI
+
+  // ... el resto de tu código
+
+  
+  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+  
   if (!process.env.STRIPE_SECRET_KEY) return res.status(500).send("Missing STRIPE_SECRET_KEY");
   if (!process.env.STRIPE_WEBHOOK_SECRET) return res.status(500).send("Missing STRIPE_WEBHOOK_SECRET");
   if (!process.env.SUPABASE_URL) return res.status(500).send("Missing SUPABASE_URL");
@@ -120,13 +129,19 @@ export default async function handler(req, res) {
         } else if (email) {
           try {
             console.log("Intentando enviar email a:", email);
-            await sendTicketEmail({
-              to: email,
-              name,
-              ticketNumber: "TICKET_GENERADO_POR_TU_RPC",
-              ticketUrl,
-              total: session.amount_total / 100,
-            });
+
+            
+            const result = await sendTicketEmail({
+  to: email,
+  name,
+  ticketNumber: "TICKET_GENERADO_POR_TU_RPC",
+  ticketUrl,
+  total: session.amount_total / 100,
+});
+
+            
+
+console.log("RESEND RESULT:", result);
           } catch (e) {
             console.error("Email failed:", e);
           }
