@@ -23,10 +23,10 @@ async function sendTicketEmail({ to, name, ticketNumber, ticketUrl, total }) {
   </div>`;
 
   await resend.emails.send({
-    from: process.env.FROM_EMAIL || "Tickets <onboarding@resend.dev>",
-    to,
-    subject,
-    html,
+  from: "Tickets <onboarding@resend.dev>",
+  to: email,
+  subject,
+  html,
   });
 }
 
