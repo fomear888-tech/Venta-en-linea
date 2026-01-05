@@ -212,6 +212,64 @@ input, select, textarea{
 }
 
 
+
+/*para bloques*/
+
+
+/* ✅ BLOQUES INICIO: Servicios / Productos */
+.homeBlocks{
+  display:grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap:16px;
+  margin-top:16px;
+}
+@media (max-width: 920px){
+  .homeBlocks{ grid-template-columns: 1fr; }
+}
+
+.homeCard{
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:#ffffff;
+  box-shadow:0 6px 18px rgba(0,0,0,.04);
+  padding:16px;
+}
+
+.homeCard h2{
+  margin:0 0 6px;
+  font-size:18px;
+}
+
+.homeCard p{
+  margin:0;
+  color:var(--muted);
+  font-size:13px;
+  line-height:1.4;
+}
+
+.homeCard .go{
+  margin-top:12px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:#ffffff;
+  color:var(--txt);
+  cursor:pointer;
+  text-decoration:none;
+  font-weight:700;
+}
+.homeCard .go:hover{
+  border-color: rgba(16,185,129,.35);
+}
+
+    
+
+html{ scroll-behavior:smooth; }
+
+    
     
     
   </style>
@@ -243,10 +301,58 @@ input, select, textarea{
 </header>
 
 
+
+
+
+
+
+
+
+
+  <!-- ✅ BLOQUES DE INICIO: SERVICIOS / PRODUCTOS -->
+<section class="wrap homeBlocks" aria-label="Inicio">
+  <div class="homeCard" id="servicesBlock">
+    <h2>Servicios</h2>
+    <p>
+      Aquí puedes mostrar información: citas, trámites, impresiones, fotocopias, etc.
+      (Solo informativo, sin compra).
+    </p>
+    <a class="go" href="#servicesInfo">📌 Ver servicios</a>
+  </div>
+
+  <div class="homeCard" id="productsBlock">
+    <h2>Productos</h2>
+    <p>
+      Aquí está el catálogo con el carrito y el pago.
+    </p>
+    <a class="go" href="#catalogo">🛍️ Ir a productos</a>
+  </div>
+</section>
+
+
+
   <!-- ✅ CUERPO: 2 PANELES: CATALOGO (izq) + CARRITO (der) -->
 <main>
   <div class="wrap">
-    <div class="grid">
+
+    <!-- ✅ PANEL SERVICIOS (solo info) -->
+    <section class="panel" id="servicesInfo" aria-label="Servicios">
+      <h2>Servicios</h2>
+      <div class="content">
+        <p class="empty" style="margin:0;">
+          📄 Citas (Seguridad Social, SEPE, Extranjería) · 🖨️ Impresiones y fotocopias · 📩 Escaneo y envío de documentos ·
+          💳 Recargas / accesorios (según tu negocio).
+        </p>
+        <p class="muted" style="margin:10px 0 0;">
+          Para solicitar un servicio, contáctanos por WhatsApp o en el local. (Aquí no se compra, solo info.)
+        </p>
+      </div>
+    </section>
+
+    <div style="height:16px"></div>
+
+    <!-- ✅ PRODUCTOS (CATÁLOGO + CARRITO) -->
+    <div class="grid" id="catalogo">
 
 
       <!-- ✅ PANEL CATALOGO: aquí se “pintan” las tarjetas de producto (JS rellena #products) -->
