@@ -51,7 +51,17 @@
     /* ✅ BUSCADOR, “PÍLDORAS” Y BOTONES DE LA CABECERA */
     .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .search{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:14px;background:#ffffff;min-width:min(420px, 92vw)}
-    .search input{width:100%;border:0;outline:0;background:transparent;color:var(--txt);font-size:14px}
+    .search input{
+  width:100%;
+  border:none;
+  outline:none;
+  background:transparent;
+  box-shadow:none;
+  padding:0;
+  margin:0;
+  color:var(--txt);
+  font-size:14px;
+}
     .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:14px;border:1px solid var(--border);background:#ffffff;color:var(--txt);cursor:pointer;user-select:none}
     .pill strong{font-weight:700}
     .pill:hover{border-color:rgba(94,234,212,.35)}
