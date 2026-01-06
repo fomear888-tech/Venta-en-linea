@@ -1,19 +1,21 @@
 // /api/place-order.js
-const { createClient } = require("@supabase/supabase-js");
+import { createClient } from "@supabase/supabase-js";
 
-function pad(n, len = 5) {
-  return String(n).padStart(len, "0");
+function pad(n, width = 5) {
+  const s = String(n);
+  return s.length >= width ? s : "0".repeat(width - s.length) + s;
 }
 
-module.exports = async function handler(req, res) {
-  // Health check en navegador
-  if (req.method === "GET") {
-    return res.status(200).json({ ok: true, msg: "place-order alive" });
-  }
+function toISODate(d) {
+  return d.toISOString().slice(0, 10); // YYYY-MM-DD
+}
 
-  if (req.method !== "POST") {
-    return res.status(405).json({ ok: false, error: "Method not allowed" });
-  }
+function toISOTime(d) {
+  return d.toTimeString().slice(0, 8); // HH:MM:SS
+}
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") return res.status(405).json({ ok: false, error: "Method not allowed" });
 
   try {
     const supabaseUrl = process.env.SUPABASE_URL;
@@ -23,146 +25,167 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({
         ok: false,
         error: "Missing env vars",
-        details: {
-          hasUrl: !!supabaseUrl,
-          hasServiceKey: !!serviceKey,
-        },
+        details: "SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing in Vercel",
       });
     }
 
-    const sb = createClient(supabaseUrl, serviceKey, {
+    // Service role -> no RLS
+    const sbAdmin = createClient(supabaseUrl, serviceKey, {
       auth: { persistSession: false },
     });
 
-    const { customer, items } = req.body || {};
-    const name = String(customer?.name || "").trim();
-    const phone = String(customer?.phone || "").trim();
+    const body = req.body || {};
+    const customer = body.customer || {};
+    const items = Array.isArray(body.items) ? body.items : [];
+
+    const name = String(customer.name || "").trim();
+    const phone = String(customer.phone || "").trim();
 
     if (!name || !phone) {
       return res.status(400).json({ ok: false, error: "Missing customer data" });
     }
-    if (!Array.isArray(items) || items.length === 0) {
+    if (items.length === 0) {
       return res.status(400).json({ ok: false, error: "Empty items" });
     }
 
-    // 1) cargar productos
-    const productIds = items.map((i) => String(i.product_id));
-    const { data: products, error: prodErr } = await sb
+    // Normaliza items: [{product_id, qty}]
+    const normalized = items
+      .map((it) => ({
+        product_id: String(it.product_id || "").trim(),
+        qty: Number(it.qty || 0),
+      }))
+      .filter((it) => it.product_id && Number.isFinite(it.qty) && it.qty > 0);
+
+    if (normalized.length === 0) {
+      return res.status(400).json({ ok: false, error: "Invalid items" });
+    }
+
+    // Trae productos
+    const ids = [...new Set(normalized.map((x) => x.product_id))];
+
+    const { data: products, error: prodErr } = await sbAdmin
       .from("products")
       .select("id,name,price,stock")
-      .in("id", productIds);
+      .in("id", ids);
 
     if (prodErr) {
-      return res.status(500).json({ ok: false, error: "Loading products failed", details: prodErr.message });
+      return res.status(500).json({ ok: false, error: "Products fetch failed", details: prodErr.message });
     }
 
     const byId = new Map((products || []).map((p) => [String(p.id), p]));
 
-    // 2) validar items + total
-    const orderItems = [];
+    // Verifica stock + calcula total
     let total = 0;
-
-    for (const it of items) {
-      const pid = String(it.product_id);
-      const qty = Number(it.qty || 0);
-
-      if (!pid || !Number.isFinite(qty) || qty <= 0) {
-        return res.status(400).json({ ok: false, error: "Invalid item", item: it });
+    for (const it of normalized) {
+      const p = byId.get(it.product_id);
+      if (!p) {
+        return res.status(400).json({ ok: false, error: `Product not found: ${it.product_id}` });
       }
-
-      const p = byId.get(pid);
-      if (!p) return res.status(400).json({ ok: false, error: `Product not found: ${pid}` });
-
       const stock = Number(p.stock || 0);
-      if (stock < qty) {
+      if (it.qty > stock) {
         return res.status(400).json({
           ok: false,
-          error: `No stock for ${p.name}`,
-          details: { product_id: pid, stock, qty },
+          error: "Not enough stock",
+          details: `${p.name} stock=${stock} requested=${it.qty}`,
         });
       }
-
       const price = Number(p.price || 0);
-      const lineTotal = price * qty;
-      total += lineTotal;
-
-      orderItems.push({
-        product_id: pid,
-        name: p.name,
-        price,
-        qty,
-        line_total: lineTotal,
-      });
+      total += price * it.qty;
     }
 
-    // 3) ticket_number tipo T-00026
-    let nextN = 1;
-    const { data: last, error: lastErr } = await sb
+    // Ticket number: lee el último y suma 1 (simple)
+    const { data: last, error: lastErr } = await sbAdmin
       .from("orders")
       .select("ticket_number, created_at")
       .order("created_at", { ascending: false })
       .limit(1);
 
-    if (!lastErr && last?.[0]?.ticket_number) {
-      const m = String(last[0].ticket_number).match(/(\d+)/);
-      if (m) nextN = Number(m[1]) + 1;
+    if (lastErr) {
+      return res.status(500).json({ ok: false, error: "Ticket lookup failed", details: lastErr.message });
     }
 
-    const ticketNumber = `T-${pad(nextN)}`;
+    let nextNum = 1;
+    const lastTicket = last?.[0]?.ticket_number || "";
+    const m = String(lastTicket).match(/(\d+)/);
+    if (m) nextNum = Number(m[1]) + 1;
 
-    // 4) insert order
-    const { data: orderRow, error: orderErr } = await sb
+    const ticket_number = `T-${pad(nextNum, 5)}`;
+
+    const now = new Date();
+    const order_date = toISODate(now);
+    const order_time = toISOTime(now);
+    const order_month = `${order_date.slice(0, 7)}-01`; // primer día del mes
+
+    // 1) Inserta order
+    const { data: orderRow, error: orderErr } = await sbAdmin
       .from("orders")
-      .insert([{
-        ticket_number: ticketNumber,
-        customer_name: name,
-        customer_phone: phone,
-        total: Number(total.toFixed(2)),
-        estado: "pendiente",
-        // metodo_pago: null
-      }])
-      .select("id,ticket_number,total,created_at")
+      .insert([
+        {
+          ticket_number,
+          customer_name: name,
+          customer_phone: phone,
+          total: Number(total.toFixed(2)),
+          order_date,
+          order_time,
+          order_month,
+          estado: "pendiente",
+          // metodo_pago: null, // si tu enum lo permite, lo dejas sin enviar o null
+        },
+      ])
+      .select("*")
       .single();
 
     if (orderErr) {
-      return res.status(500).json({ ok: false, error: "Insert orders failed", details: orderErr.message });
+      return res.status(500).json({ ok: false, error: "Orders insert failed", details: orderErr.message });
     }
 
-    const orderId = orderRow.id;
+    // 2) Inserta order_items
+    const order_id = orderRow.id;
 
-    // 5) insert items
-    const itemsToInsert = orderItems.map((oi) => ({ order_id: orderId, ...oi }));
-    const { error: itemsErr } = await sb.from("order_items").insert(itemsToInsert);
+    const itemsToInsert = normalized.map((it) => {
+      const p = byId.get(it.product_id);
+      const price = Number(p.price || 0);
+      const line_total = Number((price * it.qty).toFixed(2));
+      return {
+        order_id,
+        product_id: it.product_id,
+        name: p.name,
+        price: Number(price.toFixed(2)),
+        qty: it.qty,
+        line_total,
+      };
+    });
+
+    const { error: itemsErr } = await sbAdmin.from("order_items").insert(itemsToInsert);
 
     if (itemsErr) {
-      await sb.from("orders").delete().eq("id", orderId);
-      return res.status(500).json({ ok: false, error: "Insert order_items failed", details: itemsErr.message });
+      // Nota: aquí ya existe el order. Si quieres “borrarlo” al fallar items, lo hacemos.
+      await sbAdmin.from("orders").delete().eq("id", order_id);
+      return res.status(500).json({ ok: false, error: "Order items insert failed", details: itemsErr.message });
     }
 
-    // 6) update stock
-    for (const oi of orderItems) {
-      const p = byId.get(String(oi.product_id));
-      const newStock = Number(p.stock) - Number(oi.qty);
+    // 3) Descuenta stock
+    for (const it of normalized) {
+      const p = byId.get(it.product_id);
+      const newStock = Number(p.stock || 0) - it.qty;
 
-      const { error: updErr } = await sb.from("products").update({ stock: newStock }).eq("id", oi.product_id);
-      if (updErr) {
-        await sb.from("order_items").delete().eq("order_id", orderId);
-        await sb.from("orders").delete().eq("id", orderId);
-        return res.status(500).json({ ok: false, error: "Stock update failed", details: updErr.message });
+      const { error: stockErr } = await sbAdmin
+        .from("products")
+        .update({ stock: newStock })
+        .eq("id", it.product_id);
+
+      if (stockErr) {
+        // No matamos el pedido por esto, pero lo reportamos
+        console.error("STOCK UPDATE ERROR:", it.product_id, stockErr.message);
       }
     }
 
     return res.status(200).json({
       ok: true,
-      order: {
-        id: orderId,
-        ticket_number: orderRow.ticket_number,
-        total: orderRow.total,
-        created_at: orderRow.created_at,
-      },
+      order: orderRow,
     });
   } catch (e) {
-    console.error("PLACE ORDER FATAL:", e);
-    return res.status(500).json({ ok: false, error: "Server error", details: String(e?.message || e) });
+    console.error("PLACE ORDER SERVER ERROR:", e);
+    return res.status(500).json({ ok: false, error: "Server error", details: e?.message || String(e) });
   }
-};
+}
