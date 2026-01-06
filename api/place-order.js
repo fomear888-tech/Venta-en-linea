@@ -1,114 +1,151 @@
-// api/place-order.js
+// /api/place-order.js
 import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const sb = createClient(supabaseUrl, serviceKey, {
+  auth: { persistSession: false },
+});
+
+function pad(n, len = 5) {
+  return String(n).padStart(len, "0");
+}
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   try {
-    const { customer_name, customer_phone, items } = req.body || {};
+    const { customer, items } = req.body || {};
+    const name = (customer?.name || "").trim();
+    const phone = (customer?.phone || "").trim();
 
-    if (!customer_name || !customer_phone) {
-      return res.status(400).json({ error: "Missing customer data" });
-    }
-    if (!Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: "Empty items" });
-    }
+    if (!name || !phone) return res.status(400).json({ error: "Missing customer data" });
+    if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: "Empty items" });
 
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!SUPABASE_URL || !SERVICE_KEY) {
-      return res.status(500).json({ error: "Missing Supabase env vars" });
-    }
-
-    // ⚠️ Service role: puede saltarse RLS
-    const sbAdmin = createClient(SUPABASE_URL, SERVICE_KEY);
-
-    // 1) Traer productos para validar stock y precios reales (no confiar en el front)
-    const ids = items.map(i => i.product_id);
-    const { data: products, error: pErr } = await sbAdmin
+    // 1) Traer productos para calcular total y validar stock
+    const productIds = items.map(i => String(i.product_id));
+    const { data: products, error: prodErr } = await sb
       .from("products")
       .select("id,name,price,stock")
-      .in("id", ids);
+      .in("id", productIds);
 
-    if (pErr) return res.status(500).json({ error: pErr.message });
+    if (prodErr) return res.status(500).json({ error: "Loading products failed", details: prodErr.message });
 
-    const byId = new Map((products || []).map(p => [p.id, p]));
+    const byId = new Map((products || []).map(p => [String(p.id), p]));
 
-    // 2) Validar stock + calcular total
+    // validar y armar order_items
     const orderItems = [];
     let total = 0;
 
     for (const it of items) {
-      const p = byId.get(it.product_id);
+      const pid = String(it.product_id);
       const qty = Number(it.qty || 0);
 
-      if (!p) return res.status(400).json({ error: `Product not found: ${it.product_id}` });
-      if (!Number.isInteger(qty) || qty <= 0) return res.status(400).json({ error: "Invalid qty" });
-      if ((p.stock ?? 0) < qty) return res.status(409).json({ error: `No stock for ${p.name}` });
+      if (!pid || !Number.isFinite(qty) || qty <= 0) {
+        return res.status(400).json({ error: "Invalid item", item: it });
+      }
 
-      const price = Number(p.price) || 0;
-      const line_total = price * qty;
+      const p = byId.get(pid);
+      if (!p) return res.status(400).json({ error: `Product not found: ${pid}` });
+
+      const stock = Number(p.stock || 0);
+      if (stock < qty) return res.status(400).json({ error: `No stock for ${p.name}`, product_id: pid, stock, qty });
+
+      const price = Number(p.price || 0);
+      const lineTotal = price * qty;
+      total += lineTotal;
 
       orderItems.push({
-        product_id: p.id,
+        product_id: pid,
         name: p.name,
         price,
         qty,
-        line_total,
+        line_total: lineTotal,
       });
-
-      total += line_total;
     }
 
-    // 3) Crear order
-    const orderId = crypto.randomUUID();
-    const ticketNumber = "T-" + String(Date.now()).slice(-6); // simple (si ya tienes otro sistema, lo ajustamos)
+    // 2) Generar ticket_number tipo T-00026 (como tu tabla)
+    //    (lo sacamos leyendo el último ticket y sumando 1)
+    let nextN = 1;
+    const { data: last, error: lastErr } = await sb
+      .from("orders")
+      .select("ticket_number, created_at")
+      .order("created_at", { ascending: false })
+      .limit(1);
 
-    const { error: oErr } = await sbAdmin.from("orders").insert([{
-      id: orderId,
-      ticket_number: ticketNumber,
-      customer_name,
-      customer_phone,
-      total,
-      estado: "pendiente",
-      // metodo_pago: null, // si quieres setearlo luego
-    }]);
+    if (!lastErr && last?.[0]?.ticket_number) {
+      const m = String(last[0].ticket_number).match(/(\d+)/);
+      if (m) nextN = Number(m[1]) + 1;
+    }
 
-    if (oErr) return res.status(500).json({ error: oErr.message });
+    const ticketNumber = `T-${pad(nextN)}`;
 
-    // 4) Crear order_items
-    const rows = orderItems.map(oi => ({
-      id: crypto.randomUUID(),
+    // 3) Insert en orders
+    // Campos según tu tabla: ticket_number, customer_name, customer_phone, total, estado, metodo_pago...
+    const { data: orderRow, error: orderErr } = await sb
+      .from("orders")
+      .insert([{
+        ticket_number: ticketNumber,
+        customer_name: name,
+        customer_phone: phone,
+        total: Number(total.toFixed(2)),
+        estado: "pendiente",
+        // metodo_pago: null (o pon "bizum"/"tarjeta" si lo usas en tu enum)
+      }])
+      .select("id,ticket_number,total,created_at")
+      .single();
+
+    if (orderErr) {
+      return res.status(500).json({ error: "Insert orders failed", details: orderErr.message });
+    }
+
+    const orderId = orderRow.id;
+
+    // 4) Insert en order_items (con order_id)
+    const itemsToInsert = orderItems.map(oi => ({
       order_id: orderId,
       ...oi,
     }));
 
-    const { error: oiErr } = await sbAdmin.from("order_items").insert(rows);
-    if (oiErr) return res.status(500).json({ error: oiErr.message });
+    const { error: itemsErr } = await sb.from("order_items").insert(itemsToInsert);
+    if (itemsErr) {
+      // rollback simple: borrar order si falla items
+      await sb.from("orders").delete().eq("id", orderId);
+      return res.status(500).json({ error: "Insert order_items failed", details: itemsErr.message });
+    }
 
-    // 5) Descontar stock (simple, no transaccional)
-    // Para tu caso (tienda pequeña) funciona bien. Si luego quieres “a prueba de guerras”, hacemos RPC SQL atómico.
-    for (const it of orderItems) {
-      const p = byId.get(it.product_id);
-      const newStock = (Number(p.stock) || 0) - it.qty;
+    // 5) Descontar stock en products (simple, producto por producto)
+    // Nota: esto no es transacción atómica; para 100% robustez se hace con SQL function.
+    for (const oi of orderItems) {
+      const p = byId.get(String(oi.product_id));
+      const newStock = Number(p.stock) - Number(oi.qty);
 
-      const { error: sErr } = await sbAdmin
+      const { error: updErr } = await sb
         .from("products")
         .update({ stock: newStock })
-        .eq("id", it.product_id);
+        .eq("id", oi.product_id);
 
-      if (sErr) return res.status(500).json({ error: sErr.message });
+      if (updErr) {
+        // rollback best-effort
+        await sb.from("order_items").delete().eq("order_id", orderId);
+        await sb.from("orders").delete().eq("id", orderId);
+        return res.status(500).json({ error: "Stock update failed", details: updErr.message });
+      }
     }
 
     return res.status(200).json({
       ok: true,
-      order_id: orderId,
-      ticket_number: ticketNumber,
-      total,
+      order: {
+        id: orderId,
+        ticket_number: orderRow.ticket_number,
+        total: orderRow.total,
+        created_at: orderRow.created_at,
+      }
     });
 
   } catch (e) {
-    return res.status(500).json({ error: e?.message || "Server error" });
+    console.error("PLACE ORDER FATAL:", e);
+    return res.status(500).json({ error: "Server error", details: String(e?.message || e) });
   }
 }
