@@ -1206,9 +1206,7 @@ document.getElementById("backHomeFromProducts")?.addEventListener("click", showH
   localStorage.setItem("checkout_items", JSON.stringify(items));
 
   // ✅ 3) Ahora sí, ir a pagar
-  location.href = "./checkout.html";
-
-});
+location.href = `./pago-ok.html?order=${orderId}`;
 
 
 
