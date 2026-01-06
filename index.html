@@ -1221,32 +1221,22 @@ window.addEventListener("DOMContentLoaded", async () => {
     const { total } = countsAndTotals();
     const totalCents = Math.round(total * 100);
 
-    // ✅ Generamos el id nosotros (así NO necesitamos .select)
-const orderId = crypto.randomUUID();
+    // ✅ Generar comprobante simple (sin Supabase)
+const orderId = "ORD-" + Date.now();
 
-const { error } = await sb
-  .from("pending_orders")
-  .insert([{
-    id: orderId,
-    customer_name: name,
-    customer_phone: phone,
-    items: items.map(i => ({ product_id: i.product_id, qty: i.qty })),
-    total_cents: Math.round(safeTotal * 100),
-    status: "pending"
-  }], { returning: "minimal" });
+// ✅ Guardar comprobante + datos para mostrar en pago-ok
+localStorage.setItem("last_order_id", orderId);
+localStorage.setItem("last_order_name", name);
+localStorage.setItem("last_order_phone", phone);
+localStorage.setItem("last_order_items", JSON.stringify(items));
+localStorage.setItem("last_order_total_cents", String(totalCents));
 
-if (error) {
-  console.error("SUPABASE INSERT ERROR:", error);
-  toast("Error creando el pedido: " + (error.message || "RLS / permisos"));
-  return;
-}
-
-// ✅ Limpia carrito (mejor así, no solo removeItem)
+// ✅ limpiar carrito
 cart = {};
 saveCart();
 renderCart();
 
-// ✅ Ir a comprobante
+// ✅ ir a comprobante
 location.href = `./pago-ok.html?order=${orderId}`;
 
 
