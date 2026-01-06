@@ -1214,41 +1214,34 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 
     const items = cartItems().map((x) => ({
-      product_id: x.id,
-      qty: x.qty,
-    }));
+  product_id: x.id,
+  qty: x.qty,
+}));
 
-    const { total } = countsAndTotals();
-    const totalCents = Math.round(total * 100);
+const { total } = countsAndTotals();
+const totalCents = Math.round(total * 100);
 
-    // ✅ Generar comprobante simple (sin Supabase)
-const orderId = "ORD-" + Date.now();
+// ✅ Llamar a la función segura
+const { data: orderId, error } = await sb.rpc("place_order", {
+  p_name: name,
+  p_phone: phone,
+  p_items: items,
+  p_total_cents: totalCents,
+});
 
-// ✅ Guardar comprobante + datos para mostrar en pago-ok
-localStorage.setItem("last_order_id", orderId);
-localStorage.setItem("last_order_name", name);
-localStorage.setItem("last_order_phone", phone);
-localStorage.setItem("last_order_items", JSON.stringify(items));
-localStorage.setItem("last_order_total_cents", String(totalCents));
+if (error) {
+  console.error("place_order error:", error);
+  toast("No se pudo confirmar: " + (error.message || "error"));
+  return;
+}
 
-// ✅ limpiar carrito
+// ✅ Limpiar carrito
 cart = {};
 saveCart();
 renderCart();
 
-// ✅ ir a comprobante
+// ✅ Ir a comprobante
 location.href = `./pago-ok.html?order=${orderId}`;
-
-
-    
-
-    // ✅ limpia carrito REAL
-    cart = {};
-    saveCart();
-    renderCart();
-
-    // ✅ comprobante
-    location.href = `./pago-ok.html?order=${orderId}`;
   });
 });
 
