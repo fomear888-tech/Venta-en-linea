@@ -1227,7 +1227,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const data = await resp.json().catch(() => ({}));
 
     if (!resp.ok || !data?.ok) {
-      console.error("PLACE ORDER ERROR:", data);
+      console.error("PLACE ORDER ERROR:", JSON.stringify(data, null, 2));
       toast("No se pudo confirmar: " + (data?.error || data?.details || "Error"));
       btn.setAttribute("aria-disabled", "false");
       btn.style.pointerEvents = "auto";
