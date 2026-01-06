@@ -459,7 +459,7 @@ html{ scroll-behavior:smooth; }
           </div>
 
           <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
-            <a class="btn pay" id="payBtn" href="/checkout.html" role="button" aria-disabled="true">💳 Pagar</a>
+            <a class="btn pay" id="payBtn" href="#" role="button" aria-disabled="true">✅ Confirmar pedido</a>
           </div>
 
           <p class="muted" style="margin:10px 0 0">Asegúrese de ingresar los datos correctamente</p>
@@ -1149,112 +1149,108 @@ document.getElementById("backHomeFromProducts")?.addEventListener("click", showH
 
 
   
-  // ====== INIT ======
-  window.addEventListener("DOMContentLoaded", async () => {
-  qEl.addEventListener('input', renderProducts);
-  $('#resetBtn').addEventListener('click', clearCart);
+ // ====== INIT ======
+window.addEventListener("DOMContentLoaded", async () => {
+  qEl.addEventListener("input", renderProducts);
+  $("#resetBtn").addEventListener("click", clearCart);
 
-  $('#cartCount').addEventListener('click', () => {
-    $('#cartPanel')?.scrollIntoView({ behavior: "smooth", block: "start" });
+  $("#cartCount").addEventListener("click", () => {
+    $("#cartPanel")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  await loadProductsFromSupabase();        // ✅ esperar productos reales
-  reconcileCartWithStock(false);           // ✅ ahora sí, con stock real
-  renderCart();                            // ✅ repinta con carrito ajustado
+  await loadProductsFromSupabase();
+  reconcileCartWithStock(false);
+  renderCart();
   subscribeRealtimeProducts();
   updatePayButton();
 
-
-    document.getElementById("payBtn").addEventListener("click", async (e) => {
-  e.preventDefault();
-
-  const btn = e.currentTarget;
-  const disabled = btn.getAttribute("aria-disabled") === "true";
-  if (disabled) {
-    toast("Añade productos antes de confirmar 🙂");
-    return;
-  }
-
-  const name = (document.getElementById("customerName")?.value || "").trim();
-  const phone = (document.getElementById("customerPhone")?.value || "").trim();
-  if (!name || !phone) {
-    toast("Falta nombre o teléfono");
-    return;
-  }
-
-  // Validar stock real antes de confirmar
-  const check = await validateCartBeforePay();
-  if (!check.ok) {
-    toast("Se actualizó el stock y tu carrito quedó vacío 🙂");
-    return;
-  }
-
-  // Construir items
-  const items = cartItems().map(x => ({
-    product_id: x.id,
-    name: x.product.name,
-    qty: x.qty,
-    unit_price: x.product.price
-  }));
-
-  const { total } = countsAndTotals();
-  const safeTotal = Math.round(total * 100) / 100;
-
-  // ✅ Guardar pedido en Supabase (en pending_orders, que ya la tienes)
-  const { data, error } = await sb
-    .from("pending_orders")
-    .insert([{
-      customer_name: name,
-      customer_phone: phone,
-      items: items.map(i => ({ product_id: i.product_id, qty: i.qty })),
-      total_cents: Math.round(safeTotal * 100),
-      status: "pending"
-    }])
-    .select("id")
-    .single();
-
-  if (error) {
-    console.error(error);
-    toast("Error creando el pedido ❌");
-    return;
-  }
-
-  const orderId = data.id;
-
-  // Limpia carrito
-  localStorage.removeItem("cart_v1");
-
-  // Ir a comprobante (pago-ok)
-  location.href = `./pago-ok.html?order=${orderId}`;
-
-
-
   // 🔐 AUTO LOGOUT SI NO ESTÁS EN ?admin=1
-await autoLogoutIfNotAdminPage();
+  await autoLogoutIfNotAdminPage();
 
-// Admin (solo si entras con ?admin=1)
-await showAdminPanel();
+  // Admin (solo si entras con ?admin=1)
+  await showAdminPanel();
 
-if (wantsAdminUI()) {
-  window.addEventListener("pagehide", async () => {
-    await sb.auth.signOut();
+  if (wantsAdminUI()) {
+    window.addEventListener("pagehide", async () => {
+      await sb.auth.signOut();
+    });
+  }
+
+  document.getElementById("adminLoginBtn")?.addEventListener("click", adminLogin);
+  document.getElementById("adminLogoutBtn")?.addEventListener("click", adminLogout);
+  document.getElementById("adminUploadBtn")?.addEventListener("click", adminUploadAndAssign);
+
+  document.getElementById("adminRefreshBtn")?.addEventListener("click", async () => {
+    await loadProductsFromSupabase();
+    fillAdminProducts();
+    toast("Productos recargados ✅");
   });
-}
 
-document.getElementById('adminLoginBtn')?.addEventListener('click', adminLogin);
-document.getElementById('adminLogoutBtn')?.addEventListener('click', adminLogout);
-document.getElementById('adminUploadBtn')?.addEventListener('click', adminUploadAndAssign);
+  // ✅ al iniciar, pantalla home
+  showHome();
 
-document.getElementById('adminRefreshBtn')?.addEventListener('click', async () => {
-  await loadProductsFromSupabase();
-  fillAdminProducts();
-  toast("Productos recargados ✅");
-});
+  // ✅ CLICK: Confirmar pedido (ya no pago)
+  document.getElementById("payBtn")?.addEventListener("click", async (e) => {
+    e.preventDefault();
 
-showHome();
+    const btn = e.currentTarget;
+    const disabled = btn.getAttribute("aria-disabled") === "true";
+    if (disabled) {
+      toast("Añade productos antes de confirmar 🙂");
+      return;
+    }
 
+    const name = (document.getElementById("customerName")?.value || "").trim();
+    const phone = (document.getElementById("customerPhone")?.value || "").trim();
+    if (!name || !phone) {
+      toast("Falta nombre o teléfono");
+      return;
+    }
 
-  
+    const check = await validateCartBeforePay();
+    if (!check.ok) {
+      toast("Se actualizó el stock y tu carrito quedó vacío 🙂");
+      return;
+    }
+
+    const items = cartItems().map((x) => ({
+      product_id: x.id,
+      qty: x.qty,
+    }));
+
+    const { total } = countsAndTotals();
+    const totalCents = Math.round(total * 100);
+
+    const { data, error } = await sb
+      .from("pending_orders")
+      .insert([
+        {
+          customer_name: name,
+          customer_phone: phone,
+          items,
+          total_cents: totalCents,
+          status: "pending",
+        },
+      ])
+      .select("id")
+      .single();
+
+    if (error) {
+      console.error(error);
+      toast("Error creando el pedido ❌");
+      return;
+    }
+
+    const orderId = data.id;
+
+    // ✅ limpia carrito REAL
+    cart = {};
+    saveCart();
+    renderCart();
+
+    // ✅ comprobante
+    location.href = `./pago-ok.html?order=${orderId}`;
+  });
 });
 
   
