@@ -1166,12 +1166,12 @@ document.getElementById("backHomeFromProducts")?.addEventListener("click", showH
 
 
     document.getElementById("payBtn").addEventListener("click", async (e) => {
-  e.preventDefault(); // 🚫 no navegues todavía
+  e.preventDefault();
 
   const btn = e.currentTarget;
   const disabled = btn.getAttribute("aria-disabled") === "true";
   if (disabled) {
-    toast("Añade productos antes de pagar 🙂");
+    toast("Añade productos antes de confirmar 🙂");
     return;
   }
 
@@ -1182,14 +1182,14 @@ document.getElementById("backHomeFromProducts")?.addEventListener("click", showH
     return;
   }
 
-  // ✅ 1) Validar stock real antes de pagar
+  // Validar stock real antes de confirmar
   const check = await validateCartBeforePay();
   if (!check.ok) {
     toast("Se actualizó el stock y tu carrito quedó vacío 🙂");
     return;
   }
 
-  // ✅ 2) Construir items ya con stock actualizado
+  // Construir items
   const items = cartItems().map(x => ({
     product_id: x.id,
     name: x.product.name,
@@ -1200,30 +1200,46 @@ document.getElementById("backHomeFromProducts")?.addEventListener("click", showH
   const { total } = countsAndTotals();
   const safeTotal = Math.round(total * 100) / 100;
 
-  localStorage.setItem("checkout_total_eur", safeTotal.toString());
-  localStorage.setItem("checkout_customer_name", name);
-  localStorage.setItem("checkout_customer_phone", phone);
-  localStorage.setItem("checkout_items", JSON.stringify(items));
+  // ✅ Guardar pedido en Supabase (en pending_orders, que ya la tienes)
+  const { data, error } = await sb
+    .from("pending_orders")
+    .insert([{
+      customer_name: name,
+      customer_phone: phone,
+      items: items.map(i => ({ product_id: i.product_id, qty: i.qty })),
+      total_cents: Math.round(safeTotal * 100),
+      status: "pending"
+    }])
+    .select("id")
+    .single();
 
-  // ✅ 3) Ahora sí, ir a pagar
-location.href = `./pago-ok.html?order=${orderId}`;
+  if (error) {
+    console.error(error);
+    toast("Error creando el pedido ❌");
+    return;
+  }
+
+  const orderId = data.id;
+
+  // Limpia carrito
+  localStorage.removeItem("cart_v1");
+
+  // Ir a comprobante (pago-ok)
+  location.href = `./pago-ok.html?order=${orderId}`;
 
 
 
-      // 🔐 AUTO LOGOUT SI NO ESTÁS EN ?admin=1
-  await autoLogoutIfNotAdminPage();
+  // 🔐 AUTO LOGOUT SI NO ESTÁS EN ?admin=1
+await autoLogoutIfNotAdminPage();
 
-    // Admin (solo si entras con ?admin=1)
+// Admin (solo si entras con ?admin=1)
 await showAdminPanel();
 
-
-// 🔒 Si estás en admin, al salir/cambiar de página se cierra sesión
 if (wantsAdminUI()) {
   window.addEventListener("pagehide", async () => {
     await sb.auth.signOut();
   });
 }
-    
 
 document.getElementById('adminLoginBtn')?.addEventListener('click', adminLogin);
 document.getElementById('adminLogoutBtn')?.addEventListener('click', adminLogout);
@@ -1235,10 +1251,12 @@ document.getElementById('adminRefreshBtn')?.addEventListener('click', async () =
   toast("Productos recargados ✅");
 });
 
+showHome();
 
-    showHome(); // ✅ al iniciar, muestra solo los 2 bloques
-    
-  });
+
+  
+});
+
   
 </script>
 
