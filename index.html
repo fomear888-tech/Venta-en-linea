@@ -1201,16 +1201,10 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   const name = (document.getElementById("customerName")?.value || "").trim();
   const phone = (document.getElementById("customerPhone")?.value || "").trim();
-  if (!name || !phone) {
-    toast("Falta nombre o teléfono");
-    return;
-  }
+  if (!name || !phone) return toast("Falta nombre o teléfono");
 
   const check = await validateCartBeforePay();
-  if (!check.ok) {
-    toast("Se actualizó el stock y tu carrito quedó vacío 🙂");
-    return;
-  }
+  if (!check.ok) return toast("Se actualizó el stock y tu carrito quedó vacío 🙂");
 
   const items = cartItems().map(x => ({
     product_id: x.id,
@@ -1219,40 +1213,52 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   try {
     btn.setAttribute("aria-disabled", "true");
+    btn.style.pointerEvents = "none";
 
-    const r = await fetch("/api/place-order", {
+    const resp = await fetch("/api/place-order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        customer_name: name,
-        customer_phone: phone,
+        customer: { name, phone },
         items,
       }),
     });
 
-    const data = await r.json().catch(() => ({}));
+    const data = await resp.json().catch(() => ({}));
 
-    if (!r.ok || !data?.ok) {
+    if (!resp.ok || !data?.ok) {
       console.error("PLACE ORDER ERROR:", data);
-      toast("No se pudo confirmar: " + (data.error || "Error"));
+      toast("No se pudo confirmar: " + (data?.error || data?.details || "Error"));
       btn.setAttribute("aria-disabled", "false");
+      btn.style.pointerEvents = "auto";
       return;
     }
 
-    // ✅ limpiar carrito
+    // Guarda para el comprobante (opcional)
+    localStorage.setItem("last_order", JSON.stringify({
+      id: data.order.id,
+      ticket: data.order.ticket_number,
+      name, phone,
+      items,
+      total: data.order.total
+    }));
+
+    // limpia carrito
     cart = {};
     saveCart();
     renderCart();
 
-    // ✅ ir a comprobante con el order_id real
-    location.href = `./pago-ok.html?order=${encodeURIComponent(data.order_id)}`;
+    // ir a comprobante
+    location.href = `./pago-ok.html?order=${encodeURIComponent(data.order.id)}`;
 
   } catch (err) {
     console.error(err);
-    toast("Error de red / servidor ❌");
+    toast("No se pudo confirmar: Error de red");
     btn.setAttribute("aria-disabled", "false");
+    btn.style.pointerEvents = "auto";
   }
 });
+
 
   
 
