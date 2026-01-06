@@ -1194,149 +1194,66 @@ window.addEventListener("DOMContentLoaded", async () => {
   e.preventDefault();
 
   const btn = e.currentTarget;
-  const disabled = btn.getAttribute("aria-disabled") === "true";
-  if (disabled) return toast("Añade productos antes de confirmar 🙂");
+  if (btn.getAttribute("aria-disabled") === "true") {
+    toast("Añade productos antes de confirmar 🙂");
+    return;
+  }
 
   const name = (document.getElementById("customerName")?.value || "").trim();
   const phone = (document.getElementById("customerPhone")?.value || "").trim();
-  if (!name || !phone) return toast("Falta nombre o teléfono");
+  if (!name || !phone) {
+    toast("Falta nombre o teléfono");
+    return;
+  }
 
-  // 1) Revalidar stock contra Supabase (ya lo tienes)
   const check = await validateCartBeforePay();
   if (!check.ok) {
     toast("Se actualizó el stock y tu carrito quedó vacío 🙂");
     return;
   }
 
-  const items = cartItems().map((x) => ({
+  const items = cartItems().map(x => ({
     product_id: x.id,
-    name: x.product.name,
-    price: Number(x.product.price) || 0,
-    qty: Number(x.qty) || 1,
-    line_total: (Number(x.product.price) || 0) * (Number(x.qty) || 1),
+    qty: x.qty,
   }));
 
-  if (!items.length) return toast("Carrito vacío");
-
-  const { total } = countsAndTotals();
-  const totalNum = Number(total) || 0;
-
-  // UI: bloquear botón mientras procesa
-  btn.setAttribute("aria-disabled", "true");
-  btn.style.pointerEvents = "none";
-  const prevText = btn.textContent;
-  btn.textContent = "⏳ Confirmando…";
-
   try {
-    // 2) Crear ticket_number (simple y único)
-    const ticket = "T-" + String(Date.now()).slice(-6);
+    btn.setAttribute("aria-disabled", "true");
 
-    // 3) Insert en orders (tu tabla)
-    const { data: orderRow, error: orderErr } = await sb
-      .from("orders")
-      .insert([{
-        ticket_number: ticket,
+    const r = await fetch("/api/place-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         customer_name: name,
         customer_phone: phone,
-        total: totalNum,
-        estado: "pendiente",      // según tu enum
-        // metodo_pago: null,      // déjalo null si no lo usas
-      }])
-      .select("id, ticket_number")
-      .single();
+        items,
+      }),
+    });
 
-    if (orderErr) {
-      console.error("ORDERS INSERT ERROR:", orderErr);
-      toast("Error guardando pedido (orders): " + (orderErr.message || ""));
+    const data = await r.json().catch(() => ({}));
+
+    if (!r.ok || !data?.ok) {
+      console.error("PLACE ORDER ERROR:", data);
+      toast("No se pudo confirmar: " + (data.error || "Error"));
+      btn.setAttribute("aria-disabled", "false");
       return;
     }
 
-    const orderId = orderRow.id;
-
-    // 4) Insert en order_items (tu tabla)
-    const orderItemsPayload = items.map((it) => ({
-      order_id: orderId,
-      product_id: it.product_id,
-      name: it.name,
-      price: it.price,
-      qty: it.qty,
-      line_total: it.line_total,
-    }));
-
-    const { error: itemsErr } = await sb
-      .from("order_items")
-      .insert(orderItemsPayload);
-
-    if (itemsErr) {
-      console.error("ORDER_ITEMS INSERT ERROR:", itemsErr);
-      toast("Error guardando productos (order_items): " + (itemsErr.message || ""));
-      return;
-    }
-
-    // 5) Descontar stock en products
-    // (leemos stock actual de esos productos y actualizamos)
-    const ids = [...new Set(items.map(i => i.product_id))];
-
-    const { data: prodRows, error: prodErr } = await sb
-      .from("products")
-      .select("id, stock")
-      .in("id", ids);
-
-    if (prodErr) {
-      console.error("PRODUCTS SELECT ERROR:", prodErr);
-      toast("No pude leer stock para descontar: " + (prodErr.message || ""));
-      return;
-    }
-
-    const stockMap = new Map((prodRows || []).map(r => [r.id, Number(r.stock) || 0]));
-
-    // validar otra vez antes de descontar
-    for (const it of items) {
-      const have = stockMap.get(it.product_id) ?? 0;
-      if (have < it.qty) {
-        toast(`Stock insuficiente para ${it.name}. Hay ${have}.`);
-        return;
-      }
-    }
-
-    // actualizar uno por uno (simple y claro)
-    for (const it of items) {
-      const current = stockMap.get(it.product_id) ?? 0;
-      const newStock = current - it.qty;
-
-      const { error: updErr } = await sb
-        .from("products")
-        .update({ stock: newStock })
-        .eq("id", it.product_id);
-
-      if (updErr) {
-        console.error("PRODUCT STOCK UPDATE ERROR:", updErr);
-        toast("No pude descontar stock: " + (updErr.message || ""));
-        return;
-      }
-
-      stockMap.set(it.product_id, newStock);
-    }
-
-    // 6) Limpiar carrito y redirigir
+    // ✅ limpiar carrito
     cart = {};
     saveCart();
     renderCart();
 
-    // (opcional) guarda datos para pago-ok
-    localStorage.setItem("last_order_id", orderId);
-    localStorage.setItem("last_ticket_number", orderRow.ticket_number);
+    // ✅ ir a comprobante con el order_id real
+    location.href = `./pago-ok.html?order=${encodeURIComponent(data.order_id)}`;
 
-    location.href = `./pago-ok.html?order=${encodeURIComponent(orderId)}`;
-
-  } finally {
-    // si algo falló antes del redirect, reactivar botón
-    btn.textContent = prevText;
+  } catch (err) {
+    console.error(err);
+    toast("Error de red / servidor ❌");
     btn.setAttribute("aria-disabled", "false");
-    btn.style.pointerEvents = "auto";
-    updatePayButton();
   }
 });
+
   
 
 
