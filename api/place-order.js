@@ -1,178 +1,209 @@
 // /api/place-order.js
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  { auth: { persistSession: false } }
-);
-
-function padTicket(n) {
-  return String(n).padStart(5, "0");
-}
-
-async function getNextTicketNumber() {
-  const { data, error } = await supabaseAdmin
-    .from("orders")
-    .select("ticket_number, created_at")
-    .order("created_at", { ascending: false })
-    .limit(1);
-
-  if (error) throw new Error(`No pude leer último ticket: ${error.message}`);
-
-  const last = data?.[0]?.ticket_number || "T-00000";
-  const m = String(last).match(/(\d+)$/);
-  const lastNum = m ? parseInt(m[1], 10) : 0;
-  const nextNum = lastNum + 1;
-
-  return `T-${padTicket(nextNum)}`;
-}
-
-function toDateParts(d = new Date()) {
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const HH = String(d.getHours()).padStart(2, "0");
-  const MI = String(d.getMinutes()).padStart(2, "0");
-  const SS = String(d.getSeconds()).padStart(2, "0");
-
-  return {
-    order_date: `${yyyy}-${mm}-${dd}`,
-    order_time: `${HH}:${MI}:${SS}`,
-    order_month: `${yyyy}-${mm}-01`,
-  };
-}
-
 export default async function handler(req, res) {
-  try {
-    if (req.method !== "POST") {
-      return res.status(405).json({ ok: false, error: "Method not allowed" });
-    }
+  if (req.method !== "POST") {
+    return res.status(405).json({ ok: false, error: "Method not allowed" });
+  }
 
-    if (!process.env.SUPABASE_URL) {
-      return res.status(500).json({ ok: false, error: "Missing SUPABASE_URL" });
-    }
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      return res.status(500).json({ ok: false, error: "Missing SUPABASE_SERVICE_ROLE_KEY" });
+  try {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !serviceKey) {
+      return res.status(500).json({
+        ok: false,
+        error: "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY",
+      });
     }
 
     const { customer, items } = req.body || {};
     const name = (customer?.name || "").trim();
     const phone = (customer?.phone || "").trim();
 
-    if (!name || !phone) return res.status(400).json({ ok: false, error: "Missing customer name/phone" });
-    if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ ok: false, error: "Empty items" });
-
-    const cleanItems = items
-      .map((it) => ({
-        product_id: String(it?.product_id || "").trim(),
-        qty: Number(it?.qty || 0),
-      }))
-      .filter((it) => it.product_id && Number.isFinite(it.qty) && it.qty > 0);
-
-    if (cleanItems.length === 0) return res.status(400).json({ ok: false, error: "No valid items" });
-
-    const productIds = [...new Set(cleanItems.map((x) => x.product_id))];
-
-    // Cargar productos reales (precio/stock) desde DB
-    const { data: products, error: prodErr } = await supabaseAdmin
-      .from("products")
-      .select("id, name, price, stock")
-      .in("id", productIds);
-
-    if (prodErr) {
-      return res.status(500).json({ ok: false, error: "DB error reading products", details: prodErr.message });
+    if (!name || !phone) {
+      return res.status(400).json({ ok: false, error: "Missing customer data" });
+    }
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ ok: false, error: "Empty items" });
     }
 
-    const byId = new Map((products || []).map((p) => [String(p.id), p]));
+    // Normalizar items
+    const normItems = items
+      .map((it) => ({
+        product_id: String(it.product_id || "").trim(),
+        qty: Number(it.qty) || 0,
+      }))
+      .filter((it) => it.product_id && it.qty > 0);
 
-    // Validar existencias y total
-    let total = 0;
-    const orderItemsRows = cleanItems.map((it) => {
-      const p = byId.get(it.product_id);
-      if (!p) throw new Error(`Producto no existe: ${it.product_id}`);
+    if (normItems.length === 0) {
+      return res.status(400).json({ ok: false, error: "Invalid items" });
+    }
 
-      const price = Number(p.price) || 0;
-      const have = Number(p.stock) || 0;
+    // 1) Leer productos desde Supabase para validar stock + precio real
+    const ids = [...new Set(normItems.map((i) => i.product_id))];
+    const inList = ids.map((id) => `"${id}"`).join(",");
 
-      if (it.qty > have) {
-        throw new Error(`Stock insuficiente: ${p.name}. Pedido=${it.qty}, Stock=${have}`);
+    const productsRes = await fetch(
+      `${supabaseUrl}/rest/v1/products?select=id,name,price,stock&id=in.(${inList})`,
+      {
+        headers: {
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+        },
       }
+    );
 
-      const line_total = +(price * it.qty).toFixed(2);
+    if (!productsRes.ok) {
+      const raw = await productsRes.text();
+      return res.status(500).json({ ok: false, error: "Products fetch failed", details: raw });
+    }
+
+    const products = await productsRes.json();
+    const byId = new Map(products.map((p) => [String(p.id), p]));
+
+    // 2) Validar stock y calcular total
+    const problems = [];
+    let total = 0;
+
+    const enriched = normItems.map((it) => {
+      const p = byId.get(it.product_id);
+      if (!p) {
+        problems.push({ product_id: it.product_id, reason: "not_found" });
+        return null;
+      }
+      const have = Number(p.stock) || 0;
+      if (have < it.qty) {
+        problems.push({
+          product_id: it.product_id,
+          name: p.name,
+          available: have,
+          requested: it.qty,
+          reason: "insufficient_stock",
+        });
+        return null;
+      }
+      const price = Number(p.price) || 0;
+      const line_total = price * it.qty;
       total += line_total;
 
       return {
         product_id: it.product_id,
+        qty: it.qty,
         name: p.name,
         price,
-        qty: it.qty,
         line_total,
+        new_stock: have - it.qty,
       };
+    }).filter(Boolean);
+
+    if (problems.length) {
+      return res.status(409).json({ ok: false, error: "Stock insuficiente", problems });
+    }
+
+    if (!(total > 0)) {
+      return res.status(400).json({ ok: false, error: "Invalid total" });
+    }
+
+    // 3) Crear ticket_number
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    const ticket_number = `T-${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(
+      now.getHours()
+    )}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+    // 4) Insert en orders (tu tabla)
+    const ordersInsertRes = await fetch(`${supabaseUrl}/rest/v1/orders`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify([
+        {
+          ticket_number,
+          customer_name: name,
+          customer_phone: phone,
+          total,
+          // si en tu tabla estos campos pueden ir NULL, puedes dejarlos fuera
+          estado: "pendiente", // según tu enum/valor actual
+          // metodo_pago: null,
+        },
+      ]),
     });
 
-    total = +total.toFixed(2);
-
-    // Crear order
-    const ticket_number = await getNextTicketNumber();
-    const parts = toDateParts(new Date());
-
-    const { data: orderInserted, error: orderErr } = await supabaseAdmin
-      .from("orders")
-      .insert({
-        ticket_number,
-        customer_name: name,
-        customer_phone: phone,
-        total,
-        estado: "pendiente",
-        metodo_pago: null,
-        order_date: parts.order_date,
-        order_time: parts.order_time,
-        order_month: parts.order_month,
-      })
-      .select("*")
-      .single();
-
-    if (orderErr) {
-      return res.status(500).json({ ok: false, error: "DB error inserting order", details: orderErr.message });
+    if (!ordersInsertRes.ok) {
+      const raw = await ordersInsertRes.text();
+      return res.status(500).json({ ok: false, error: "Insert orders failed", details: raw });
     }
 
-    // Insertar order_items
-    const rows = orderItemsRows.map((r) => ({ order_id: orderInserted.id, ...r }));
-
-    const { error: itemsErr } = await supabaseAdmin.from("order_items").insert(rows);
-
-    if (itemsErr) {
-      // rollback suave
-      await supabaseAdmin.from("orders").delete().eq("id", orderInserted.id);
-      return res.status(500).json({ ok: false, error: "DB error inserting order_items", details: itemsErr.message });
+    const [order] = await ordersInsertRes.json();
+    const orderId = order?.id;
+    if (!orderId) {
+      return res.status(500).json({ ok: false, error: "Order insert returned no id" });
     }
 
-    // Descontar stock
-    for (const it of cleanItems) {
-      const p = byId.get(it.product_id);
-      const newStock = Math.max(0, (Number(p.stock) || 0) - it.qty);
+    // 5) Insert en order_items (tu tabla)
+    const orderItemsPayload = enriched.map((x) => ({
+      order_id: orderId,
+      product_id: x.product_id,
+      name: x.name,
+      price: x.price,
+      qty: x.qty,
+      line_total: x.line_total,
+    }));
 
-      const { error: stErr } = await supabaseAdmin
-        .from("products")
-        .update({ stock: newStock })
-        .eq("id", it.product_id);
+    const itemsInsertRes = await fetch(`${supabaseUrl}/rest/v1/order_items`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify(orderItemsPayload),
+    });
 
-      if (stErr) console.warn("Stock update failed:", it.product_id, stErr.message);
+    if (!itemsInsertRes.ok) {
+      const raw = await itemsInsertRes.text();
+      return res.status(500).json({ ok: false, error: "Insert order_items failed", details: raw });
+    }
+
+    // 6) Descontar stock (simple, sin SQL extra)
+    for (const x of enriched) {
+      const upd = await fetch(`${supabaseUrl}/rest/v1/products?id=eq.${encodeURIComponent(x.product_id)}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify({ stock: x.new_stock }),
+      });
+
+      if (!upd.ok) {
+        const raw = await upd.text();
+        // OJO: aquí ya creamos pedido; devolvemos error informando (para que lo veas)
+        return res.status(500).json({
+          ok: false,
+          error: "Stock update failed (order created)",
+          details: raw,
+          order: { id: orderId, ticket_number, total },
+        });
+      }
     }
 
     return res.status(200).json({
       ok: true,
       order: {
-        id: orderInserted.id,
-        ticket_number: orderInserted.ticket_number,
-        total: orderInserted.total,
-        estado: orderInserted.estado,
+        id: orderId,
+        ticket_number,
+        total,
       },
     });
-  } catch (e) {
-    console.error("PLACE-ORDER FATAL:", e);
-    return res.status(500).json({ ok: false, error: "Server error", details: e?.message || String(e) });
+  } catch (err) {
+    console.error("PLACE ORDER FATAL:", err);
+    return res.status(500).json({ ok: false, error: "Server error", details: String(err?.message || err) });
   }
 }
-
