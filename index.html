@@ -696,6 +696,49 @@ html{ scroll-behavior:smooth; }
 </footer>
 
 
+
+
+
+
+
+<!-- ✅ MODAL TIPO INSTAGRAM -->
+<div id="igModal" class="igModal" aria-hidden="true">
+  <div class="igBackdrop" data-close></div>
+
+  <div class="igSheet" role="dialog" aria-modal="true" aria-label="Detalle del producto">
+    <button class="igClose" type="button" data-close aria-label="Cerrar">✕</button>
+
+    <div class="igMedia">
+      <button class="igNav left" type="button" id="igPrev" aria-label="Anterior">‹</button>
+      <img id="igImg" alt="">
+      <button class="igNav right" type="button" id="igNext" aria-label="Siguiente">›</button>
+    </div>
+
+    <div class="igInfo">
+      <div class="igTag" id="igCat"></div>
+      <h3 class="igTitle" id="igName"></h3>
+      <p class="igDesc" id="igDesc"></p>
+
+      <div class="igMeta">
+        <div class="igPrice" id="igPrice"></div>
+        <div class="igStock" id="igStock"></div>
+      </div>
+
+      <button class="igBtn" id="igAddBtn" type="button">Añadir al carrito</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+  
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   
 <script>
@@ -1055,6 +1098,13 @@ async function validateCartBeforePay() {
 
 // ✅ MODAL tipo Instagram para productos
 const igModal = document.getElementById("igModal");
+
+if (!igModal) {
+  console.warn("igModal no existe en el DOM todavía");
+}
+
+
+  
 const igImg   = document.getElementById("igImg");
 const igName  = document.getElementById("igName");
 const igCat   = document.getElementById("igCat");
@@ -1126,7 +1176,7 @@ function closeIgModal(){
 }
 
 // cerrar al click fuera o en X
-igModal.addEventListener("click", (e) => {
+igModal?.addEventListener("click", (e) => {
   if (e.target?.dataset?.close !== undefined) closeIgModal();
 });
 
@@ -1555,41 +1605,5 @@ if (phoneInput) {
 
 
 
-
-
-
-<!-- ✅ MODAL TIPO INSTAGRAM -->
-<div id="igModal" class="igModal" aria-hidden="true">
-  <div class="igBackdrop" data-close></div>
-
-  <div class="igSheet" role="dialog" aria-modal="true" aria-label="Detalle del producto">
-    <button class="igClose" type="button" data-close aria-label="Cerrar">✕</button>
-
-    <div class="igMedia">
-      <button class="igNav left" type="button" id="igPrev" aria-label="Anterior">‹</button>
-      <img id="igImg" alt="">
-      <button class="igNav right" type="button" id="igNext" aria-label="Siguiente">›</button>
-    </div>
-
-    <div class="igInfo">
-      <div class="igTag" id="igCat"></div>
-      <h3 class="igTitle" id="igName"></h3>
-      <p class="igDesc" id="igDesc"></p>
-
-      <div class="igMeta">
-        <div class="igPrice" id="igPrice"></div>
-        <div class="igStock" id="igStock"></div>
-      </div>
-
-      <button class="igBtn" id="igAddBtn" type="button">Añadir al carrito</button>
-    </div>
-  </div>
-</div>
-
-
-  
-
-
-  
 </body>
 </html>
