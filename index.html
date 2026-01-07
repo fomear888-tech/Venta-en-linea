@@ -75,6 +75,10 @@
 @media (max-width: 920px){.grid{grid-template-columns:1fr}}
     @media (max-width: 920px){main .grid{grid-template-columns:1fr}}
 
+    .grid.onecol{
+  grid-template-columns: 1fr !important;
+}
+
     /* ✅ “CAJAS” TIPO PANEL PARA CATALOGO Y CARRITO */
     .panel{
   border:1px solid var(--border);
@@ -768,7 +772,7 @@ html{ scroll-behavior:smooth; }
     <button class="backBtn" id="backHomeFromProducts">← Volver</button>
   </div>
 
-  <div class="grid">
+  <div class="grid onecol">
     <!-- ✅ PANEL CATALOGO -->
     <section class="panel" aria-label="Catálogo">
       <h2>Catálogo</h2>
