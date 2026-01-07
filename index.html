@@ -449,14 +449,16 @@ html{ scroll-behavior:smooth; }
 
 @media (max-width: 860px){
   .igSheet{
-    top:auto; bottom:12px;
-    transform:translate(-50%,0);
+    top:50%;                       /* 👈 lo centramos vertical */
+    bottom:auto;
+    transform:translate(-50%,-55%);
     grid-template-columns:1fr;
-    width:min(560px, 96vw);
-    max-height:88vh;
+    width:min(560px, 94vw);
+    max-height:85vh;               /* un pelín más compacto */
     border-radius:22px;
   }
 }
+
 
 .igClose{
   position:absolute; right:12px; top:12px;
