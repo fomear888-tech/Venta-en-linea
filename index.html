@@ -629,16 +629,6 @@ async function showAdminPanel(){
   }
 
 
-  /*forza a usar solo numeros*/
-
-const phoneInput = document.getElementById("customerPhone");
-
-if (phoneInput) {
-  phoneInput.addEventListener("input", () => {
-    phoneInput.value = phoneInput.value.replace(/\D+/g, "");
-  });
-}
-
   
   
 
@@ -1307,7 +1297,16 @@ try { data = raw ? JSON.parse(raw) : {}; } catch { data = { raw }; }
 });
 
 
-  
+
+    /*forza a usar solo numeros*/
+
+const phoneInput = document.getElementById("customerPhone");
+
+if (phoneInput) {
+  phoneInput.addEventListener("input", () => {
+    phoneInput.value = phoneInput.value.replace(/\D+/g, "");
+  });
+}
 
 
 });
