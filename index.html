@@ -734,6 +734,33 @@ html{ scroll-behavior:smooth; }
 
 
 
+    /* 📱 Buscador expandido en móvil */
+@media (max-width: 600px){
+  .top.search-active .search{
+    flex: 1;
+  }
+
+  .top.search-active #cartCount{
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    margin: 0;
+  }
+
+  .search{
+    transition: flex .25s ease;
+  }
+
+  #cartCount{
+    transition: opacity .2s ease, width .2s ease;
+  }
+}
+
+
+
+
+
+    
     
 
 
@@ -2063,6 +2090,24 @@ window.addEventListener("popstate", (e) => {
 window.addEventListener("DOMContentLoaded", async () => {
   
   qEl.addEventListener("input", renderProducts);
+
+
+const topBar = document.querySelector(".top");
+
+// cuando el buscador recibe foco
+qEl.addEventListener("focus", () => {
+  if (window.innerWidth <= 600) {
+    topBar.classList.add("search-active");
+  }
+});
+
+// cuando pierde foco
+qEl.addEventListener("blur", () => {
+  topBar.classList.remove("search-active");
+});
+
+
+  
   document.getElementById("resetBtn")?.addEventListener("click", clearCart);
 
 
