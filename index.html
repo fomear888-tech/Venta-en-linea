@@ -701,11 +701,35 @@ html{ scroll-behavior:smooth; }
         <select id="adminProduct" style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;"></select>
       </div>
 
-      <div style="display:grid;gap:10px;">
-        <label class="muted">Imagen (JPG/PNG/WebP)</label>
-        <input id="adminFile" type="file" accept="image/*"
-          style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;">
-      </div>
+      
+
+
+
+
+
+  <div style="display:grid;gap:10px;">
+  <label class="muted">Foto del producto</label>
+  <select id="adminImgSlot"
+    style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;">
+    <option value="img">Foto 1 (principal)</option>
+    <option value="img2">Foto 2</option>
+    <option value="img3">Foto 3</option>
+    <option value="img4">Foto 4</option>
+    <option value="img5">Foto 5</option>
+  </select>
+</div>
+
+<div style="display:grid;gap:10px;">
+  <label class="muted">Archivo (JPG/PNG/WebP)</label>
+  <input id="adminFile" type="file" accept="image/*"
+    style="padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:#eaf0ff;outline:0;">
+</div>
+
+
+
+
+
+  
 
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn" id="adminUploadBtn">Subir y asignar</button>
