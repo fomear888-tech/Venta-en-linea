@@ -538,6 +538,33 @@ html{ scroll-behavior:smooth; }
 
 
 
+/* ✅ Puntitos tipo Instagram */
+.igDots{
+  display:flex;
+  justify-content:center;
+  gap:6px;
+  padding:8px 0 4px;
+}
+
+.igDot{
+  width:7px;
+  height:7px;
+  border-radius:999px;
+  background:#d1d5db; /* gris claro */
+  transition: background .2s ease, transform .2s ease;
+}
+
+.igDot.active{
+  background:#10b981; /* tu verde */
+  transform: scale(1.2);
+}
+
+
+
+    
+
+
+
     
   </style>
 </head>
@@ -785,6 +812,13 @@ html{ scroll-behavior:smooth; }
       <img id="igImg" alt="">
       <button class="igNav right" type="button" id="igNext" aria-label="Siguiente">›</button>
     </div>
+
+
+    
+<div class="igDots" id="igDots"></div>
+
+
+    
 
     <div class="igInfo">
       <div class="igTag" id="igCat"></div>
@@ -1196,6 +1230,7 @@ if (!igModal) {
 
   
 const igImg   = document.getElementById("igImg");
+const igDots  = document.getElementById("igDots");
 const igName  = document.getElementById("igName");
 const igCat   = document.getElementById("igCat");
 const igDesc  = document.getElementById("igDesc");
@@ -1222,6 +1257,27 @@ function getImages(p){
 
 
 
+
+  function renderDots(total, activeIndex){
+  if(!igDots) return;
+
+  // Si solo hay 1 imagen, no mostramos puntitos
+  if(total <= 1){
+    igDots.innerHTML = "";
+    return;
+  }
+
+  igDots.innerHTML = "";
+  for(let i = 0; i < total; i++){
+    const dot = document.createElement("span");
+    dot.className = "igDot" + (i === activeIndex ? " active" : "");
+    igDots.appendChild(dot);
+  }
+}
+
+
+
+
   
 
 function openIgModal(productId){
@@ -1233,6 +1289,7 @@ function openIgModal(productId){
 
   const imgs = getImages(p);
   igImg.src = imgs[igIndex];
+  renderDots(imgs.length, igIndex);
   igImg.alt = p.name;
 
   igName.textContent = p.name;
@@ -1258,10 +1315,12 @@ function openIgModal(productId){
   igPrev.onclick = () => {
     igIndex = (igIndex - 1 + imgs.length) % imgs.length;
     igImg.src = imgs[igIndex];
+    renderDots(imgs.length, igIndex);
   };
   igNext.onclick = () => {
     igIndex = (igIndex + 1) % imgs.length;
     igImg.src = imgs[igIndex];
+    renderDots(imgs.length, igIndex);
   };
 
   igModal.classList.add("open");
@@ -1307,6 +1366,7 @@ function openIgModal(productId){
     }
 
     igImg.src = imgs2[igIndex];
+    renderDots(imgs2.length, igIndex);
   };
 
   // Guardamos handlers en el modal para poder quitarlos al cerrar
