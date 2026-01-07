@@ -469,6 +469,18 @@ html{ scroll-behavior:smooth; }
   height:100%;
   object-fit:cover;
   display:block;
+
+
+
+  touch-action: pan-y; /* permite scroll vertical, pero swipe horizontal funciona */
+  user-select: none;
+  -webkit-user-drag: none;
+
+
+
+
+
+  
 }
 
 .igNav{
@@ -1255,11 +1267,79 @@ function openIgModal(productId){
   igModal.classList.add("open");
   igModal.setAttribute("aria-hidden","false");
   document.body.style.overflow = "hidden"; // bloquea scroll atrás
+
+
+
+
+  // ✅ SWIPE en móvil (tipo Instagram)
+  let startX = 0;
+  let startY = 0;
+
+  const onTouchStart = (e) => {
+    const t = e.touches?.[0];
+    if (!t) return;
+    startX = t.clientX;
+    startY = t.clientY;
+  };
+
+  const onTouchEnd = (e) => {
+    const t = e.changedTouches?.[0];
+    if (!t) return;
+
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+
+    // Si el gesto fue más vertical que horizontal, lo ignoramos (para permitir scroll)
+    if (Math.abs(dy) > Math.abs(dx)) return;
+
+    // Umbral (distancia mínima para considerar swipe)
+    if (Math.abs(dx) < 35) return;
+
+    const imgs2 = getImages(igCurrent).filter(Boolean);
+    if (imgs2.length <= 1) return;
+
+    if (dx < 0) {
+      // swipe izquierda => siguiente
+      igIndex = (igIndex + 1) % imgs2.length;
+    } else {
+      // swipe derecha => anterior
+      igIndex = (igIndex - 1 + imgs2.length) % imgs2.length;
+    }
+
+    igImg.src = imgs2[igIndex];
+  };
+
+  // Guardamos handlers en el modal para poder quitarlos al cerrar
+  igModal._touchStart = onTouchStart;
+  igModal._touchEnd = onTouchEnd;
+
+  igImg.addEventListener("touchstart", onTouchStart, { passive: true });
+  igImg.addEventListener("touchend", onTouchEnd, { passive: true });
+
+  
+
+
+
+
+  
 }
 
 function closeIgModal(){
   igModal.classList.remove("open");
   igModal.setAttribute("aria-hidden","true");
+
+
+
+
+  // ✅ Quitar swipe listeners al cerrar
+  if (igModal?._touchStart) igImg.removeEventListener("touchstart", igModal._touchStart);
+  if (igModal?._touchEnd) igImg.removeEventListener("touchend", igModal._touchEnd);
+  igModal._touchStart = null;
+  igModal._touchEnd = null;
+
+
+
+  
   document.body.style.overflow = ""; // devuelve scroll
 }
 
