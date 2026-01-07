@@ -91,6 +91,42 @@
   box-shadow: 0 6px 18px rgba(0,0,0,.04);
 }
 
+
+
+
+/* ✅ Cards clickeables (tipo “objeto tocable”) */
+.card{
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .15s ease, border-color .15s ease;
+}
+
+.card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(0,0,0,.10);
+  border-color: rgba(16,185,129,.28);
+}
+
+.card:active{
+  transform: translateY(0px) scale(.99);
+}
+
+/* ✅ En móvil no hay hover real; igual se ve bien */
+@media (hover: none){
+  .card:hover{ transform:none; box-shadow: 0 6px 18px rgba(0,0,0,.04); }
+}
+
+
+
+
+    /*para resaltar*/
+
+.card .btn{
+  cursor: pointer;
+}
+
+
+    
+
     /* ✅ GRID DE PRODUCTOS (3 columnas / 2 / 1 según pantalla) */
     .products{display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:12px}
     @media (max-width: 920px){.products{grid-template-columns:repeat(2, minmax(0,1fr))}}
