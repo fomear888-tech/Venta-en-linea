@@ -449,15 +449,22 @@ html{ scroll-behavior:smooth; }
 
 @media (max-width: 860px){
   .igSheet{
-    top:50%;                       /* 👈 lo centramos vertical */
-    bottom:auto;
-    transform:translate(-50%,-55%);
-    grid-template-columns:1fr;
-    width:min(560px, 94vw);
-    max-height:85vh;               /* un pelín más compacto */
-    border-radius:22px;
+    display:flex;              /* 👈 en móvil mejor que grid */
+    flex-direction:column;
+    height: min(85vh, 720px);  /* 👈 alto fijo del modal */
+  }
+
+  .igMedia{
+    flex: 0 0 auto;
+    height: 320px;             /* ya lo tenías, lo respetamos */
+  }
+
+  .igInfo{
+    flex: 1 1 auto;            /* 👈 ocupa el resto */
+    min-height: 0;             /* 👈 CLAVE para que el overflow funcione en flex */
   }
 }
+
 
 
 .igClose{
@@ -577,7 +584,14 @@ html{ scroll-behavior:smooth; }
 .igNav.left{ left:10px; }
 .igNav.right{ right:10px; }
 
-.igInfo{ padding:16px 16px 18px; overflow:auto; }
+.igInfo{
+  padding:16px 16px 18px;
+  overflow:auto;
+  -webkit-overflow-scrolling: touch; /* 👈 scroll suave en móvil */
+  overscroll-behavior: contain;      /* 👈 evita “arrastrar” la página detrás */
+}
+
+    
 .igTag{
   display:inline-flex; align-items:center;
   font-size:12px;
