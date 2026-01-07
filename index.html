@@ -952,6 +952,17 @@ html{ scroll-behavior:smooth; }
 
 
 
+<!-- ✅ ZOOM FULLSCREEN -->
+<div id="igZoom" class="igZoom" aria-hidden="true">
+  <div class="igZoomBg" data-zoom-close></div>
+  <button class="igZoomClose" type="button" data-zoom-close aria-label="Cerrar">✕</button>
+  <img id="igZoomImg" class="igZoomImg" alt="">
+</div>
+  
+
+  
+
+
 
 
   
@@ -1351,6 +1362,51 @@ const igAddBtn = document.getElementById("igAddBtn");
 const igPrev = document.getElementById("igPrev");
 const igNext = document.getElementById("igNext");
 
+
+
+
+// ✅ Zoom fullscreen para la imagen del modal (solo se configura UNA vez)
+const igZoom = document.getElementById("igZoom");
+const igZoomImg = document.getElementById("igZoomImg");
+
+function openZoom(src, alt=""){
+  if(!igZoom || !igZoomImg) return;
+  igZoomImg.src = src;
+  igZoomImg.alt = alt;
+  igZoom.classList.add("open");
+  igZoom.setAttribute("aria-hidden","false");
+}
+
+function closeZoom(){
+  if(!igZoom || !igZoomImg) return;
+  igZoom.classList.remove("open");
+  igZoom.setAttribute("aria-hidden","true");
+  igZoomImg.src = "";
+}
+
+// click en la imagen principal del modal → abre zoom
+igImg?.addEventListener("click", () => {
+  if (!igImg?.src) return;
+  openZoom(igImg.src, igImg.alt || "");
+});
+
+// cerrar tocando fondo o X
+igZoom?.addEventListener("click", (e) => {
+  if (e.target?.dataset?.zoomClose !== undefined) closeZoom();
+});
+
+// cerrar con ESC (solo el zoom)
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && igZoom?.classList.contains("open")) closeZoom();
+});
+
+
+
+
+
+
+  
+
 let igCurrent = null;
 let igIndex = 0;
 
@@ -1511,45 +1567,6 @@ if (d && d.toUpperCase() !== "EMPTY") {
 function closeIgModal(){
   igModal.classList.remove("open");
   igModal.setAttribute("aria-hidden","true");
-
-
-
-
-
-
-// ✅ Zoom fullscreen para la imagen del modal
-const igZoom = document.getElementById("igZoom");
-const igZoomImg = document.getElementById("igZoomImg");
-
-function openZoom(src, alt=""){
-  if(!igZoom || !igZoomImg) return;
-  igZoomImg.src = src;
-  igZoomImg.alt = alt;
-  igZoom.classList.add("open");
-  igZoom.setAttribute("aria-hidden","false");
-}
-
-function closeZoom(){
-  if(!igZoom || !igZoomImg) return;
-  igZoom.classList.remove("open");
-  igZoom.setAttribute("aria-hidden","true");
-  igZoomImg.src = "";
-}
-
-// click en la imagen principal del modal → abre zoom
-igImg?.addEventListener("click", () => {
-  openZoom(igImg.src, igImg.alt || "");
-});
-
-// cerrar tocando fondo o X
-igZoom?.addEventListener("click", (e) => {
-  if (e.target?.dataset?.zoomClose !== undefined) closeZoom();
-});
-
-// cerrar con ESC
-window.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && igZoom?.classList.contains("open")) closeZoom();
-});
 
 
 
@@ -1999,13 +2016,6 @@ if (phoneInput) {
   
 </script>
 
-
-<!-- ✅ ZOOM FULLSCREEN -->
-<div id="igZoom" class="igZoom" aria-hidden="true">
-  <div class="igZoomBg" data-zoom-close></div>
-  <button class="igZoomClose" type="button" data-zoom-close aria-label="Cerrar">✕</button>
-  <img id="igZoomImg" class="igZoomImg" alt="">
-</div>
 
   
 
