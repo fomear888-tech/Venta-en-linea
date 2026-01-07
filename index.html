@@ -334,6 +334,31 @@ html{ scroll-behavior:smooth; }
   background:#fff;
 }
 
+
+
+    /* ✨ Inputs bonitos para checkout */
+.checkout-input{
+  width: 100%;
+  padding: 14px 16px;          /* aire interno */
+  font-size: 15px;             /* letra más cómoda */
+  border-radius: 14px;         /* esquinas suaves */
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--txt);
+  line-height: 1.4;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.checkout-input::placeholder{
+  color: var(--muted);
+}
+
+/* efecto foco (cuando escribes) */
+.checkout-input:focus{
+  outline: none;
+  border-color: rgba(16,185,129,.55);
+  box-shadow: 0 0 0 3px rgba(16,185,129,.15);
+}
     
     
   </style>
@@ -454,8 +479,8 @@ html{ scroll-behavior:smooth; }
           <div class="line grand"><span>Total</span><span id="total">0,00 €</span></div>
 
           <div style="display:grid; gap:10px; margin:12px 0;">
-            <input id="customerName" name="customerName" type="text" autocomplete="name" placeholder="Nombre y apellidos">
-            <input id="customerPhone" name="customerPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Teléfono">
+            <input id="customerName" class="checkout-input" name="customerName" type="text" autocomplete="name" placeholder="Nombre y apellidos">
+            <input id="customerPhone" class="checkout-input" name="customerPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Teléfono">
           </div>
 
           <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
