@@ -1897,6 +1897,12 @@ function showHome(){
 
   
   window.scrollTo({ top: 0, behavior: "smooth" });
+
+
+setRoute("home", { replace: true });
+
+
+  
 }
 
 document.getElementById("servicesBlock")?.addEventListener("click", () => {
@@ -1923,6 +1929,10 @@ document.getElementById("productsBlock")?.addEventListener("click", () => {
   document.getElementById("catalogo").scrollIntoView({ behavior: "smooth" });
 });
 
+  
+  setRoute("catalog");
+
+
 // ✅ Botones volver
 document.getElementById("backHomeFromServices")?.addEventListener("click", showHome);
 document.getElementById("backHomeFromProducts")?.addEventListener("click", showHome);
@@ -1934,6 +1944,56 @@ document.getElementById("backHomeFromProducts")?.addEventListener("click", showH
 
 
 
+// ====== HISTORIAL: soportar botón ATRÁS del navegador ======
+function setRoute(route, { replace = false } = {}) {
+  const url = new URL(location.href);
+  url.searchParams.set("view", route);
+
+  if (replace) history.replaceState({ view: route }, "", url);
+  else history.pushState({ view: route }, "", url);
+}
+
+function getRoute() {
+  const v = new URLSearchParams(location.search).get("view");
+  return v || "home";
+}
+
+function applyRoute(route, { fromPop = false } = {}) {
+  if (route === "cart") {
+    showCart();
+  } else if (route === "catalog") {
+    // si vienes desde home, asegúrate de mostrar catálogo y ocultar lo demás
+    document.getElementById("homeScreen").style.display = "none";
+    document.getElementById("servicesInfo").style.display = "none";
+    document.getElementById("catalogo").style.display = "block";
+    document.getElementById("cartView").style.display = "none";
+    setHeaderCatalogMode(true);
+  } else {
+    // home
+    showHome();
+    
+  }
+
+  // Si no viene del botón atrás, guardamos en historial
+  if (!fromPop) setRoute(route);
+}
+
+// Cuando el navegador hace ATRÁS/ADELANTE
+window.addEventListener("popstate", () => {
+  applyRoute(getRoute(), { fromPop: true });
+});
+
+
+
+
+
+
+
+
+  
+
+
+
   
  // ====== INIT ======
 window.addEventListener("DOMContentLoaded", async () => {
@@ -1941,13 +2001,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   qEl.addEventListener("input", renderProducts);
   $("#resetBtn").addEventListener("click", clearCart);
 
-  document.getElementById("cartCount")
-  ?.addEventListener("click", showCart);
+document.getElementById("cartCount")?.addEventListener("click", () => applyRoute("cart"));
+document.getElementById("backToCatalog")?.addEventListener("click", () => applyRoute("catalog"));
 
-
-
-document.getElementById("backToCatalog")
-  ?.addEventListener("click", showCatalog);
 
   
 
@@ -1981,6 +2037,9 @@ document.getElementById("backToCatalog")
 
   // ✅ al iniciar, pantalla home
   showHome();
+
+  // ✅ al iniciar, aplica la ruta guardada (si alguien recarga estando en carrito, etc.)
+applyRoute(getRoute(), { fromPop: true });
 
   // ✅ CLICK: Confirmar pedido (ya no pago)
   document.getElementById("payBtn")?.addEventListener("click", async (e) => {
