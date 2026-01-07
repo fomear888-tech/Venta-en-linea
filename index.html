@@ -360,6 +360,136 @@ html{ scroll-behavior:smooth; }
   box-shadow: 0 0 0 3px rgba(16,185,129,.15);
 }
     
+
+
+
+
+
+/* ✅ Modal tipo Instagram */
+.igModal{ position:fixed; inset:0; display:none; z-index:9999; }
+.igModal.open{ display:block; }
+
+.igBackdrop{
+  position:absolute; inset:0;
+  background:rgba(0,0,0,.55);
+  backdrop-filter: blur(6px);
+}
+
+.igSheet{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%) scale(.98);
+  width:min(920px, 94vw);
+  max-height:min(86vh, 720px);
+  background:#fff;
+  border:1px solid rgba(0,0,0,.10);
+  border-radius:22px;
+  overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.22);
+  display:grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  animation: igIn .14s ease-out;
+}
+
+@keyframes igIn{
+  from{ opacity:0; transform:translate(-50%,-48%) scale(.98); }
+  to{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+}
+
+@media (max-width: 860px){
+  .igSheet{
+    top:auto; bottom:12px;
+    transform:translate(-50%,0);
+    grid-template-columns:1fr;
+    width:min(560px, 96vw);
+    max-height:88vh;
+    border-radius:22px;
+  }
+}
+
+.igClose{
+  position:absolute; right:12px; top:12px;
+  width:40px; height:40px;
+  border-radius:999px;
+  border:1px solid rgba(0,0,0,.10);
+  background:#fff;
+  cursor:pointer;
+  font-size:18px;
+  z-index:3;
+}
+
+.igMedia{
+  background:#f3f4f6;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:260px;
+}
+
+.igMedia img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.igNav{
+  position:absolute; top:50%;
+  transform:translateY(-50%);
+  width:42px; height:42px;
+  border-radius:999px;
+  border:1px solid rgba(0,0,0,.10);
+  background:rgba(255,255,255,.85);
+  cursor:pointer;
+  font-size:26px;
+  line-height:1;
+  display:flex; align-items:center; justify-content:center;
+}
+.igNav.left{ left:10px; }
+.igNav.right{ right:10px; }
+
+.igInfo{ padding:16px 16px 18px; overflow:auto; }
+.igTag{
+  display:inline-flex; align-items:center;
+  font-size:12px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(0,0,0,.10);
+  color:#6b7280;
+}
+.igTitle{ margin:10px 0 8px; font-size:18px; }
+.igDesc{ margin:0 0 12px; color:#6b7280; line-height:1.45; font-size:13px; }
+
+.igMeta{
+  display:flex; justify-content:space-between; gap:12px;
+  align-items:center;
+  padding:12px 0;
+  border-top:1px solid rgba(0,0,0,.08);
+  border-bottom:1px solid rgba(0,0,0,.08);
+  margin-bottom:12px;
+}
+.igPrice{ font-weight:900; font-size:18px; }
+.igStock{ color:#6b7280; font-size:13px; }
+
+.igBtn{
+  width:100%;
+  padding:14px 16px;
+  border-radius:14px;
+  border:1px solid rgba(16,185,129,.35);
+  background:rgba(16,185,129,.12);
+  font-weight:900;
+  cursor:pointer;
+}
+.igBtn:hover{ filter:brightness(1.03); }
+
+
+
+
+
+
+
     
   </style>
 </head>
@@ -817,6 +947,100 @@ async function adminUploadAndAssign(){
   if (r.changed) {
     renderCart();        // repinta
     updatePayButton();   // asegura el botón pagar
+
+
+
+
+// ✅ MODAL tipo Instagram para productos
+const igModal = document.getElementById("igModal");
+const igImg   = document.getElementById("igImg");
+const igName  = document.getElementById("igName");
+const igCat   = document.getElementById("igCat");
+const igDesc  = document.getElementById("igDesc");
+const igPrice = document.getElementById("igPrice");
+const igStock = document.getElementById("igStock");
+const igAddBtn = document.getElementById("igAddBtn");
+const igPrev = document.getElementById("igPrev");
+const igNext = document.getElementById("igNext");
+
+let igCurrent = null;
+let igIndex = 0;
+
+// Si en tu BD aún no tienes varias imágenes, usamos solo p.img
+function getImages(p){
+  // si algún día guardas array: p.images => return p.images;
+  return [p.img || "img/placeholder.jpg"];
+}
+
+function openIgModal(productId){
+  const p = getProduct(productId);
+  if(!p) return;
+
+  igCurrent = p;
+  igIndex = 0;
+
+  const imgs = getImages(p);
+  igImg.src = imgs[igIndex];
+  igImg.alt = p.name;
+
+  igName.textContent = p.name;
+  igCat.textContent  = p.category || "";
+  igDesc.textContent = p.desc || "";
+  igPrice.textContent = eur(p.price);
+
+  const stock = stockFor(p.id);
+  igStock.textContent = `Stock: ${stock}`;
+
+  // Botón añadir
+  igAddBtn.onclick = () => {
+    addToCart(p.id);
+    // opcional: cerrar al añadir
+    // closeIgModal();
+  };
+
+  // Navegación (si hay 1 imagen, ocultar flechas)
+  const canNav = imgs.length > 1;
+  igPrev.style.display = canNav ? "flex" : "none";
+  igNext.style.display = canNav ? "flex" : "none";
+
+  igPrev.onclick = () => {
+    igIndex = (igIndex - 1 + imgs.length) % imgs.length;
+    igImg.src = imgs[igIndex];
+  };
+  igNext.onclick = () => {
+    igIndex = (igIndex + 1) % imgs.length;
+    igImg.src = imgs[igIndex];
+  };
+
+  igModal.classList.add("open");
+  igModal.setAttribute("aria-hidden","false");
+  document.body.style.overflow = "hidden"; // bloquea scroll atrás
+}
+
+function closeIgModal(){
+  igModal.classList.remove("open");
+  igModal.setAttribute("aria-hidden","true");
+  document.body.style.overflow = ""; // devuelve scroll
+}
+
+// cerrar al click fuera o en X
+igModal.addEventListener("click", (e) => {
+  if (e.target?.dataset?.close !== undefined) closeIgModal();
+});
+
+// cerrar con ESC
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && igModal.classList.contains("open")) closeIgModal();
+});
+
+// 👉 Enganche: abrir modal al tocar un producto
+// En renderProducts(), después de crear cada card, añade:
+// el.addEventListener('click', () => openIgModal(p.id));
+
+
+
+
+    
   }
 }
     )
@@ -956,6 +1180,18 @@ async function validateCartBeforePay() {
         </div>
       `;
       productsEl.appendChild(el);
+
+
+
+
+el.addEventListener("click", (ev) => {
+  // evita que el click del botón "Añadir" dispare doble
+  if (ev.target?.matches?.("[data-add]")) return;
+  openIgModal(p.id);
+});
+      
+
+      
     });
 
     productsEl.querySelectorAll('[data-add]').forEach(btn => {
@@ -1313,6 +1549,42 @@ if (phoneInput) {
 
   
 </script>
+
+
+
+
+
+
+<!-- ✅ MODAL TIPO INSTAGRAM -->
+<div id="igModal" class="igModal" aria-hidden="true">
+  <div class="igBackdrop" data-close></div>
+
+  <div class="igSheet" role="dialog" aria-modal="true" aria-label="Detalle del producto">
+    <button class="igClose" type="button" data-close aria-label="Cerrar">✕</button>
+
+    <div class="igMedia">
+      <button class="igNav left" type="button" id="igPrev" aria-label="Anterior">‹</button>
+      <img id="igImg" alt="">
+      <button class="igNav right" type="button" id="igNext" aria-label="Siguiente">›</button>
+    </div>
+
+    <div class="igInfo">
+      <div class="igTag" id="igCat"></div>
+      <h3 class="igTitle" id="igName"></h3>
+      <p class="igDesc" id="igDesc"></p>
+
+      <div class="igMeta">
+        <div class="igPrice" id="igPrice"></div>
+        <div class="igStock" id="igStock"></div>
+      </div>
+
+      <button class="igBtn" id="igAddBtn" type="button">Añadir al carrito</button>
+    </div>
+  </div>
+</div>
+
+
+  
 
 
   
