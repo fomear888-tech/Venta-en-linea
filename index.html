@@ -947,100 +947,7 @@ async function adminUploadAndAssign(){
   if (r.changed) {
     renderCart();        // repinta
     updatePayButton();   // asegura el botón pagar
-
-
-
-
-// ✅ MODAL tipo Instagram para productos
-const igModal = document.getElementById("igModal");
-const igImg   = document.getElementById("igImg");
-const igName  = document.getElementById("igName");
-const igCat   = document.getElementById("igCat");
-const igDesc  = document.getElementById("igDesc");
-const igPrice = document.getElementById("igPrice");
-const igStock = document.getElementById("igStock");
-const igAddBtn = document.getElementById("igAddBtn");
-const igPrev = document.getElementById("igPrev");
-const igNext = document.getElementById("igNext");
-
-let igCurrent = null;
-let igIndex = 0;
-
-// Si en tu BD aún no tienes varias imágenes, usamos solo p.img
-function getImages(p){
-  // si algún día guardas array: p.images => return p.images;
-  return [p.img || "img/placeholder.jpg"];
-}
-
-function openIgModal(productId){
-  const p = getProduct(productId);
-  if(!p) return;
-
-  igCurrent = p;
-  igIndex = 0;
-
-  const imgs = getImages(p);
-  igImg.src = imgs[igIndex];
-  igImg.alt = p.name;
-
-  igName.textContent = p.name;
-  igCat.textContent  = p.category || "";
-  igDesc.textContent = p.desc || "";
-  igPrice.textContent = eur(p.price);
-
-  const stock = stockFor(p.id);
-  igStock.textContent = `Stock: ${stock}`;
-
-  // Botón añadir
-  igAddBtn.onclick = () => {
-    addToCart(p.id);
-    // opcional: cerrar al añadir
-    // closeIgModal();
-  };
-
-  // Navegación (si hay 1 imagen, ocultar flechas)
-  const canNav = imgs.length > 1;
-  igPrev.style.display = canNav ? "flex" : "none";
-  igNext.style.display = canNav ? "flex" : "none";
-
-  igPrev.onclick = () => {
-    igIndex = (igIndex - 1 + imgs.length) % imgs.length;
-    igImg.src = imgs[igIndex];
-  };
-  igNext.onclick = () => {
-    igIndex = (igIndex + 1) % imgs.length;
-    igImg.src = imgs[igIndex];
-  };
-
-  igModal.classList.add("open");
-  igModal.setAttribute("aria-hidden","false");
-  document.body.style.overflow = "hidden"; // bloquea scroll atrás
-}
-
-function closeIgModal(){
-  igModal.classList.remove("open");
-  igModal.setAttribute("aria-hidden","true");
-  document.body.style.overflow = ""; // devuelve scroll
-}
-
-// cerrar al click fuera o en X
-igModal.addEventListener("click", (e) => {
-  if (e.target?.dataset?.close !== undefined) closeIgModal();
-});
-
-// cerrar con ESC
-window.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && igModal.classList.contains("open")) closeIgModal();
-});
-
-// 👉 Enganche: abrir modal al tocar un producto
-// En renderProducts(), después de crear cada card, añade:
-// el.addEventListener('click', () => openIgModal(p.id));
-
-
-
-
-    
+ 
   }
 }
     )
@@ -1140,6 +1047,102 @@ async function validateCartBeforePay() {
     const subtotal = items.reduce((a, x) => a + x.qty * x.product.price, 0);
     return { distinct, units, subtotal, total: subtotal };
   }
+
+
+
+
+
+
+// ✅ MODAL tipo Instagram para productos
+const igModal = document.getElementById("igModal");
+const igImg   = document.getElementById("igImg");
+const igName  = document.getElementById("igName");
+const igCat   = document.getElementById("igCat");
+const igDesc  = document.getElementById("igDesc");
+const igPrice = document.getElementById("igPrice");
+const igStock = document.getElementById("igStock");
+const igAddBtn = document.getElementById("igAddBtn");
+const igPrev = document.getElementById("igPrev");
+const igNext = document.getElementById("igNext");
+
+let igCurrent = null;
+let igIndex = 0;
+
+// Si en tu BD aún no tienes varias imágenes, usamos solo p.img
+function getImages(p){
+  // si algún día guardas array: p.images => return p.images;
+  return [p.img || "img/placeholder.jpg"];
+}
+
+function openIgModal(productId){
+  const p = getProduct(productId);
+  if(!p) return;
+
+  igCurrent = p;
+  igIndex = 0;
+
+  const imgs = getImages(p);
+  igImg.src = imgs[igIndex];
+  igImg.alt = p.name;
+
+  igName.textContent = p.name;
+  igCat.textContent  = p.category || "";
+  igDesc.textContent = p.desc || "";
+  igPrice.textContent = eur(p.price);
+
+  const stock = stockFor(p.id);
+  igStock.textContent = `Stock: ${stock}`;
+
+  // Botón añadir
+  igAddBtn.onclick = () => {
+    addToCart(p.id);
+    // opcional: cerrar al añadir
+    // closeIgModal();
+  };
+
+  // Navegación (si hay 1 imagen, ocultar flechas)
+  const canNav = imgs.length > 1;
+  igPrev.style.display = canNav ? "flex" : "none";
+  igNext.style.display = canNav ? "flex" : "none";
+
+  igPrev.onclick = () => {
+    igIndex = (igIndex - 1 + imgs.length) % imgs.length;
+    igImg.src = imgs[igIndex];
+  };
+  igNext.onclick = () => {
+    igIndex = (igIndex + 1) % imgs.length;
+    igImg.src = imgs[igIndex];
+  };
+
+  igModal.classList.add("open");
+  igModal.setAttribute("aria-hidden","false");
+  document.body.style.overflow = "hidden"; // bloquea scroll atrás
+}
+
+function closeIgModal(){
+  igModal.classList.remove("open");
+  igModal.setAttribute("aria-hidden","true");
+  document.body.style.overflow = ""; // devuelve scroll
+}
+
+// cerrar al click fuera o en X
+igModal.addEventListener("click", (e) => {
+  if (e.target?.dataset?.close !== undefined) closeIgModal();
+});
+
+// cerrar con ESC
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && igModal.classList.contains("open")) closeIgModal();
+});
+
+// 👉 Enganche: abrir modal al tocar un producto
+// En renderProducts(), después de crear cada card, añade:
+// el.addEventListener('click', () => openIgModal(p.id));
+
+  
+
+
+  
 
   // ====== RENDER ======
   function renderProducts(){
