@@ -483,18 +483,46 @@ html{ scroll-behavior:smooth; }
   
 }
 
+/* ✅ Flechas grandes estilo Amazon */
 .igNav{
-  position:absolute; top:50%;
+  position:absolute;
+  top:50%;
   transform:translateY(-50%);
-  width:42px; height:42px;
-  border-radius:999px;
-  border:1px solid rgba(0,0,0,.10);
-  background:rgba(255,255,255,.85);
+  background:none;
+  border:none;
   cursor:pointer;
-  font-size:26px;
+  font-size:64px;          /* 👈 tamaño grande */
+  font-weight:300;
+  color:white;
+  text-shadow: 0 4px 14px rgba(0,0,0,.55);
+  padding:0 14px;
   line-height:1;
-  display:flex; align-items:center; justify-content:center;
+  user-select:none;
 }
+
+/* Posición */
+.igNav.left{ left:0; }
+.igNav.right{ right:0; }
+
+/* Hover elegante */
+@media (hover:hover){
+  .igNav{
+    opacity:0;
+    transition: opacity .2s ease;
+  }
+  .igMedia:hover .igNav{
+    opacity:1;
+  }
+}
+
+/* Móvil: siempre visibles */
+@media (max-width: 860px){
+  .igNav{
+    opacity:1 !important;
+    font-size:56px;
+  }
+}
+
 .igNav.left{ left:10px; }
 .igNav.right{ right:10px; }
 
