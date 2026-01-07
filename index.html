@@ -1899,13 +1899,11 @@ function showHome(){
   window.scrollTo({ top: 0, behavior: "smooth" });
 
 
-setRoute("home", { replace: true });
-
 
   
 }
 
-document.getElementById("servicesBlock")?.addEventListener("click", () => {
+document.getElementById("servicesBlock")?.addEventListener("click", () => navigate("services"));
   document.getElementById("homeScreen").style.display = "none";
   document.getElementById("servicesInfo").style.display = "block";
   document.getElementById("catalogo").style.display = "none";
@@ -1919,7 +1917,7 @@ document.getElementById("servicesBlock")?.addEventListener("click", () => {
 
 
   
-document.getElementById("productsBlock")?.addEventListener("click", () => {
+document.getElementById("productsBlock")?.addEventListener("click", () => navigate("catalog"));
   document.getElementById("homeScreen").style.display = "none";
   document.getElementById("catalogo").style.display = "block";
   document.getElementById("servicesInfo").style.display = "none";
@@ -1930,12 +1928,11 @@ document.getElementById("productsBlock")?.addEventListener("click", () => {
 });
 
   
-  setRoute("catalog");
 
 
 // ✅ Botones volver
-document.getElementById("backHomeFromServices")?.addEventListener("click", showHome);
-document.getElementById("backHomeFromProducts")?.addEventListener("click", showHome);
+document.getElementById("backHomeFromServices")?.addEventListener("click", () => navigate("home"));
+document.getElementById("backHomeFromProducts")?.addEventListener("click", () => navigate("home"));
 
 
 
@@ -1944,45 +1941,62 @@ document.getElementById("backHomeFromProducts")?.addEventListener("click", showH
 
 
 
-// ====== HISTORIAL: soportar botón ATRÁS del navegador ======
-function setRoute(route, { replace = false } = {}) {
+
+
+// ====== ROUTER SIMPLE (HOME / SERVICES / CATALOG / CART) ======
+function getRouteFromUrl(){
+  return new URLSearchParams(location.search).get("view") || "home";
+}
+
+function writeRoute(view, { replace = false } = {}){
   const url = new URL(location.href);
-  url.searchParams.set("view", route);
-
-  if (replace) history.replaceState({ view: route }, "", url);
-  else history.pushState({ view: route }, "", url);
+  url.searchParams.set("view", view);
+  if (replace) history.replaceState({ view }, "", url);
+  else history.pushState({ view }, "", url);
 }
 
-function getRoute() {
-  const v = new URLSearchParams(location.search).get("view");
-  return v || "home";
-}
+function setView(view){
+  const home = document.getElementById("homeScreen");
+  const services = document.getElementById("servicesInfo");
+  const catalog = document.getElementById("catalogo");
+  const cartV = document.getElementById("cartView");
 
-function applyRoute(route, { fromPop = false } = {}) {
-  if (route === "cart") {
-    showCart();
-  } else if (route === "catalog") {
-    // si vienes desde home, asegúrate de mostrar catálogo y ocultar lo demás
-    document.getElementById("homeScreen").style.display = "none";
-    document.getElementById("servicesInfo").style.display = "none";
-    document.getElementById("catalogo").style.display = "block";
-    document.getElementById("cartView").style.display = "none";
+  // ✅ Apaga TODO siempre (para que jamás se mezclen)
+  if (home) home.style.display = "none";
+  if (services) services.style.display = "none";
+  if (catalog) catalog.style.display = "none";
+  if (cartV) cartV.style.display = "none";
+
+  // ✅ Enciende solo lo que toca
+  if (view === "services") {
+    if (services) services.style.display = "block";
+    setHeaderCatalogMode(false);
+  } else if (view === "catalog") {
+    if (catalog) catalog.style.display = "block";
     setHeaderCatalogMode(true);
+  } else if (view === "cart") {
+    if (cartV) cartV.style.display = "block";
+    setHeaderCatalogMode(false);
   } else {
     // home
-    showHome();
-    
+    if (home) home.style.display = "grid";
+    setHeaderCatalogMode(false);
   }
 
-  // Si no viene del botón atrás, guardamos en historial
-  if (!fromPop) setRoute(route);
+  // opcional: subir arriba siempre al cambiar de vista
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-// Cuando el navegador hace ATRÁS/ADELANTE
-window.addEventListener("popstate", () => {
-  applyRoute(getRoute(), { fromPop: true });
-});
+function navigate(view, { replace = false } = {}){
+  setView(view);
+  writeRoute(view, { replace });
+}
 
+// ✅ ATRÁS / ADELANTE del navegador
+window.addEventListener("popstate", (e) => {
+  const view = e.state?.view || getRouteFromUrl();
+  setView(view);
+});
 
 
 
@@ -2001,8 +2015,12 @@ window.addEventListener("DOMContentLoaded", async () => {
   qEl.addEventListener("input", renderProducts);
   $("#resetBtn").addEventListener("click", clearCart);
 
-document.getElementById("cartCount")?.addEventListener("click", () => applyRoute("cart"));
-document.getElementById("backToCatalog")?.addEventListener("click", () => applyRoute("catalog"));
+document.getElementById("cartCount")?.addEventListener("click", () => {
+  const header = document.getElementById("headerActions");
+  if (header?.classList.contains("hidden")) return; // 🛑 seguridad
+  navigate("cart");
+});
+document.getElementById("backToCatalog")?.addEventListener("click", () => navigate("catalog"));
 
 
   
@@ -2036,9 +2054,10 @@ document.getElementById("backToCatalog")?.addEventListener("click", () => applyR
   });
 
 
-
-  // ✅ al iniciar, aplica la ruta guardada (si alguien recarga estando en carrito, etc.)
-applyRoute(getRoute(), { fromPop: true });
+// ✅ al iniciar, pinta lo que diga la URL
+const initial = getRouteFromUrl();
+writeRoute(initial, { replace: true }); // fija state para que popstate tenga view
+setView(initial);
 
 
   
