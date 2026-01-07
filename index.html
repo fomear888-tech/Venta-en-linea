@@ -1483,8 +1483,7 @@ if (d && d.toUpperCase() !== "EMPTY") {
   // Botón añadir
   igAddBtn.onclick = () => {
     addToCart(p.id);
-    // opcional: cerrar al añadir
-    // closeIgModal();
+    closeIgModal(); // 👈 cierra la tarjetita automáticamente
   };
 
   // Navegación (si hay 1 imagen, ocultar flechas)
