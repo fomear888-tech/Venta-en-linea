@@ -2035,12 +2035,13 @@ document.getElementById("backToCatalog")?.addEventListener("click", () => applyR
     toast("Productos recargados ✅");
   });
 
-  // ✅ al iniciar, pantalla home
-  showHome();
+
 
   // ✅ al iniciar, aplica la ruta guardada (si alguien recarga estando en carrito, etc.)
 applyRoute(getRoute(), { fromPop: true });
 
+
+  
   // ✅ CLICK: Confirmar pedido (ya no pago)
   document.getElementById("payBtn")?.addEventListener("click", async (e) => {
   e.preventDefault();
