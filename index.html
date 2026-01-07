@@ -134,7 +134,17 @@
     /* ✅ GRID DE PRODUCTOS (3 columnas / 2 / 1 según pantalla) */
     .products{display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:12px}
     @media (max-width: 920px){.products{grid-template-columns:repeat(2, minmax(0,1fr))}}
-    @media (max-width: 520px){.products{grid-template-columns:1fr}}
+    @media (max-width: 520px){
+  .products{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+
+
+    @media (max-width: 520px){
+  .card{ padding:10px; }
+  .title{ font-size:13px; }
+  .desc{ font-size:11px; }
+  .btn{ padding:8px 9px; }
+}
 
 
     /* ✅ TARJETAS DE PRODUCTO + BOTONES */
