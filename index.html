@@ -672,6 +672,27 @@ html{ scroll-behavior:smooth; }
 
 
 
+
+    .panelHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:14px 14px;
+  border-bottom:1px solid var(--border);
+}
+
+.panelHead h2{
+  margin:0;
+  padding:0;            /* importante: ya no usamos padding del h2 viejo */
+  border-bottom:none;   /* importante */
+  font-size:14px;
+  letter-spacing:.25px;
+}
+
+
+    
+
     
 
 
@@ -802,9 +823,13 @@ html{ scroll-behavior:smooth; }
   </div>
 
   <aside class="panel" aria-label="Carrito" id="cartPanel">
-    <h2>Carrito</h2>
 
-    <div class="content">
+  <div class="panelHead">
+    <h2>Carrito</h2>
+    <button class="pill" id="resetBtn" title="Vaciar carrito">🧹 Vaciar</button>
+  </div>
+
+  <div class="content">
 
 
 
