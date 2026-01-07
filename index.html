@@ -594,6 +594,14 @@ html{ scroll-behavior:smooth; }
 
 
 
+
+
+    .igDesc{
+  background: #f9fafb;
+  border: 1px solid rgba(0,0,0,.08);
+  padding: 10px 12px;
+  border-radius: 14px;
+}
     
 
 
@@ -1332,7 +1340,20 @@ function openIgModal(productId){
 
   igName.textContent = p.name;
   igCat.textContent  = p.category || "";
-  igDesc.textContent = p.desc || "";
+
+  
+  const d = (p.desc || "").trim();
+
+if (d && d.toUpperCase() !== "EMPTY") {
+  igDesc.style.display = "block";
+  igDesc.textContent = d;
+} else {
+  igDesc.style.display = "none";
+  igDesc.textContent = "";
+}
+
+
+  
   igPrice.textContent = eur(p.price);
 
   const stock = stockFor(p.id);
