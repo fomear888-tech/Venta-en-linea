@@ -699,7 +699,6 @@ html{ scroll-behavior:smooth; }
           <input id="q" type="search" placeholder="Buscar productos…" autocomplete="off" />
         </div>
         <div class="pill" id="cartCount" title="Productos en el carrito">🛒 <strong>0</strong></div>
-        <button class="pill" id="resetBtn" title="Vaciar carrito">🧹 Vaciar</button>
       </div>
     </div>
   </div>
@@ -750,6 +749,20 @@ html{ scroll-behavior:smooth; }
 <section class="panel" id="servicesInfo" aria-label="Servicios">
   <h2>Servicios</h2>
   <div class="content">
+
+
+
+    <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+  <button class="pill" id="resetBtn" title="Vaciar carrito">
+    🧹 Vaciar
+  </button>
+</div>
+
+
+
+
+
+    
     <div class="backBar">
       <button class="backBtn" id="backHomeFromServices">← Volver</button>
     </div>
@@ -1989,7 +2002,8 @@ window.addEventListener("popstate", (e) => {
 window.addEventListener("DOMContentLoaded", async () => {
   
   qEl.addEventListener("input", renderProducts);
-  $("#resetBtn").addEventListener("click", clearCart);
+  document.getElementById("resetBtn")?.addEventListener("click", clearCart);
+
 
 document.getElementById("cartCount")?.addEventListener("click", () => {
   const header = document.getElementById("headerActions");
