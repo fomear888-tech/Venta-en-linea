@@ -762,7 +762,7 @@ html{ scroll-behavior:smooth; }
 
 
 
-    <div id="catalogo">
+   <div id="catalogo" style="display:none;">
 
   <div class="backBar">
     <button class="backBtn" id="backHomeFromProducts">← Volver</button>
@@ -776,9 +776,13 @@ html{ scroll-behavior:smooth; }
         <div id="products" class="products"></div>
       </div>
     </section>
+
+    <!-- (Opcional) si NO quieres carrito al lado en desktop, quítalo.
+         Si lo quieres al lado, déjalo. Si quieres solo pantalla separada, quítalo.
+         Yo lo quito para respetar tu “pantalla independiente”. -->
   </div>
 
-</div> <!-- 👈 AQUÍ CIERRA catalogo -->
+</div> <!-- /catalogo -->
 
 
 <!-- 🛒 VISTA CARRITO (pantalla independiente) -->
@@ -789,7 +793,39 @@ html{ scroll-behavior:smooth; }
   </div>
 
   <aside class="panel" aria-label="Carrito" id="cartPanel">
-    <!-- TODO tu carrito tal cual -->
+    <h2>Carrito</h2>
+
+    <div class="content">
+      <div id="cart" class="cartList"></div>
+
+      <div class="totals">
+        <div class="line">
+          <span class="muted">Productos</span>
+          <span id="itemsCount" class="muted">0</span>
+        </div>
+
+        <div class="line">
+          <span class="muted">Subtotal</span>
+          <span id="subtotal" class="muted">0,00 €</span>
+        </div>
+
+        <div class="line grand">
+          <span>Total</span>
+          <span id="total">0,00 €</span>
+        </div>
+
+        <div style="display:grid; gap:10px; margin:12px 0;">
+          <input id="customerName" class="checkout-input" name="customerName" type="text" autocomplete="name" placeholder="Nombre y apellidos">
+          <input id="customerPhone" class="checkout-input" name="customerPhone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="Teléfono" pattern="[0-9]*">
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+          <a class="btn pay" id="payBtn" href="#" role="button" aria-disabled="true">✅ Confirmar pedido</a>
+        </div>
+
+        <p class="muted" style="margin:10px 0 0">Asegúrese de ingresar los datos correctamente</p>
+      </div>
+    </div>
   </aside>
 
 </section>
@@ -1160,6 +1196,10 @@ async function adminUploadAndAssign(){
   let PRODUCTS = [];
   const productsEl = $('#products');
   const cartEl = $('#cart');
+if (!productsEl) console.warn("Falta #products en el DOM");
+if (!cartEl) console.warn("Falta #cart en el DOM");
+
+  
   const qEl = $('#q');
 
   const cartCountEl = $('#cartCount strong');
@@ -1650,6 +1690,9 @@ el.addEventListener("click", (ev) => {
   }
 
   function renderCart(){
+
+  if(!cartEl) return; // ✅ airbag: si falta #cart, no revienta el script
+    
     const items = cartItems();
     cartEl.innerHTML = '';
 
