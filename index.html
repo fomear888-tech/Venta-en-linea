@@ -1903,39 +1903,15 @@ function showHome(){
   
 }
 
+
+
+  // ✅ HOME CARDS
 document.getElementById("servicesBlock")?.addEventListener("click", () => navigate("services"));
-  document.getElementById("homeScreen").style.display = "none";
-  document.getElementById("servicesInfo").style.display = "block";
-  document.getElementById("catalogo").style.display = "none";
-
-
-  setHeaderCatalogMode(false); // 👈 ocultar acciones
-
-  
-  document.getElementById("servicesInfo").scrollIntoView({ behavior: "smooth" });
-});
-
-
-  
 document.getElementById("productsBlock")?.addEventListener("click", () => navigate("catalog"));
-  document.getElementById("homeScreen").style.display = "none";
-  document.getElementById("catalogo").style.display = "block";
-  document.getElementById("servicesInfo").style.display = "none";
-
-  setHeaderCatalogMode(true); // 👈 mostrar buscador/carrito/vaciar
-  
-  document.getElementById("catalogo").scrollIntoView({ behavior: "smooth" });
-});
-
-  
-
 
 // ✅ Botones volver
 document.getElementById("backHomeFromServices")?.addEventListener("click", () => navigate("home"));
 document.getElementById("backHomeFromProducts")?.addEventListener("click", () => navigate("home"));
-
-
-
 
 
 
