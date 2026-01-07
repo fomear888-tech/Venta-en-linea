@@ -480,7 +480,16 @@ html{ scroll-behavior:smooth; }
 
           <div style="display:grid; gap:10px; margin:12px 0;">
             <input id="customerName" class="checkout-input" name="customerName" type="text" autocomplete="name" placeholder="Nombre y apellidos">
-            <input id="customerPhone" class="checkout-input" name="customerPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Teléfono">
+            <input
+  id="customerPhone"
+  class="checkout-input"
+  name="customerPhone"
+  type="tel"
+  inputmode="numeric"
+  autocomplete="tel"
+  placeholder="Teléfono"
+  pattern="[0-9]*"
+/>
           </div>
 
           <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
