@@ -778,6 +778,19 @@ html{ scroll-behavior:smooth; }
       </div>
     </section>
 
+
+
+
+<!-- 🛒 VISTA CARRITO (pantalla independiente) -->
+<section id="cartView" style="display:none">
+
+  <div class="backBar">
+    <button class="backBtn" id="backToCatalog">← Volver al catálogo</button>
+  </div>
+
+
+    
+
     <!-- ✅ PANEL CARRITO -->
     <aside class="panel" aria-label="Carrito" id="cartPanel">
       <h2>Carrito</h2>
@@ -1834,6 +1847,24 @@ function updatePayButton(){
 }
 
 
+
+
+// ====== CAMBIO DE VISTAS: CATÁLOGO / CARRITO ======
+function showCatalog(){
+  document.getElementById("catalogo").style.display = "block";
+  document.getElementById("cartView").style.display = "none";
+  setHeaderCatalogMode(true);
+}
+
+function showCart(){
+  document.getElementById("catalogo").style.display = "none";
+  document.getElementById("cartView").style.display = "block";
+  setHeaderCatalogMode(false);
+}
+
+  
+
+
   
 
 // ✅ HOME: mostrar secciones al hacer clic
@@ -1890,9 +1921,16 @@ window.addEventListener("DOMContentLoaded", async () => {
   qEl.addEventListener("input", renderProducts);
   $("#resetBtn").addEventListener("click", clearCart);
 
-  $("#cartCount").addEventListener("click", () => {
-    $("#cartPanel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  document.getElementById("cartCount")
+  ?.addEventListener("click", showCart);
   });
+
+
+
+document.getElementById("backToCatalog")
+  ?.addEventListener("click", showCatalog);
+
+  
 
   await loadProductsFromSupabase();
   reconcileCartWithStock(false);
