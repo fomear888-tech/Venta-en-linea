@@ -769,7 +769,6 @@ html{ scroll-behavior:smooth; }
   </div>
 
   <div class="grid">
-
     <!-- ✅ PANEL CATALOGO -->
     <section class="panel" aria-label="Catálogo">
       <h2>Catálogo</h2>
@@ -777,49 +776,24 @@ html{ scroll-behavior:smooth; }
         <div id="products" class="products"></div>
       </div>
     </section>
-
   </div>
 
+</div> <!-- 👈 AQUÍ CIERRA catalogo -->
 
-    
 
-      <!-- ✅ PANEL CARRITO -->
+<!-- 🛒 VISTA CARRITO (pantalla independiente) -->
+<section id="cartView" style="display:none">
+
+  <div class="backBar">
+    <button class="backBtn" id="backToCatalog">← Volver al catálogo</button>
+  </div>
+
   <aside class="panel" aria-label="Carrito" id="cartPanel">
-    <h2>Carrito</h2>
-    <div class="content">
-      <div id="cart" class="cartList"></div>
-
-      <div class="totals">
-        <div class="line">
-          <span class="muted">Productos</span>
-          <span id="itemsCount" class="muted">0</span>
-        </div>
-        <div class="line">
-          <span class="muted">Subtotal</span>
-          <span id="subtotal" class="muted">0,00 €</span>
-        </div>
-        <div class="line grand">
-          <span>Total</span>
-          <span id="total">0,00 €</span>
-        </div>
-
-        <div style="display:grid; gap:10px; margin:12px 0;">
-          <input id="customerName" class="checkout-input" placeholder="Nombre y apellidos">
-          <input id="customerPhone" class="checkout-input" placeholder="Teléfono">
-        </div>
-
-        <div style="margin-top:12px">
-          <a class="btn pay" id="payBtn" href="#" aria-disabled="true">
-            ✅ Confirmar pedido
-          </a>
-        </div>
-
-        <p class="muted">Asegúrese de ingresar los datos correctamente</p>
-      </div>
-    </div>
+    <!-- TODO tu carrito tal cual -->
   </aside>
 
 </section>
+
 
       
 
