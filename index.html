@@ -488,12 +488,13 @@ html{ scroll-behavior:smooth; }
 
 /* ✅ Puntitos SIEMPRE en el mismo sitio */
 .igDots{
-  position:absolute;
-  left: 18px;
-  bottom: 14px;
-  display:flex;
-  gap:6px;
-  z-index:4;
+  position: absolute;
+  left: 50%;
+  bottom: 18px;          /* súbelos un poco */
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 4;
 }
 
 .igDot{
