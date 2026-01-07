@@ -538,26 +538,31 @@ html{ scroll-behavior:smooth; }
 
 
 
-/* ✅ Puntitos tipo Instagram */
+/* ✅ Puntitos tipo Instagram (sobre la imagen) */
 .igDots{
+  position:absolute;
+  left:0; right:0;
+  bottom:10px;
   display:flex;
   justify-content:center;
   gap:6px;
-  padding:8px 0 4px;
+  pointer-events:none; /* para que no estorbe el swipe/click */
 }
 
 .igDot{
   width:7px;
   height:7px;
   border-radius:999px;
-  background:#d1d5db; /* gris claro */
-  transition: background .2s ease, transform .2s ease;
+  background:rgba(255,255,255,.65); /* se ve bien sobre fotos */
+  transition: transform .2s ease, background .2s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
 }
 
 .igDot.active{
-  background:#10b981; /* tu verde */
+  background:#10b981;  /* tu verde */
   transform: scale(1.2);
 }
+
 
 
 
@@ -810,12 +815,17 @@ html{ scroll-behavior:smooth; }
     <div class="igMedia">
       <button class="igNav left" type="button" id="igPrev" aria-label="Anterior">‹</button>
       <img id="igImg" alt="">
+
+  <!-- ✅ Puntitos dentro de la imagen -->
+  <div class="igDots" id="igDots"></div>
+
+      
       <button class="igNav right" type="button" id="igNext" aria-label="Siguiente">›</button>
     </div>
 
 
     
-<div class="igDots" id="igDots"></div>
+
 
 
     
