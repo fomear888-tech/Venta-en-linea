@@ -920,17 +920,27 @@ function fillAdminProducts(){
     opt.value = p.id;
     opt.textContent = `${p.name} (${p.id})`;
     sel.appendChild(opt);
+
+
+const slotSel = document.getElementById("adminImgSlot");
+if (slotSel) slotSel.value = "img";
+    
   });
 }
 
 async function adminUploadAndAssign(){
   const status = document.getElementById('adminStatus');
   const sel = document.getElementById('adminProduct');
+  const slotSel = document.getElementById('adminImgSlot');
   const fileInput = document.getElementById('adminFile');
   const btn = document.getElementById('adminUploadBtn');
 
   if(!sel?.value) return toast("Selecciona un producto");
   const productId = sel.value;
+  const slot = (slotSel?.value || "img").trim(); // img, img2, img3, img4, img5
+
+
+  
 
   const file = fileInput?.files?.[0];
   if(!file) return toast("Selecciona una imagen");
@@ -943,7 +953,7 @@ async function adminUploadAndAssign(){
 
   try{
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-    const path = `products/${productId}.${ext}`;
+    const path = `products/${productId}_${slot}.${ext}`;
 
     const { error: upErr } = await sb.storage
       .from('product-images')
@@ -963,7 +973,7 @@ async function adminUploadAndAssign(){
 
     const { error: updErr } = await sb
       .from('products')
-      .update({ img: publicUrl })
+      .update({ [slot]: publicUrl })
       .eq('id', productId);
 
     if(updErr){
@@ -1028,6 +1038,14 @@ async function adminUploadAndAssign(){
       price: Number(row.price) || 0,
       desc: row["desc"] || "",
       img: row.img || "img/placeholder.jpg",
+
+      // Mas imagenes
+      img2: row.img2 || "",
+      img3: row.img3 || "",
+      img4: row.img4 || "",
+      img5: row.img5 || "",
+
+      
       stock: Number(row.stock) || 0
     }));
 
@@ -1178,11 +1196,21 @@ const igNext = document.getElementById("igNext");
 let igCurrent = null;
 let igIndex = 0;
 
-// Si en tu BD aún no tienes varias imágenes, usamos solo p.img
+
+
+
+
 function getImages(p){
-  // si algún día guardas array: p.images => return p.images;
-  return [p.img || "img/placeholder.jpg"];
+  const imgs = [p.img, p.img2, p.img3, p.img4, p.img5]
+    .map(x => String(x || "").trim())
+    .filter(Boolean); // quita vacíos
+
+  return imgs.length ? imgs : ["img/placeholder.jpg"];
 }
+
+
+
+  
 
 function openIgModal(productId){
   const p = getProduct(productId);
