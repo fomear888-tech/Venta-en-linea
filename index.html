@@ -703,6 +703,37 @@ html{ scroll-behavior:smooth; }
 
     
 
+
+
+    /* 📱 Móvil: buscador + carrito en una sola línea */
+@media (max-width: 520px){
+
+  .top{
+    flex-wrap: nowrap;              /* 👈 NO saltar de línea */
+    align-items: center;
+  }
+
+  .actions{
+    flex-wrap: nowrap;              /* 👈 todo en una fila */
+    width: 100%;
+    gap:8px;
+  }
+
+  .search{
+    min-width: 0;                   /* 👈 clave: permite encogerse */
+    flex: 1;                        /* ocupa todo lo posible */
+  }
+
+  #cartCount{
+    flex-shrink: 0;                 /* 👈 que el carrito NO se encoja */
+  }
+}
+
+
+
+
+
+
     
 
 
