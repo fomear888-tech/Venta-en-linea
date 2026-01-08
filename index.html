@@ -2166,6 +2166,26 @@ function navigate(view, { replace = false } = {}){
   writeRoute(view, { replace });
 }
 
+
+
+
+
+
+
+ function setActiveTab(view){
+  document.querySelectorAll(".tab").forEach(b => {
+    b.classList.toggle("active", b.dataset.view === view);
+  });
+}
+
+
+
+
+
+
+
+  
+
 // ✅ ATRÁS / ADELANTE del navegador
 window.addEventListener("popstate", (e) => {
   const view = e.state?.view || getRouteFromUrl();
@@ -2340,16 +2360,6 @@ if (phoneInput) {
 
 
 
-
-
-
-
-  function setActiveTab(view){
-  document.querySelectorAll(".tab").forEach(b => {
-    b.classList.toggle("active", b.dataset.view === view);
-  });
-}
-
 document.querySelectorAll(".tab").forEach(btn => {
   btn.addEventListener("click", async () => {
     const v = btn.dataset.view;
@@ -2366,12 +2376,6 @@ document.querySelectorAll(".tab").forEach(btn => {
     setActiveTab(v);
   });
 });
-
-
-
-
-
-
 
 
   
