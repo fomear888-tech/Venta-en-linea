@@ -789,12 +789,13 @@ a,
 
 
 
-   /* ✅ Navegación tipo Amazon (solo texto) */
+  /* ✅ Navegación tipo Amazon (fila fija debajo del header) */
 .subnav{
   display:flex;
   gap:18px;
   align-items:center;
-  padding:10px 0 2px;
+  justify-content:flex-start;     /* 👈 arranca izquierda */
+  padding:10px 0 6px;
   border-top:1px solid var(--border);
   margin-top:10px;
 }
@@ -807,39 +808,34 @@ a,
   padding:6px 0;
   cursor:pointer;
 
-  /* letra más “delgadita” y pequeñita */
-  font-size:13px;
-  font-weight:500;
-  color: var(--muted);
+  font-size:13px;                 /* 👈 más pequeñita */
+  font-weight:400;                /* 👈 más delgada */
+  color: rgba(17,24,39,.65);
 
   letter-spacing:.2px;
   line-height:1;
   position:relative;
 }
 
-/* Hover suave */
-.tablink:hover{
-  color: var(--txt);
-}
+.tablink:hover{ color: rgba(17,24,39,.90); }
 
-/* Activo = negrita + subrayado elegante */
+/* Activo = negrita + subrayado */
 .tablink.active{
-  color: var(--txt);
+  color: rgba(17,24,39,1);
   font-weight:800;
 }
 
 .tablink.active::after{
   content:"";
   position:absolute;
-  left:0;
-  right:0;
+  left:0; right:0;
   bottom:-8px;
   height:2px;
   background: rgba(16,185,129,.65);
   border-radius:999px;
 }
 
-/* 📱 Móvil: que no se rompa */
+/* 📱 móvil */
 @media (max-width:520px){
   .subnav{
     gap:14px;
@@ -868,6 +864,7 @@ a,
   <!-- ✅ CABECERA: Marca + buscador + contador de carrito + vaciar -->
 <header>
   <div class="wrap">
+
     <div class="top">
       <div class="brand">
         <img class="logoImg" src="img/logo-masenvios.png" alt="Mas Envíos">
@@ -876,27 +873,6 @@ a,
           <div class="sub">Tu servicio de confianza.</div>
         </div>
       </div>
-
-
-
-
-
-      <!-- ✅ (1) QUITA el nav de aquí dentro de .top -->
-
-<!-- ✅ (2) Pégalo JUSTO DESPUÉS del cierre de .top -->
-<div class="subnav" aria-label="Navegación secundaria">
-  <button class="tablink" data-view="home" type="button">Inicio</button>
-  <button class="tablink" data-view="services" type="button">Servicios</button>
-  <button class="tablink" data-view="catalog" type="button">Productos</button>
-</div>
-
-
-
-
-
-
-      
-
 
       
       <div class="actions" id="headerActions">
@@ -908,6 +884,21 @@ a,
         <div class="pill" id="cartCount" title="Productos en el carrito">🛒 <strong>0</strong></div>
       </div>
     </div>
+
+
+    <!-- ✅ (1) QUITA el nav de aquí dentro de .top -->
+
+<!-- ✅ (2) Pégalo JUSTO DESPUÉS del cierre de .top -->
+<div class="subnav" aria-label="Navegación secundaria">
+  <button class="tablink" data-view="home" type="button">Inicio</button>
+  <button class="tablink" data-view="services" type="button">Servicios</button>
+  <button class="tablink" data-view="catalog" type="button">Productos</button>
+</div>
+
+
+
+
+    
   </div>
 </header>
 
@@ -2389,12 +2380,11 @@ if (phoneInput) {
 
 
 document.querySelectorAll(".tablink").forEach(btn => {
-  btn.addEventListener("click", async () => {
-    const v = btn.dataset.view;
-    navigate(v);
-    setActiveTab(v);
+  btn.addEventListener("click", () => {
+    navigate(btn.dataset.view);
   });
 });
+
 
 
 
