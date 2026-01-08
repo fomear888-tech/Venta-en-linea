@@ -47,6 +47,7 @@
     .logo{width:40px;height:40px;border-radius:14px;background:radial-gradient(circle at 30% 20%, var(--accent), transparent 55%), linear-gradient(135deg,#2b2f55,#111a33); border:1px solid var(--border)}
     h1{font-size:18px;margin:0;letter-spacing:.3px}
     .sub{color:var(--muted);font-size:12px;margin-top:2px}
+    
 
     /* ✅ BUSCADOR, “PÍLDORAS” Y BOTONES DE LA CABECERA */
     .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -784,6 +785,52 @@ a,
   -webkit-tap-highlight-color: transparent;
 }
 
+
+
+
+
+    /* ✅ Pestañas superiores tipo Amazon */
+.tabs{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.tab{
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--txt);
+  cursor:pointer;
+  font-weight:800;
+  font-size:13px;
+  user-select:none;
+  transition: border-color .15s ease, transform .08s ease, box-shadow .15s ease;
+}
+
+.tab:hover{
+  border-color: rgba(16,185,129,.35);
+  box-shadow: 0 6px 18px rgba(0,0,0,.04);
+}
+
+.tab:active{ transform: translateY(1px); }
+
+.tab.active{
+  border-color: rgba(16,185,129,.55);
+  box-shadow: 0 0 0 3px rgba(16,185,129,.12);
+}
+
+/* 📱 En móvil, que no rompa la cabecera */
+@media (max-width: 520px){
+  .tabs{ width:100%; }
+  .tab{ padding:9px 10px; font-size:12px; }
+}
+
+
+
+
     
     
 
@@ -805,6 +852,25 @@ a,
           <div class="sub">Tu servicio de confianza.</div>
         </div>
       </div>
+
+
+
+
+
+      <nav class="tabs" aria-label="Navegación">
+  <button class="tab" data-view="home" type="button">Inicio</button>
+  <button class="tab" data-view="services" type="button">Servicios</button>
+  <button class="tab" data-view="catalog" type="button">Productos</button>
+  <button class="tab" data-view="cart" type="button">Carrito</button>
+</nav>
+
+
+
+
+      
+
+
+      
       <div class="actions" id="headerActions">
 
         <div class="search" role="search">
@@ -870,7 +936,7 @@ a,
     
     <div class="backBar">
       <button class="backBtn" id="backHomeFromServices">← Volver</button>
-    </div>
+  </div>
 
     <p class="empty" style="margin:0;">
       📄 Citas (Seguridad Social, SEPE, Extranjería) · 🖨️ Impresiones y fotocopias · 📩 Escaneo y envío de documentos · 💳 Recargas / accesorios.
@@ -2086,6 +2152,13 @@ function setView(view){
 
   // opcional: subir arriba siempre al cambiar de vista
   window.scrollTo({ top: 0, behavior: "smooth" });
+
+
+
+  setActiveTab(view); // 👈 añade esto
+
+
+  
 }
 
 function navigate(view, { replace = false } = {}){
@@ -2265,6 +2338,43 @@ if (phoneInput) {
   });
 }
 
+
+
+
+
+
+
+  function setActiveTab(view){
+  document.querySelectorAll(".tab").forEach(b => {
+    b.classList.toggle("active", b.dataset.view === view);
+  });
+}
+
+document.querySelectorAll(".tab").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const v = btn.dataset.view;
+
+    // Si intenta ir a carrito vacío, lo frenamos con humor 😄
+    if (v === "cart" && countsAndTotals().distinct <= 0) {
+      toast("Tu carrito está más vacío que mi nevera un domingo 😅");
+      navigate("catalog");
+      setActiveTab("catalog");
+      return;
+    }
+
+    navigate(v);
+    setActiveTab(v);
+  });
+});
+
+
+
+
+
+
+
+
+  
 
 });
 
