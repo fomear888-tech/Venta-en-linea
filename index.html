@@ -797,18 +797,53 @@ a,
   flex-wrap:wrap;
 }
 
-.tab{
-  padding:10px 12px;
-  border-radius:14px;
-  border:1px solid var(--border);
-  background:#fff;
-  color:var(--txt);
+/* ✅ NAV tipo Amazon (solo texto elegante) */
+.tabs{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  flex-wrap:wrap;
+}
+
+.tablink{
+  border:0;
+  background:transparent;
+  padding:8px 2px;
   cursor:pointer;
   font-weight:800;
-  font-size:13px;
-  user-select:none;
-  transition: border-color .15s ease, transform .08s ease, box-shadow .15s ease;
+  font-size:14px;
+  color: var(--txt);
+  letter-spacing:.2px;
+  position:relative;
+  opacity:.9;
 }
+
+.tablink:hover{
+  opacity:1;
+}
+
+.tablink.active{
+  opacity:1;
+}
+
+/* Rayita elegante del activo */
+.tablink.active::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:-6px;
+  height:3px;
+  border-radius:999px;
+  background: rgba(16,185,129,.85);
+}
+
+/* 📱 en móvil: un pelín más compacto */
+@media (max-width:520px){
+  .tabs{ gap:14px; }
+  .tablink{ font-size:13px; }
+}
+
 
 .tab:hover{
   border-color: rgba(16,185,129,.35);
@@ -858,10 +893,11 @@ a,
 
 
       <nav class="tabs" aria-label="Navegación">
-  <button class="tab" data-view="home" type="button">Inicio</button>
-  <button class="tab" data-view="services" type="button">Servicios</button>
-  <button class="tab" data-view="catalog" type="button">Productos</button>
+  <button class="tablink" data-view="home" type="button">Inicio</button>
+  <button class="tablink" data-view="services" type="button">Servicios</button>
+  <button class="tablink" data-view="catalog" type="button">Productos</button>
 </nav>
+
 
 
 
@@ -2171,8 +2207,8 @@ function navigate(view, { replace = false } = {}){
 
 
 
- function setActiveTab(view){
-  document.querySelectorAll(".tab").forEach(b => {
+function setActiveTab(view){
+  document.querySelectorAll(".tablink").forEach(b => {
     b.classList.toggle("active", b.dataset.view === view);
   });
 }
@@ -2359,14 +2395,14 @@ if (phoneInput) {
 
 
 
-document.querySelectorAll(".tab").forEach(btn => {
-  btn.addEventListener("click", async () => {
+document.querySelectorAll(".tablink").forEach(btn => {
+  btn.addEventListener("click", () => {
     const v = btn.dataset.view;
-
     navigate(v);
     setActiveTab(v);
   });
 });
+
 
 
   
