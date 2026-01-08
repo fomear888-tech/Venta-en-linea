@@ -789,78 +789,67 @@ a,
 
 
 
-    /* ✅ Pestañas superiores tipo Amazon */
-.tabs{
+   /* ✅ Navegación tipo Amazon (solo texto) */
+.subnav{
   display:flex;
-  gap:8px;
-  align-items:center;
-  flex-wrap:wrap;
-}
-
-/* ✅ NAV tipo Amazon (solo texto elegante) */
-.tabs{
-  display:flex;
-  align-items:center;
   gap:18px;
-  flex-wrap:wrap;
+  align-items:center;
+  padding:10px 0 2px;
+  border-top:1px solid var(--border);
+  margin-top:10px;
 }
 
+/* Botones como enlaces: sin caja */
 .tablink{
-  border:0;
+  appearance:none;
+  border:none;
   background:transparent;
-  padding:8px 2px;
+  padding:6px 0;
   cursor:pointer;
-  font-weight:800;
-  font-size:14px;
-  color: var(--txt);
+
+  /* letra más “delgadita” y pequeñita */
+  font-size:13px;
+  font-weight:500;
+  color: var(--muted);
+
   letter-spacing:.2px;
+  line-height:1;
   position:relative;
-  opacity:.9;
 }
 
+/* Hover suave */
 .tablink:hover{
-  opacity:1;
+  color: var(--txt);
 }
 
+/* Activo = negrita + subrayado elegante */
 .tablink.active{
-  opacity:1;
+  color: var(--txt);
+  font-weight:800;
 }
 
-/* Rayita elegante del activo */
 .tablink.active::after{
   content:"";
   position:absolute;
   left:0;
   right:0;
-  bottom:-6px;
-  height:3px;
+  bottom:-8px;
+  height:2px;
+  background: rgba(16,185,129,.65);
   border-radius:999px;
-  background: rgba(16,185,129,.85);
 }
 
-/* 📱 en móvil: un pelín más compacto */
+/* 📱 Móvil: que no se rompa */
 @media (max-width:520px){
-  .tabs{ gap:14px; }
-  .tablink{ font-size:13px; }
-}
-
-
-.tab:hover{
-  border-color: rgba(16,185,129,.35);
-  box-shadow: 0 6px 18px rgba(0,0,0,.04);
-}
-
-.tab:active{ transform: translateY(1px); }
-
-.tab.active{
-  border-color: rgba(16,185,129,.55);
-  box-shadow: 0 0 0 3px rgba(16,185,129,.12);
-}
-
-/* 📱 En móvil, que no rompa la cabecera */
-@media (max-width: 520px){
-  .tabs{ width:100%; }
-  .tab{ padding:9px 10px; font-size:12px; }
+  .subnav{
+    gap:14px;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .tablink{
+    font-size:12px;
+    white-space:nowrap;
+  }
 }
 
 
@@ -892,11 +881,15 @@ a,
 
 
 
-      <nav class="tabs" aria-label="Navegación">
+      <!-- ✅ (1) QUITA el nav de aquí dentro de .top -->
+
+<!-- ✅ (2) Pégalo JUSTO DESPUÉS del cierre de .top -->
+<div class="subnav" aria-label="Navegación secundaria">
   <button class="tablink" data-view="home" type="button">Inicio</button>
   <button class="tablink" data-view="services" type="button">Servicios</button>
   <button class="tablink" data-view="catalog" type="button">Productos</button>
-</nav>
+</div>
+
 
 
 
@@ -2396,7 +2389,7 @@ if (phoneInput) {
 
 
 document.querySelectorAll(".tablink").forEach(btn => {
-  btn.addEventListener("click", () => {
+  btn.addEventListener("click", async () => {
     const v = btn.dataset.view;
     navigate(v);
     setActiveTab(v);
