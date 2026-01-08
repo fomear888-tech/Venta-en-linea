@@ -858,6 +858,45 @@ a,
 
 
     
+
+
+
+
+    /* ✅ Mini foto dentro del carrito */
+.cartItem .topline{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.cartThumb{
+  width:64px;
+  height:64px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:#fff;
+  object-fit:cover;
+  flex:0 0 auto;
+}
+
+.cartMain{
+  flex:1;
+  min-width:0;
+}
+
+.cartItem .name{
+  margin:0 0 6px;
+  font-weight:800;
+  font-size:13px;
+}
+
+@media (max-width:520px){
+  .cartThumb{ width:54px; height:54px; border-radius:12px; }
+}
+
+
+
+
     
 
 
@@ -1929,20 +1968,31 @@ el.addEventListener("click", (ev) => {
       const el = document.createElement('div');
       el.className = 'cartItem';
       el.innerHTML = `
-        <div class="name">${escapeHtml(product.name)}</div>
-        <div class="meta">
-          <div class="muted">${escapeHtml(product.category)} · ${eur(product.price)} c/u</div>
-          <div class="muted"><strong>${eur(lineTotal)}</strong></div>
-        </div>
-        <div class="meta" style="margin-top:10px">
-          <div class="qty">
-            <button data-dec="${id}">−</button>
-            <input data-qty="${id}" inputmode="numeric" pattern="[0-9]*" value="${qty}" />
-            <button data-inc="${id}" ${qty >= stockFor(id) ? 'disabled' : ''}>+</button>
-          </div>
-          <button class="btn danger" data-rm="${id}">Quitar</button>
-        </div>
-      `;
+  <div class="topline">
+    <img class="cartThumb" src="${escapeHtml(product.img || 'img/placeholder.jpg')}" alt="${escapeHtml(product.name)}">
+    <div class="cartMain">
+      <div class="name">${escapeHtml(product.name)}</div>
+      <div class="meta">
+        <div class="muted">${escapeHtml(product.category)} · ${eur(product.price)} c/u</div>
+        <div class="muted"><strong>${eur(lineTotal)}</strong></div>
+      </div>
+    </div>
+
+    <button class="btn danger" data-rm="${id}">Quitar</button>
+  </div>
+
+  <div class="meta" style="margin-top:10px">
+    <div class="qty">
+      <button data-dec="${id}">−</button>
+      <input data-qty="${id}" inputmode="numeric" pattern="[0-9]*" value="${qty}" />
+      <button data-inc="${id}" ${qty >= stockFor(id) ? 'disabled' : ''}>+</button>
+    </div>
+  </div>
+`;
+
+
+
+      
       cartEl.appendChild(el);
     });
 
