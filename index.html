@@ -897,6 +897,33 @@ a,
 
 
 
+
+
+
+
+    /* ✅ Carrito: item clickeable pero elegante */
+.cartItem{
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+
+.cartItem:hover{
+  border-color: rgba(16,185,129,.22);
+  background: rgba(16,185,129,.03);
+}
+
+/* ✅ Pero los controles siguen siendo “controles” */
+.cartItem button,
+.cartItem input{
+  cursor: pointer;
+}
+
+
+
+
+
+
+    
     
 
 
@@ -1994,6 +2021,24 @@ el.addEventListener("click", (ev) => {
 
       
       cartEl.appendChild(el);
+
+
+
+
+      // ✅ Clic en el item del carrito => abre el mismo modal del catálogo
+el.addEventListener("click", (ev) => {
+  // Si clickeó un botón/input/enlace (Quitar, +, -, etc), NO abrir modal
+  if (ev.target.closest("button, input, a")) return;
+
+  openIgModal(product.id); // 👈 el mismo modal del catálogo
+});
+
+
+
+
+
+
+      
     });
 
     cartEl.querySelectorAll('[data-inc]').forEach(b => b.addEventListener('click', () => changeQty(b.getAttribute('data-inc'), +1)));
@@ -2013,6 +2058,10 @@ el.addEventListener("click", (ev) => {
     updateTotals();
     renderProducts();
   }
+
+
+
+  
 
   function updateTotals(){
     const { distinct, units, subtotal, total } = countsAndTotals();
