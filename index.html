@@ -901,16 +901,22 @@ a,
 
 
 
-    /* ✅ Carrito: item clickeable pero elegante */
+/* ✅ Carrito: selección elegante en gris */
 .cartItem{
   cursor: pointer;
-  transition: border-color .15s ease, background .15s ease;
+  transition: background .15s ease, border-color .15s ease;
 }
 
 .cartItem:hover{
-  border-color: rgba(16,185,129,.22);
-  background: rgba(16,185,129,.03);
+  background: rgba(0,0,0,.025);     /* gris muy suave */
+  border-color: rgba(0,0,0,.12);    /* borde gris fino */
 }
+
+/* cuando se hace click */
+.cartItem:active{
+  background: rgba(0,0,0,.04);
+}
+
 
 /* ✅ Pero los controles siguen siendo “controles” */
 .cartItem button,
