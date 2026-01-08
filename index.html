@@ -685,6 +685,28 @@ html{ scroll-behavior:smooth; }
   z-index: 2;
 }
 
+
+/* 🔍 Lupa: zoom al pasar el ratón (solo desktop) */
+.igZoomImg{
+  transition: transform .12s ease, transform-origin .05s linear;
+  transform-origin: 50% 50%;
+}
+
+.igZoom.zooming .igZoomImg{
+  transform: scale(2);   /* 👈 aquí ajustas el nivel (1.6 - 2.5) */
+  cursor: zoom-out;
+}
+
+/* En móvil no aplicamos lupa-hover */
+@media (hover: none){
+  .igZoom.zooming .igZoomImg{ transform: none; }
+}
+
+
+
+
+    
+
 /* X arriba */
 .igZoomClose{ z-index: 3; }
 
@@ -1681,6 +1703,39 @@ const igNext = document.getElementById("igNext");
 // ✅ Zoom fullscreen para la imagen del modal (solo se configura UNA vez)
 const igZoom = document.getElementById("igZoom");
 const igZoomImg = document.getElementById("igZoomImg");
+
+
+
+// 🔍 Lupa: zoom con el ratón para explorar
+function enableHoverZoom(){
+  if(!igZoom || !igZoomImg) return;
+
+  const isTouch = window.matchMedia("(hover: none)").matches;
+  if (isTouch) return; // móvil: no
+
+  igZoomImg.addEventListener("mouseenter", () => {
+    igZoom.classList.add("zooming");
+  });
+
+  igZoomImg.addEventListener("mouseleave", () => {
+    igZoom.classList.remove("zooming");
+    igZoomImg.style.transformOrigin = "50% 50%";
+  });
+
+  igZoomImg.addEventListener("mousemove", (e) => {
+    const r = igZoomImg.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width) * 100;
+    const y = ((e.clientY - r.top) / r.height) * 100;
+
+    igZoomImg.style.transformOrigin = `${x}% ${y}%`;
+  });
+}
+
+enableHoverZoom();
+
+
+
+  
 
 function openZoom(src, alt=""){
   if(!igZoom || !igZoomImg) return;
