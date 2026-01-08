@@ -1715,6 +1715,16 @@ const igZoomImg = document.getElementById("igZoomImg");
 
 
 
+  // 🎯 variables para suavizar movimiento (NO borrar)
+let rafId = null;
+let lastMove = null;
+
+
+  
+
+
+
+
   const igZoomStage = document.querySelector(".igZoomStage");
 
 let zoomOn = false;
@@ -1748,38 +1758,61 @@ igZoomImg?.addEventListener("click", (e) => {
 function moveZoomTo(clientX, clientY){
   if(!zoomOn || !igZoomStage || !igZoomImg) return;
 
-  const r = igZoomStage.getBoundingClientRect();
-  const x = (clientX - r.left) / r.width;   // 0..1
-  const y = (clientY - r.top) / r.height;   // 0..1
+  const stage = igZoomStage.getBoundingClientRect();
+  const img = igZoomImg.getBoundingClientRect();
 
-  // clamp para que no se vaya “feo” a las esquinas
-  const cx = Math.max(0.08, Math.min(0.92, x));
-  const cy = Math.max(0.08, Math.min(0.92, y));
+  // Posición 0..1 del puntero dentro del stage
+  const x = (clientX - stage.left) / stage.width;
+  const y = (clientY - stage.top) / stage.height;
 
-  // cuanto “se puede mover” según el zoom
-  const maxX = (ZOOM_SCALE - 1) * r.width * 0.5;
-  const maxY = (ZOOM_SCALE - 1) * r.height * 0.5;
+  // ✅ clamp suave (margen pequeño, pero sin “saltos” fuertes)
+  const margin = 0.02; // 2% (ajusta si quieres)
+  const cx = Math.max(margin, Math.min(1 - margin, x));
+  const cy = Math.max(margin, Math.min(1 - margin, y));
 
-  // mover en sentido contrario para explorar
-  const dx = (0.5 - cx) * 2 * maxX;
-  const dy = (0.5 - cy) * 2 * maxY;
+  // ✅ Movimiento máximo basado en el TAMAÑO REAL de la imagen (más correcto)
+  // Cuando escalas, lo que “sobra” es: img*(scale-1)
+  const maxX = Math.max(0, (img.width * ZOOM_SCALE - img.width) / 2);
+  const maxY = Math.max(0, (img.height * ZOOM_SCALE - img.height) / 2);
 
+  // Convertimos cx/cy a -1..1 (centro=0)
+  const nx = (0.5 - cx) * 2;
+  const ny = (0.5 - cy) * 2;
+
+  // dx/dy dentro de límites
+  const dx = nx * maxX;
+  const dy = ny * maxY;
+
+  // ✅ aplicamos
   igZoomImg.style.setProperty("--zx", `${dx}px`);
   igZoomImg.style.setProperty("--zy", `${dy}px`);
 }
 
 // Desktop: mouse
 igZoomStage?.addEventListener("mousemove", (e) => {
-  moveZoomTo(e.clientX, e.clientY);
+  lastMove = { x: e.clientX, y: e.clientY };
+  if (rafId) return;
+  rafId = requestAnimationFrame(() => {
+    rafId = null;
+    if (lastMove) moveZoomTo(lastMove.x, lastMove.y);
+  });
 });
+
 
 // Móvil: finger move cuando zoom está ON
 igZoomStage?.addEventListener("touchmove", (e) => {
   if(!zoomOn) return;
   const t = e.touches?.[0];
   if(!t) return;
-  moveZoomTo(t.clientX, t.clientY);
+
+  lastMove = { x: t.clientX, y: t.clientY };
+  if (rafId) return;
+  rafId = requestAnimationFrame(() => {
+    rafId = null;
+    if (lastMove) moveZoomTo(lastMove.x, lastMove.y);
+  });
 }, { passive: true });
+
 
 // ✅ Si cierras el zoom, también apaga el zoom interno
 function closeZoom(){
