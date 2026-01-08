@@ -661,41 +661,44 @@ html{ scroll-behavior:smooth; }
 }
 .igZoom.open{ display:block; }
 
-/* ✅ Fondo NEGRO cubre todo y es clickeable */
 .igZoomBg{
-  position:absolute;
-  inset:0;
+  position:absolute; inset:0;
   background: rgba(0,0,0,.86);
-  cursor: zoom-out;
 }
 
-/* ✅ Imagen centrada SIN ocupar toda la pantalla */
-.igZoomImg{
+.igZoomStage{
   position:absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  max-width: calc(100% - 80px);
-  max-height: calc(100% - 80px);
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  background: transparent;
-  cursor: zoom-in;
-  z-index: 2;
+  inset: 16px;
+  overflow: hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
-
-/* 🔍 Lupa: zoom al pasar el ratón (solo desktop) */
+/* Imagen centrada SIEMPRE */
 .igZoomImg{
-  transition: transform .12s ease, transform-origin .05s linear;
-  transform-origin: 50% 50%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+
+  /* movimiento controlado por variables */
+  --zs: 1;
+  --zx: 0px;
+  --zy: 0px;
+
+  transform: translate(var(--zx), var(--zy)) scale(var(--zs));
+  transform-origin: center center;
+  transition: transform .12s ease;
+  cursor: zoom-in;
 }
 
-.igZoom.zooming .igZoomImg{
-  transform: scale(2);   /* 👈 aquí ajustas el nivel (1.6 - 2.5) */
+.igZoom.zoomed .igZoomImg{
   cursor: zoom-out;
+  transition: transform .06s linear;
 }
+
 
 /* En móvil no aplicamos lupa-hover */
 @media (hover: none){
@@ -1287,8 +1290,12 @@ a,
 <div id="igZoom" class="igZoom" aria-hidden="true">
   <div class="igZoomBg" data-zoom-close></div>
   <button class="igZoomClose" type="button" data-zoom-close aria-label="Cerrar">✕</button>
-  <img id="igZoomImg" class="igZoomImg" alt="">
+
+  <div class="igZoomStage">
+    <img id="igZoomImg" class="igZoomImg" alt="">
+  </div>
 </div>
+
   
 
   
@@ -1703,6 +1710,99 @@ const igNext = document.getElementById("igNext");
 // ✅ Zoom fullscreen para la imagen del modal (solo se configura UNA vez)
 const igZoom = document.getElementById("igZoom");
 const igZoomImg = document.getElementById("igZoomImg");
+
+
+
+
+
+  const igZoomStage = document.querySelector(".igZoomStage");
+
+let zoomOn = false;
+const ZOOM_SCALE = 2; // ajusta: 1.6 - 2.5
+
+function setZoomState(on){
+  zoomOn = on;
+  if(!igZoom || !igZoomImg) return;
+
+  igZoom.classList.toggle("zoomed", zoomOn);
+
+  if(!zoomOn){
+    // reset perfecto al centro
+    igZoomImg.style.setProperty("--zs", 1);
+    igZoomImg.style.setProperty("--zx", "0px");
+    igZoomImg.style.setProperty("--zy", "0px");
+  } else {
+    igZoomImg.style.setProperty("--zs", ZOOM_SCALE);
+    igZoomImg.style.setProperty("--zx", "0px");
+    igZoomImg.style.setProperty("--zy", "0px");
+  }
+}
+
+// ✅ Click (o tap) sobre la imagen: toggle zoom
+igZoomImg?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  setZoomState(!zoomOn);
+});
+
+// ✅ Mover para “explorar” SOLO cuando el zoom está activado
+function moveZoomTo(clientX, clientY){
+  if(!zoomOn || !igZoomStage || !igZoomImg) return;
+
+  const r = igZoomStage.getBoundingClientRect();
+  const x = (clientX - r.left) / r.width;   // 0..1
+  const y = (clientY - r.top) / r.height;   // 0..1
+
+  // clamp para que no se vaya “feo” a las esquinas
+  const cx = Math.max(0.08, Math.min(0.92, x));
+  const cy = Math.max(0.08, Math.min(0.92, y));
+
+  // cuanto “se puede mover” según el zoom
+  const maxX = (ZOOM_SCALE - 1) * r.width * 0.5;
+  const maxY = (ZOOM_SCALE - 1) * r.height * 0.5;
+
+  // mover en sentido contrario para explorar
+  const dx = (0.5 - cx) * 2 * maxX;
+  const dy = (0.5 - cy) * 2 * maxY;
+
+  igZoomImg.style.setProperty("--zx", `${dx}px`);
+  igZoomImg.style.setProperty("--zy", `${dy}px`);
+}
+
+// Desktop: mouse
+igZoomStage?.addEventListener("mousemove", (e) => {
+  moveZoomTo(e.clientX, e.clientY);
+});
+
+// Móvil: finger move cuando zoom está ON
+igZoomStage?.addEventListener("touchmove", (e) => {
+  if(!zoomOn) return;
+  const t = e.touches?.[0];
+  if(!t) return;
+  moveZoomTo(t.clientX, t.clientY);
+}, { passive: true });
+
+// ✅ Si cierras el zoom, también apaga el zoom interno
+function closeZoom(){
+  if(!igZoom || !igZoomImg) return;
+  setZoomState(false);
+  igZoom.classList.remove("open");
+  igZoom.setAttribute("aria-hidden","true");
+  igZoomImg.src = "";
+}
+
+// ✅ Cuando abres zoom, inicia centrado y SIN zoom (hasta que toques)
+function openZoom(src, alt=""){
+  if(!igZoom || !igZoomImg) return;
+  igZoomImg.src = src;
+  igZoomImg.alt = alt;
+  igZoom.classList.add("open");
+  igZoom.setAttribute("aria-hidden","false");
+  setZoomState(false);
+}
+
+
+
+  
 
 
 
