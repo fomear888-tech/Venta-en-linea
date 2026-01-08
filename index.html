@@ -1707,10 +1707,15 @@ igImg?.addEventListener("click", () => {
   openZoom(igImg.src, igImg.alt || "");
 });
 
-// cerrar tocando fondo o X
+// ✅ Cerrar zoom al hacer click fuera de la imagen
 igZoom?.addEventListener("click", (e) => {
-  if (e.target?.dataset?.zoomClose !== undefined) closeZoom();
+  // si clickeas SOBRE la imagen, no cierres
+  if (e.target === igZoomImg) return;
+
+  // si clickeas en cualquier otra zona (fondo o X), cierra
+  closeZoom();
 });
+
 
 // cerrar con ESC (solo el zoom)
 window.addEventListener("keydown", (e) => {
