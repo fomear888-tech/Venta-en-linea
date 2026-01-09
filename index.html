@@ -658,17 +658,50 @@ html{ scroll-behavior:smooth; }
   inset: 0;
   display: none;
   z-index: 10000;
+
+  /* 👇 centra la imagen */
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
 }
-.igZoom.open{ display:block; }
+.igZoom.open{ display:flex; } /* 👈 antes era block */
 
 .igZoomBg{
-  position:absolute; inset:0;
+  position:absolute;
+  inset:0;
   background: rgba(0,0,0,.86);
 }
 
+/* ✅ imagen grande centrada y con límites */
+.igZoomImg{
+  position: relative;
+  z-index: 2;
+  display: block;
+  max-width: min(96vw, 1200px);
+  max-height: 92vh;
+  object-fit: contain;
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  cursor: zoom-out; /* opcional */
+}
 
+/* ✅ botón cerrar bien colocado */
+.igZoomClose{
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(0,0,0,.35);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+}
+.igZoomClose:hover{ filter: brightness(1.15); }
 
-.igZoomImg{ cursor: default !important; }
 
 
 
@@ -1719,7 +1752,14 @@ igImg?.addEventListener("click", (e) => {
 // ✅ Cerrar tocando negro alrededor o la X
 igZoom?.addEventListener("click", (e) => {
   const clickedBgOrClose = e.target?.dataset?.zoomClose !== undefined;
-  const clickedImage = e.target === igZoomImg; // click en la imagen también cierra
+  
+igZoom?.addEventListener("click", (e) => {
+  const clickedBgOrClose = e.target?.dataset?.zoomClose !== undefined;
+  if (clickedBgOrClose) closeZoom();
+});
+
+
+  
   if (clickedBgOrClose || clickedImage) closeZoom();
 });
 
