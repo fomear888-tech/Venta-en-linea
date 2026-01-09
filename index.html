@@ -9,6 +9,16 @@
   
   <style>
 
+
+
+    html, body{
+  min-height: 100%;
+}
+
+
+
+    
+
 /* ✅ ESTILOS GENERALES (COLORES Y “TEMA” DE LA WEB) Aquí defines los colores base y el look (fondo, textos, bordes, botones). */
     
     :root{
@@ -224,7 +234,25 @@
 
     /* ✅ PIE DE PÁGINA */
     .empty{color:var(--muted);font-size:13px;line-height:1.45;margin:0}
-    footer{color:var(--muted);font-size:12px;text-align:center;padding:18px 16px}
+
+
+    
+footer{
+  position: relative;
+  z-index: 1;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+  padding: 40px 16px 24px; /* 👈 más espacio arriba */
+  margin-top: 20vh;       /* 👈 lo empuja hacia abajo */
+  background: transparent;
+}
+
+
+
+
+
+    
     code{background:rgba(255,255,255,.06);padding:2px 6px;border-radius:8px}
 
   
@@ -968,10 +996,10 @@ body{
   z-index: -1;              /* detrás de todo */
   pointer-events: none;
   background:
-    linear-gradient(to bottom,
-      rgba(249,250,251,0) 65%,
-      rgba(249,250,251,1) 95%   /* 👈 “desvanece” a tu fondo real */
-    ),
+  linear-gradient(to bottom,
+  rgba(249,250,251,0) 40%,
+  rgba(249,250,251,1) 85%
+),
     url("https://raw.githubusercontent.com/fomear888-tech/Venta-en-linea/main/img/bc1043c4-a198-4467-866d-ce43b1f3c0c7.jpg") center top / cover no-repeat;
 }
 
