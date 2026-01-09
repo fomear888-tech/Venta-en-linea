@@ -3,24 +3,172 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Pago OK</title>
+  <title>Pedido confirmado</title>
+
+  <style>
+    :root{
+      --bg:#f9fafb;
+      --card:#ffffff;
+      --txt:#111827;
+      --muted:#6b7280;
+      --border:rgba(0,0,0,.08);
+      --ok:#10b981;
+      --shadow:0 10px 28px rgba(0,0,0,.06);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;
+      background:var(--bg);
+      color:var(--txt);
+      padding:24px 14px;
+    }
+    .wrap{max-width:720px;margin:0 auto}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+    .top{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+    }
+    .badge{
+      width:44px;height:44px;border-radius:14px;
+      background:rgba(16,185,129,.12);
+      display:grid;place-items:center;
+      border:1px solid rgba(16,185,129,.25);
+      flex:0 0 auto;
+      font-size:20px;
+    }
+    h1{margin:0;font-size:18px}
+    .muted{color:var(--muted);font-size:13px;line-height:1.45;margin:6px 0 0}
+    .hr{height:1px;background:var(--border);margin:14px 0}
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width:640px){ .grid{grid-template-columns:1fr} }
+    .box{
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:14px;
+      background:#fff;
+    }
+    .box h2{font-size:13px;margin:0 0 6px}
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#fff;
+      font-size:13px;
+      margin:6px 6px 0 0;
+      white-space:nowrap;
+    }
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:#fff;
+      cursor:pointer;
+      text-decoration:none;
+      color:var(--txt);
+      font-weight:800;
+    }
+    .btn.ok{
+      border-color:rgba(16,185,129,.35);
+      background:rgba(16,185,129,.12);
+    }
+    .btn:hover{filter:brightness(1.03)}
+    .small{font-size:12px;color:var(--muted);margin-top:10px}
+    .addr{
+      font-size:13px;
+      line-height:1.45;
+      margin:0;
+      color:var(--txt);
+    }
+  </style>
 </head>
-<body style="font-family:system-ui;padding:24px;background:#f9fafb;color:#111827;">
-  
-  <h2>✅ Pago completado</h2>
-  <p>Pago confirmado. Ya puedes volver al catálogo.</p>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div class="badge">✅</div>
+        <div>
+          <h1>Pedido confirmado</h1>
+          <p class="muted">
+            Hemos recibido tu pedido correctamente.
+            <strong>El pago se realiza en el local</strong> y
+            <strong>la entrega del producto es en el mismo local</strong>.
+          </p>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="grid">
+        <div class="box">
+          <h2>💳 Formas de pago disponibles</h2>
+          <div class="pill">💶 Efectivo</div>
+          <div class="pill">📲 Bizum</div>
+          <p class="small">*No te preocupes: en el local te ayudamos si lo necesitas.</p>
+        </div>
+
+        <div class="box">
+          <h2>📍 Ubicación (recogida y pago)</h2>
+
+          <!-- ✏️ EDITA AQUÍ tu dirección real -->
+          <p class="addr">
+            <strong>Mas Envíos</strong><br>
+            Paseo Nit del Alba 34<br>
+            03204 · Elche (Alicante)
+          </p>
+
+          <!-- ✏️ EDITA ESTE LINK DE MAPS (lo dejo con Elche de ejemplo) -->
+          <div class="actions" style="margin-top:10px">
+            <a class="btn ok" target="_blank" rel="noopener"
+               href="https://www.google.com/maps?q=Paseo+Nit+del+Alba+34,+Elche,+Alicante">
+              🗺️ Ver en Google Maps
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a class="btn ok" href="/">← Volver al catálogo</a>
+      </div>
+
+      <p class="small">
+        Consejo rápido: si vienes con prisa, di en el mostrador “vengo a recoger un pedido online” y quedas como cliente VIP 😄
+      </p>
+    </div>
+  </div>
 
   <script>
+    // Limpieza de datos temporales de checkout + carrito
     localStorage.removeItem("checkout_total_eur");
     localStorage.removeItem("checkout_customer_name");
     localStorage.removeItem("checkout_customer_phone");
     localStorage.removeItem("checkout_items");
-
-    
-  // ✅ Limpia el carrito (tu carrito es cart_v1)
-  localStorage.removeItem("cart_v1");
+    localStorage.removeItem("cart_v1");
   </script>
-
-  <a href="/">Volver al catálogo</a>
 </body>
 </html>
