@@ -990,18 +990,26 @@ body{
   background: #f9fafb; /* fallback */
 }
 
+/* ✅ Hero fijo SOLO ARRIBA (no en toda la página) */
 .bgHero{
   position: fixed;
-  inset: 0;
-  z-index: -1;              /* detrás de todo */
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 520px;            /* 👈 aquí controlas cuánto “dura” la imagen */
+  z-index: -1;
   pointer-events: none;
+
   background:
-  linear-gradient(to bottom,
-  rgba(249,250,251,0) 40%,
-  rgba(249,250,251,1) 85%
-),
-    url("https://raw.githubusercontent.com/fomear888-tech/Venta-en-linea/main/img/bc1043c4-a198-4467-866d-ce43b1f3c0c7.jpg") center top / cover no-repeat;
+    linear-gradient(to bottom,
+      rgba(249,250,251,0) 45%,
+      rgba(249,250,251,1) 92%
+    ),
+    url("https://raw.githubusercontent.com/fomear888-tech/Venta-en-linea/main/img/bc1043c4-a198-4467-866d-ce43b1f3c0c7.jpg")
+    center top / cover no-repeat;
 }
+
 
     
 
