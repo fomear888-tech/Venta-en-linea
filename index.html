@@ -714,7 +714,7 @@ html{ scroll-behavior:smooth; }
 .igZoomClose{ z-index: 3; }
 
 
-.igMedia img{ cursor: zoom-in; }  /* el cursor de “quiero ampliar” */
+.igMedia img{ cursor: default; }
 
 
 
@@ -1282,19 +1282,6 @@ a,
 
 
 
-
-
-
-
-<!-- ✅ ZOOM FULLSCREEN -->
-<div id="igZoom" class="igZoom" aria-hidden="true">
-  <div class="igZoomBg" data-zoom-close></div>
-  <button class="igZoomClose" type="button" data-zoom-close aria-label="Cerrar">✕</button>
-
-  <div class="igZoomStage">
-    <img id="igZoomImg" class="igZoomImg" alt="">
-  </div>
-</div>
 
   
 
@@ -1885,11 +1872,7 @@ function closeZoom(){
   igZoomImg.src = "";
 }
 
-// click en la imagen principal del modal → abre zoom
-igImg?.addEventListener("click", () => {
-  if (!igImg?.src) return;
-  openZoom(igImg.src, igImg.alt || "");
-});
+
 
 // ✅ Cerrar zoom al hacer click fuera de la imagen
 igZoom?.addEventListener("click", (e) => {
