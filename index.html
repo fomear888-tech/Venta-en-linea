@@ -1005,6 +1005,12 @@ a,
 
 
 
+<!-- ✅ ZOOM FULLSCREEN -->
+<div id="igZoom" class="igZoom" aria-hidden="true">
+  <div class="igZoomBg" data-zoom-close></div>
+  <button class="igZoomClose" type="button" data-zoom-close aria-label="Cerrar">✕</button>
+  <img id="igZoomImg" class="igZoomImg" alt="">
+</div>
 
 
 
@@ -1857,6 +1863,10 @@ enableHoverZoom();
 
   
 
+// ✅ Zoom fullscreen SIMPLE (sin lupa, sin arrastre, sin movimientos raros)
+const igZoom = document.getElementById("igZoom");
+const igZoomImg = document.getElementById("igZoomImg");
+
 function openZoom(src, alt=""){
   if(!igZoom || !igZoomImg) return;
   igZoomImg.src = src;
@@ -1872,21 +1882,29 @@ function closeZoom(){
   igZoomImg.src = "";
 }
 
+// ✅ Click en la imagen del modal → abre zoom (solo la imagen)
+igImg?.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  if (!igImg?.src) return;
 
-
-// ✅ Cerrar zoom al hacer click fuera de la imagen
-igZoom?.addEventListener("click", (e) => {
-  // si clickeas la imagen, NO cierres
-  if (e.target === igZoomImg) return;
-  closeZoom();
+  // si ya está abierto → lo cierra (toggle)
+  if (igZoom?.classList.contains("open")) closeZoom();
+  else openZoom(igImg.src, igImg.alt || "");
 });
 
+// ✅ Cerrar tocando negro alrededor o la X
+igZoom?.addEventListener("click", (e) => {
+  const clickedBgOrClose = e.target?.dataset?.zoomClose !== undefined;
+  const clickedImage = e.target === igZoomImg; // click en la imagen también cierra
+  if (clickedBgOrClose || clickedImage) closeZoom();
+});
 
-
-// cerrar con ESC (solo el zoom)
+// ✅ Cerrar con ESC
 window.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && igZoom?.classList.contains("open")) closeZoom();
 });
+
 
 
 
