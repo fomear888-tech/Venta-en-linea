@@ -956,6 +956,28 @@ a,
 
 
 
+
+    /* ✅ Fondo tipo Amazon con fade abajo */
+body{
+  background: #f9fafb; /* fallback */
+}
+
+.bgHero{
+  position: fixed;
+  inset: 0;
+  z-index: -1;              /* detrás de todo */
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom,
+      rgba(249,250,251,0) 65%,
+      rgba(249,250,251,1) 95%   /* 👈 “desvanece” a tu fondo real */
+    ),
+    url("PON_AQUI_TU_URL_DE_GITHUB") center top / cover no-repeat;
+}
+
+    
+
+
     
     
 
@@ -964,6 +986,15 @@ a,
   </style>
 </head>
 <body>
+
+
+
+
+  <div class="bgHero" aria-hidden="true"></div>
+
+
+
+  
 
   
   <!-- ✅ CABECERA: Marca + buscador + contador de carrito + vaciar -->
