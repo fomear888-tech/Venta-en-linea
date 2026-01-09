@@ -666,38 +666,10 @@ html{ scroll-behavior:smooth; }
   background: rgba(0,0,0,.86);
 }
 
-.igZoomStage{
-  position:absolute;
-  inset: 16px;
-  overflow: hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
 
-/* Imagen centrada SIEMPRE */
-.igZoomImg{
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  user-select: none;
-  -webkit-user-drag: none;
 
-  /* movimiento controlado por variables */
-  --zs: 1;
-  --zx: 0px;
-  --zy: 0px;
+.igZoomImg{ cursor: default !important; }
 
-  transform: translate(var(--zx), var(--zy)) scale(var(--zs));
-  transform-origin: center center;
-  transition: transform .12s ease;
-  cursor: zoom-in;
-}
-
-.igZoom.zoomed .igZoomImg{
-  cursor: zoom-out;
-  transition: transform .06s linear;
-}
 
 
 /* En móvil no aplicamos lupa-hover */
@@ -1708,9 +1680,7 @@ const igZoomImg = document.getElementById("igZoomImg");
 
 
 
-  // 🎯 variables para suavizar movimiento (NO borrar)
-let rafId = null;
-let lastMove = null;
+
 
 
   
