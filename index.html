@@ -991,23 +991,32 @@ body{
 }
 
 /* ✅ Hero fijo SOLO ARRIBA (no en toda la página) */
+/* ✅ Fondo/hero SOLO ARRIBA y se va al hacer scroll */
+body{ position:relative; }  /* 👈 importante */
+
 .bgHero{
-  position: fixed;
+  position: absolute;       /* 👈 CLAVE: ya NO es fixed */
   top: 0;
   left: 0;
   right: 0;
 
-  height: 520px;            /* 👈 aquí controlas cuánto “dura” la imagen */
-  z-index: -1;
+  height: 520px;
+  z-index: 0;
   pointer-events: none;
 
   background:
     linear-gradient(to bottom,
-      rgba(249,250,251,0) 45%,
-      rgba(249,250,251,1) 92%
+      rgba(249,250,251,0) 25%,   /* 👈 empieza el difuminado más arriba */
+      rgba(249,250,251,1) 85%
     ),
     url("https://raw.githubusercontent.com/fomear888-tech/Venta-en-linea/main/img/bc1043c4-a198-4467-866d-ce43b1f3c0c7.jpg")
     center top / cover no-repeat;
+}
+
+
+    main, header, footer{
+  position: relative;
+  z-index: 1;
 }
 
 
