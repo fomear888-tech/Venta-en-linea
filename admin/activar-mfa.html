@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin · Activar 2FA</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --bg:#f9fafb; --card:#fff; --txt:#111827; --muted:#6b7280;
+      --border:rgba(0,0,0,.08); --ok:#10b981; --shadow:0 10px 28px rgba(0,0,0,.06);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;background:var(--bg);color:var(--txt);padding:18px}
+    .wrap{max-width:860px;margin:0 auto}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:16px}
+    h1{font-size:18px;margin:0 0 6px}
+    p{margin:8px 0;color:var(--muted);font-size:13px;line-height:1.45}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:760px){.grid{grid-template-columns:1fr}}
+    .box{border:1px solid var(--border);border-radius:16px;padding:14px;background:#fff}
+    .qr{
+      width:100%; max-width:320px; aspect-ratio:1/1; border:1px dashed var(--border);
+      border-radius:16px; display:grid; place-items:center; overflow:hidden; background:#fff;
+    }
+    .qr img{width:100%;height:100%;object-fit:contain;display:block}
+    code{background:rgba(0,0,0,.04);padding:2px 6px;border-radius:8px;color:var(--txt)}
+    input{
+      width:100%; padding:12px 14px; border-radius:14px; border:1px solid var(--border);
+      font-size:15px; outline:none;
+    }
+    input:focus{border-color:rgba(16,185,129,.55); box-shadow:0 0 0 3px rgba(16,185,129,.15)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+    button,a.btn{
+      padding:12px 14px; border-radius:14px; border:1px solid var(--border);
+      background:#fff; cursor:pointer; font-weight:900; text-decoration:none; color:var(--txt);
+      display:inline-flex; align-items:center; gap:8px;
+    }
+    button.ok{border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.12)}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .warn{color:#b45309}
+    .err{color:#ef4444}
+    .oktxt{color:#059669}
+    .muted{color:var(--muted)}
+    .small{font-size:12px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Activar verificación en dos pasos (2FA)</h1>
+      <p>
+        Esto hace que <b>solo tú</b> puedas entrar al panel de pedidos/tickets.
+        Aunque alguien sepa la URL o la contraseña, sin tu Authenticator no pasa.
+      </p>
+
+      <div class="grid">
+        <div class="box">
+          <h2 style="margin:0 0 6px;font-size:14px">1) Escanea el QR</h2>
+          <p class="small">Abre Google Authenticator / Authy → “Añadir” → “Escanear QR”.</p>
+
+          <div class="qr" id="qrBox">
+            <span class="muted">Generando QR…</span>
+          </div>
+
+          <p class="small" style="margin-top:10px">
+            Si no puedes escanear, usa este secreto:
+            <br><code id="secretText">—</code>
+          </p>
+        </div>
+
+        <div class="box">
+          <h2 style="margin:0 0 6px;font-size:14px">2) Confirma el código</h2>
+          <p class="small">Escribe el código de 6 dígitos que te aparece en la app.</p>
+
+          <input id="code" inputmode="numeric" placeholder="123456" maxlength="6" />
+          <div class="row">
+            <button class="ok" id="verifyBtn">✅ Activar 2FA</button>
+            <a class="btn" href="./pedidos.html">↩️ Volver</a>
+            <button id="logoutBtn">🚪 Salir</button>
+          </div>
+
+          <p id="status" class="small"></p>
+
+          <p class="small warn">
+            Tip: guarda tus códigos/backup donde tú puedas recuperarlos.
+            (No en un post-it pegado en la pantalla… que eso se “auto-hackea” 😄)
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ====== CONFIG ======
+  const SUPABASE_URL = "https://pujzkraozoqbriqnlikf.supabase.co";
+  const SUPABASE_ANON_KEY = "REEMPLAZA_AQUI_TU_ANON_KEY"; // <-- pon tu key real
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ====== UI HELPERS ======
+  const $ = (id) => document.getElementById(id);
+  function setStatus(msg, cls="muted"){
+    const el = $("status");
+    el.className = "small " + cls;
+    el.textContent = msg || "";
+  }
+  function onlyDigits(el){
+    el.value = (el.value || "").replace(/\D+/g, "").slice(0, 6);
+  }
+
+  // ====== SECURITY: REQUIRE ADMIN ======
+  async function requireAdmin(){
+    const { data: { user } } = await sb.auth.getUser();
+    if(!user){
+      location.href = "./login.html"; // si no tienes login.html, dime y te lo hago ya
+      return null;
+    }
+
+    // tabla: administradores (ajusta si se llama distinto)
+    const { data: admin, error } = await sb
+      .from("administradores")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if(error){
+      console.error(error);
+      setStatus("Error comprobando admin.", "err");
+      return null;
+    }
+
+    if(!admin){
+      await sb.auth.signOut();
+      alert("Acceso no autorizado");
+      location.href = "/";
+      return null;
+    }
+
+    return user;
+  }
+
+  // ====== MFA FLOW (TOTP) ======
+  let factorId = null;
+
+  async function initMFA(){
+    setStatus("Comprobando sesión…");
+
+    const user = await requireAdmin();
+    if(!user) return;
+
+    // ¿Ya tiene MFA?
+    const { data: factors, error: fErr } = await sb.auth.mfa.listFactors();
+    if(fErr){
+      console.error(fErr);
+      setStatus("No pude listar factores MFA.", "err");
+      return;
+    }
+
+    const hasTotp = (factors?.totp || []).length > 0;
+    if(hasTotp){
+      setStatus("✅ Ya tienes 2FA activado. Te llevo al panel…", "oktxt");
+      setTimeout(() => location.href = "./pedidos.html", 900);
+      return;
+    }
+
+    setStatus("Generando QR…");
+
+    // 1) Enroll (crear factor TOTP)
+    const { data: enroll, error: eErr } = await sb.auth.mfa.enroll({ factorType: "totp" });
+    if(eErr){
+      console.error(eErr);
+      setStatus("No pude generar el QR. Revisa Auth settings en Supabase.", "err");
+      return;
+    }
+
+    factorId = enroll?.id || null;
+
+    // Supabase devuelve datos TOTP (qr_code, secret, uri)
+    const qrSvg = enroll?.totp?.qr_code;  // suele ser SVG string
+    const secret = enroll?.totp?.secret;
+
+    if(secret) $("secretText").textContent = secret;
+
+    const qrBox = $("qrBox");
+    qrBox.innerHTML = "";
+
+    if(qrSvg){
+      // Si viene SVG, lo incrustamos
+      const div = document.createElement("div");
+      div.innerHTML = qrSvg;
+      div.style.width = "100%";
+      div.style.height = "100%";
+      qrBox.appendChild(div);
+    } else {
+      qrBox.textContent = "No se recibió QR (pero puedes usar el secreto).";
+    }
+
+    setStatus("Escanea el QR y escribe el código de 6 dígitos para activar.");
+  }
+
+  async function verifyMFA(){
+    try{
+      const codeEl = $("code");
+      onlyDigits(codeEl);
+      const code = (codeEl.value || "").trim();
+
+      if(!factorId){
+        setStatus("No hay factor MFA creado. Recarga la página.", "err");
+        return;
+      }
+      if(code.length !== 6){
+        setStatus("Escribe un código de 6 dígitos.", "warn");
+        return;
+      }
+
+      $("verifyBtn").disabled = true;
+      setStatus("Verificando…");
+
+      // 2) Challenge
+      const { data: challenge, error: cErr } = await sb.auth.mfa.challenge({ factorId });
+      if(cErr){
+        console.error(cErr);
+        setStatus("No pude iniciar la verificación (challenge).", "err");
+        return;
+      }
+
+      // 3) Verify
+      const { data: verify, error: vErr } = await sb.auth.mfa.verify({
+        factorId,
+        challengeId: challenge.id,
+        code
+      });
+
+      if(vErr){
+        console.error(vErr);
+        setStatus("Código incorrecto o expirado. Intenta de nuevo.", "err");
+        return;
+      }
+
+      setStatus("✅ 2FA activado correctamente. Entrando al panel…", "oktxt");
+      setTimeout(() => location.href = "./pedidos.html", 900);
+
+    } finally {
+      $("verifyBtn").disabled = false;
+    }
+  }
+
+  // ====== EVENTS ======
+  $("code").addEventListener("input", (e) => onlyDigits(e.target));
+  $("verifyBtn").addEventListener("click", verifyMFA);
+
+  $("logoutBtn").addEventListener("click", async () => {
+    await sb.auth.signOut();
+    location.href = "./login.html";
+  });
+
+  window.addEventListener("DOMContentLoaded", initMFA);
+</script>
+</body>
+</html>
