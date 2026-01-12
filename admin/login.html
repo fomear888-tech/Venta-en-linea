@@ -114,6 +114,11 @@
   }
 
   async function routeAfterLogin(){
+
+const DEV_MODE = true; // ← SOLO mientras editas
+
+
+    
     // 1) Admin check
     const ok = await isAdmin();
     if(!ok){
@@ -123,12 +128,15 @@
       return;
     }
 
-    // 2) MFA check
+
+  // 2) MFA check (solo si NO estamos en dev)
+  if(!DEV_MODE){
     const mfa = await hasMFA();
     if(!mfa){
       location.href = "./activar-mfa.html";
       return;
     }
+  }
 
     // 3) Go panel
     location.href = "./pedidos.html";
