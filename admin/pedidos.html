@@ -209,7 +209,12 @@ function renderPedidos(data){
       <td>${p.customer_name || ""}</td>
       <td>${p.customer_phone || ""}</td>
       <td><b>${Number(p.total || 0).toFixed(2)}</b></td>
-      <td>
+      
+<td>
+  ${
+    (p.estado === "cancelado")
+      ? `<span class="status cancelado">cancelado</span>`
+      : `
         <select class="statusSel ${statusClass(p.estado)}"
                 onchange="cambiarEstado('${p.id}', this.value, this)">
           <option value="pendiente" ${p.estado==="pendiente"?"selected":""}>pendiente</option>
@@ -217,7 +222,10 @@ function renderPedidos(data){
           <option value="entregado" ${p.estado==="entregado"?"selected":""}>entregado</option>
           <option value="cancelado" ${p.estado==="cancelado"?"selected":""}>cancelado</option>
         </select>
-      </td>
+      `
+  }
+</td>
+
       <td class="muted">${fmtDate(p.created_at)}</td>
       <td><button onclick="verTicket('${p.id}')">🧾 Ticket</button></td>
     `;
@@ -282,6 +290,9 @@ document.getElementById("invBtn").addEventListener("click", () => {
 window.cambiarEstado = async function(orderId, nuevoEstado, el){
   const old = el.getAttribute("data-old") || el.value;
 
+  
+  
+
   // ✅ SI ELIGEN "cancelado": confirm + RPC + recargar
   if (nuevoEstado === "cancelado") {
     const ok = confirm(
@@ -317,6 +328,19 @@ window.cambiarEstado = async function(orderId, nuevoEstado, el){
     await loadPedidos(); // refresca lista y filtros
     return;
   }
+
+
+
+if (old === "cancelado") {
+  alert("Este pedido está cancelado y ya no se puede editar.");
+  el.value = old;
+  return;
+}
+
+
+
+
+  
 
   // UI: pinta según estado
   el.classList.remove("pendiente","pagado","entregado","cancelado");
