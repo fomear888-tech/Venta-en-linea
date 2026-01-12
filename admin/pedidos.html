@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin · Pedidos</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --bg:#f9fafb; --card:#fff; --txt:#111827; --muted:#6b7280;
+      --border:rgba(0,0,0,.08); --accent:#10b981; --danger:#ef4444;
+      --shadow:0 10px 28px rgba(0,0,0,.06);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;
+      background:var(--bg);color:var(--txt);padding:18px
+    }
+    .wrap{max-width:1100px;margin:0 auto}
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+    h1{font-size:18px;margin:0}
+    button,a.btn{
+      padding:10px 12px;border-radius:12px;border:1px solid var(--border);
+      background:#fff;cursor:pointer;font-weight:800;
+      display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--txt)
+    }
+    button.primary{border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.12)}
+    button.danger{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.12)}
+    .card{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:18px;box-shadow:var(--shadow);padding:14px
+    }
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left}
+    th{font-size:12px;color:var(--muted)}
+    tr:hover{background:#f3f4f6}
+    .muted{color:var(--muted);font-size:12px}
+    .status{padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800}
+    .pendiente{background:#fff7ed;color:#9a3412}
+    .pagado{background:#ecfeff;color:#155e75}
+    .entregado{background:#ecfdf5;color:#065f46}
+    .empty{padding:20px;text-align:center;color:var(--muted)}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>📦 Pedidos</h1>
+    <div style="display:flex;gap:8px">
+      <button id="reloadBtn">🔄 Recargar</button>
+      <button class="danger" id="logoutBtn">🚪 Salir</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Ticket</th>
+          <th>Cliente</th>
+          <th>Teléfono</th>
+          <th>Total (€)</th>
+          <th>Estado</th>
+          <th>Fecha</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="rows">
+        <tr><td colspan="7" class="empty">Cargando pedidos…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  // ===== CONFIG =====
+  const SUPABASE_URL = "https://pujzkraozoqbriqnlikf.supabase.co";
+  const SUPABASE_ANON_KEY = "REEMPLAZA_AQUI_TU_ANON_KEY";
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const rows = document.getElementById("rows");
+
+  function fmtDate(ts){
+    if(!ts) return "";
+    return new Date(ts).toLocaleString("es-ES");
+  }
+
+  function statusClass(s){
+    return s === "pagado" ? "pagado" :
+           s === "entregado" ? "entregado" : "pendiente";
+  }
+
+  async function isAdmin(){
+    const { data: { user } } = await sb.auth.getUser();
+    if(!user) return false;
+
+    const { data } = await sb
+      .from("administradores")   // ⚠️ ajusta si tu tabla se llama distinto
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    return !!data;
+  }
+
+  async function loadPedidos(){
+    rows.innerHTML = `<tr><td colspan="7" class="empty">Cargando pedidos…</td></tr>`;
+
+    const { data, error } = await sb
+      .from("ordenes")           // ⚠️ tu tabla de pedidos
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if(error){
+      console.error(error);
+      rows.innerHTML = `<tr><td colspan="7" class="empty">Error cargando pedidos</td></tr>`;
+      return;
+    }
+
+    if(!data || data.length === 0){
+      rows.innerHTML = `<tr><td colspan="7" class="empty">No hay pedidos aún</td></tr>`;
+      return;
+    }
+
+    rows.innerHTML = "";
+    data.forEach(p => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${p.numero_ticket || ""}</td>
+        <td>${p.nombre_del_cliente || ""}</td>
+        <td>${p.telefono_del_cliente || ""}</td>
+        <td><b>${Number(p.total || 0).toFixed(2)}</b></td>
+        <td><span class="status ${statusClass(p.estado)}">${p.estado}</span></td>
+        <td class="muted">${fmtDate(p.created_at)}</td>
+        <td>
+          <button onclick="verTicket('${p.id}')">🧾 Ticket</button>
+        </td>
+      `;
+      rows.appendChild(tr);
+    });
+  }
+
+  window.verTicket = function(id){
+    // luego creamos ticket.html
+    location.href = `./ticket.html?id=${encodeURIComponent(id)}`;
+  }
+
+  document.getElementById("reloadBtn").addEventListener("click", loadPedidos);
+
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await sb.auth.signOut();
+    location.href = "./login.html";
+  });
+
+  // ===== INIT =====
+  window.addEventListener("DOMContentLoaded", async () => {
+    const { data: { user } } = await sb.auth.getUser();
+    if(!user){
+      location.href = "./login.html";
+      return;
+    }
+
+    const ok = await isAdmin();
+    if(!ok){
+      await sb.auth.signOut();
+      alert("Acceso no autorizado");
+      location.href = "/";
+      return;
+    }
+
+    loadPedidos();
+  });
+</script>
+</body>
+</html>
