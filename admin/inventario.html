@@ -490,30 +490,30 @@ async function saveModal(){
     if(!/^p\d{3,}$/i.test(idTyped)) return alert("ID sugerido: p083, p120, etc.");
   }
 
-  const patch = {
-    id: isNew ? idTyped : undefined,   // en INSERT se usa, en UPDATE no
-    name: el("m_name").value.trim(),
-    category: el("m_category").value.trim() || null,
-    price: Number(el("m_price").value || 0),
-    stock: Number(el("m_stock").value || 0),
-    desc: el("m_desc").value.trim() || null,
-    updated_at: new Date().toISOString()
-  };
+const patch = {
+  name: el("m_name").value.trim(),
+  category: el("m_category").value.trim() || null,
+  price: Number(el("m_price").value || 0),
+  stock: Number(el("m_stock").value || 0),
+  desc: el("m_desc").value.trim() || null,
+  updated_at: new Date().toISOString()
+};
 
   if(!patch.name) return alert("El nombre es obligatorio.");
 
   try{
     // 1) INSERT o UPDATE primero (para que exista el producto antes de subir imágenes)
-    if(isNew){
-      const { error } = await sb.from(TABLE_PRODUCTS).insert([patch]);
-      if(error) throw error;
-    }else{
-      const { error } = await sb
-        .from(TABLE_PRODUCTS)
-        .update(patch)
-        .eq("id", current.id);
-      if(error) throw error;
-    }
+if(isNew){
+  const { error } = await sb.from(TABLE_PRODUCTS).insert([ { id: idTyped, ...patch } ]);
+  if(error) throw error;
+}else{
+  const { error } = await sb
+    .from(TABLE_PRODUCTS)
+    .update(patch)
+    .eq("id", current.id);
+  if(error) throw error;
+}
+
 
     const productId = isNew ? idTyped : current.id;
 
