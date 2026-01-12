@@ -136,7 +136,7 @@ select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
 </thead>
 
       <tbody id="rows">
-        <tr><td colspan="7" class="empty">Cargando pedidos…</td></tr>
+        <tr><td colspan="8" class="empty">Cargando pedidos…</td></tr>
       </tbody>
     </table>
   </div>
@@ -230,7 +230,7 @@ function applyFilters(){
 
 function renderPedidos(data){
   if(!data || data.length === 0){
-    rows.innerHTML = `<tr><td colspan="7" class="empty">No hay pedidos con esos filtros</td></tr>`;
+    rows.innerHTML = `<tr><td colspan="8" class="empty">No hay pedidos con esos filtros</td></tr>`;
     return;
   }
 
@@ -311,12 +311,12 @@ if (pay) pay.setAttribute("data-old", p.metodo_pago || "");
 
     if(error){
       console.error(error);
-      rows.innerHTML = `<tr><td colspan="7" class="empty">Error cargando pedidos</td></tr>`;
+      rows.innerHTML = `<tr><td colspan="8" class="empty">Error cargando pedidos</td></tr>`;
       return;
     }
 
 if(!data || data.length === 0){
-  rows.innerHTML = `<tr><td colspan="7" class="empty">No hay pedidos aún</td></tr>`;
+  rows.innerHTML = `<tr><td colspan="8" class="empty">No hay pedidos aún</td></tr>`;
   return;
 }
 
@@ -360,7 +360,7 @@ window.cambiarMetodoPago = async function(orderId, nuevoMetodo, el){
 
   const { error } = await sb
     .from("orders")
-    .update({ metodo_pago: nuevoMetodo || null })
+    .update({ metodo_pago: (nuevoMetodo || null) })
     .eq("id", orderId);
 
   if(error){
@@ -372,6 +372,7 @@ window.cambiarMetodoPago = async function(orderId, nuevoMetodo, el){
 
   el.setAttribute("data-old", nuevoMetodo || "");
 };
+
 
   
   
