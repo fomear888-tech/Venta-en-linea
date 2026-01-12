@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin · Acceso</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --bg:#f9fafb; --card:#fff; --txt:#111827; --muted:#6b7280;
+      --border:rgba(0,0,0,.08); --accent:#10b981; --danger:#ef4444;
+      --shadow:0 10px 28px rgba(0,0,0,.06);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;background:var(--bg);color:var(--txt);padding:18px}
+    .wrap{max-width:520px;margin:0 auto}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:16px}
+    h1{font-size:18px;margin:0 0 6px}
+    p{margin:8px 0;color:var(--muted);font-size:13px;line-height:1.45}
+    label{display:block;font-size:12px;color:var(--muted);margin:10px 0 6px}
+    input{
+      width:100%; padding:12px 14px; border-radius:14px; border:1px solid var(--border);
+      font-size:14px; outline:none; background:#fff; color:var(--txt);
+    }
+    input:focus{border-color:rgba(16,185,129,.55); box-shadow:0 0 0 3px rgba(16,185,129,.15)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+    button,a.btn{
+      padding:12px 14px; border-radius:14px; border:1px solid var(--border);
+      background:#fff; cursor:pointer; font-weight:900; text-decoration:none; color:var(--txt);
+      display:inline-flex; align-items:center; gap:8px;
+    }
+    button.primary{border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.12)}
+    button.danger{border-color:rgba(239,68,68,.30);background:rgba(239,68,68,.10)}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .small{font-size:12px;color:var(--muted)}
+    .err{color:var(--danger)}
+    .ok{color:#059669}
+    code{background:rgba(0,0,0,.04);padding:2px 6px;border-radius:8px}
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Acceso admin</h1>
+      <p>Panel privado para pedidos y tickets. Si no eres admin, aquí no hay tour 👀</p>
+
+      <div id="alreadyBox" style="display:none">
+        <p class="ok"><b>Sesión detectada ✅</b> Estoy comprobando permisos y 2FA…</p>
+        <div class="row">
+          <button class="danger" id="logoutBtn">🚪 Cerrar sesión</button>
+          <a class="btn" href="/">↩️ Volver a la web</a>
+        </div>
+        <p class="small" id="statusTop"></p>
+      </div>
+
+      <form id="loginForm" autocomplete="on">
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="email" placeholder="tu@email.com" required />
+
+        <label for="pass">Contraseña</label>
+        <input id="pass" type="password" autocomplete="current-password" placeholder="••••••••" required />
+
+        <div class="row">
+          <button class="primary" id="loginBtn" type="submit">🔐 Entrar</button>
+          <a class="btn" href="/">↩️ Volver a la web</a>
+        </div>
+
+        <p class="small" id="status"></p>
+        <p class="small">Tip: este panel se abre en <code>/admin/login.html</code> (no lo enlaces en la web pública).</p>
+      </form>
+    </div>
+  </div>
+
+<script>
+  // ====== CONFIG ======
+  const SUPABASE_URL = "https://pujzkraozoqbriqnlikf.supabase.co";
+  const SUPABASE_ANON_KEY = "REEMPLAZA_AQUI_TU_ANON_KEY"; // <-- PON TU KEY REAL
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const $ = (id) => document.getElementById(id);
+  function setStatus(msg, cls=""){
+    const el = $("status");
+    el.className = "small " + cls;
+    el.textContent = msg || "";
+  }
+  function setStatusTop(msg, cls=""){
+    const el = $("statusTop");
+    el.className = "small " + cls;
+    el.textContent = msg || "";
+  }
+
+  async function isAdmin(){
+    const { data: { user } } = await sb.auth.getUser();
+    if(!user) return false;
+
+    // ⚠️ Ajusta el nombre si tu tabla se llama distinto: admins / administradores
+    const { data, error } = await sb
+      .from("administradores")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if(error) return false;
+    return !!data;
+  }
+
+  async function hasMFA(){
+    const { data, error } = await sb.auth.mfa.listFactors();
+    if(error) return false;
+    return (data?.totp || []).length > 0;
+  }
+
+  async function routeAfterLogin(){
+    // 1) Admin check
+    const ok = await isAdmin();
+    if(!ok){
+      await sb.auth.signOut();
+      alert("Acceso no autorizado");
+      location.href = "/";
+      return;
+    }
+
+    // 2) MFA check
+    const mfa = await hasMFA();
+    if(!mfa){
+      location.href = "./activar-mfa.html";
+      return;
+    }
+
+    // 3) Go panel
+    location.href = "./pedidos.html";
+  }
+
+  async function init(){
+    const { data: { user } } = await sb.auth.getUser();
+    if(user){
+      $("loginForm").style.display = "none";
+      $("alreadyBox").style.display = "block";
+      setStatusTop("Comprobando…");
+      await routeAfterLogin();
+    } else {
+      $("loginForm").style.display = "block";
+      $("alreadyBox").style.display = "none";
+    }
+  }
+
+  $("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    setStatus("");
+
+    const email = ($("email").value || "").trim();
+    const password = ($("pass").value || "").trim();
+    if(!email || !password){
+      setStatus("Falta email o contraseña.", "err");
+      return;
+    }
+
+    $("loginBtn").disabled = true;
+    setStatus("Entrando…");
+
+    try{
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if(error){
+        console.error(error);
+        setStatus("Login falló: " + (error.message || "Error"), "err");
+        return;
+      }
+
+      setStatus("✅ Login OK. Verificando permisos…", "ok");
+      await routeAfterLogin();
+
+    } finally {
+      $("loginBtn").disabled = false;
+    }
+  });
+
+  $("logoutBtn")?.addEventListener("click", async () => {
+    await sb.auth.signOut();
+    location.reload();
+  });
+
+  window.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
