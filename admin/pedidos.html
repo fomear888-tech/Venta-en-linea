@@ -350,12 +350,9 @@ document.getElementById("cancelBtn").addEventListener("click", () => {
 
 
 
-window.cambiarEstado = async function(orderId, nuevoEstado, el){
-  const old = el.getAttribute("data-old") || el.value;
 
 
-
-window.cambiarMetodoPago = async function(orderId, nuevoMetodo, el){
+  window.cambiarMetodoPago = async function(orderId, nuevoMetodo, el){
   const old = el.getAttribute("data-old") || "";
 
   const { error } = await sb
@@ -374,9 +371,17 @@ window.cambiarMetodoPago = async function(orderId, nuevoMetodo, el){
 };
 
 
-  
+
+
+
+
+
   
 
+window.cambiarEstado = async function(orderId, nuevoEstado, el){
+  const old = el.getAttribute("data-old") || el.value;
+  
+  
   // ✅ SI ELIGEN "cancelado": confirm + RPC + recargar
   if (nuevoEstado === "cancelado") {
     const ok = confirm(
