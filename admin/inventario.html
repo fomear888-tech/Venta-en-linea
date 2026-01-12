@@ -235,7 +235,7 @@
       </div>
       <div>
         <div class="label">ID (solo lectura)</div>
-        <input id="m_id_read" class="mono" placeholder="p083" />
+        <input id="m_id_read" class="mono" placeholder="p000" />
 <div class="hint">En edición no se cambia el ID. En “Nuevo” sí lo eliges.</div>
 
       </div>
@@ -322,6 +322,24 @@
 
 
 
+function nextProductIdSuggestion(){
+  // saca los ids tipo p001, p083, p120...
+  const nums = (all || [])
+    .map(p => String(p.id || "").trim().toLowerCase())
+    .map(id => {
+      const m = id.match(/^p(\d+)$/);
+      return m ? parseInt(m[1], 10) : null;
+    })
+    .filter(n => Number.isFinite(n));
+
+  const next = (nums.length ? Math.max(...nums) + 1 : 1);
+  return `p${String(next).padStart(3,"0")}`; // p001, p084, etc
+}
+
+  
+  
+
+
 function openNew(){
   isNew = true;
   current = null;
@@ -329,6 +347,10 @@ function openNew(){
   el("m_id").textContent = `Nuevo producto`;
   el("m_id_read").value = "";
   el("m_id_read").disabled = false;
+
+
+  el("m_id_read").placeholder = nextProductIdSuggestion(); // 👈 sugerencia p084
+  
 
   el("m_name").value = "";
   el("m_category").value = "";
@@ -390,6 +412,7 @@ function openNew(){
 
     all = Array.isArray(data) ? data : [];
     applyFilter();
+    el("m_id_read").placeholder = nextProductIdSuggestion();
   }
 
   function applyFilter(){
