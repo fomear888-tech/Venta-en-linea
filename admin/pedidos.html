@@ -72,16 +72,38 @@ select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
   <div class="card">
     <table>
       <thead>
-        <tr>
-          <th>Ticket</th>
-          <th>Cliente</th>
-          <th>Teléfono</th>
-          <th>Total (€)</th>
-          <th>Estado</th>
-          <th>Fecha</th>
-          <th></th>
-        </tr>
-      </thead>
+  <tr>
+    <th>Ticket</th>
+    <th>Cliente</th>
+    <th>Teléfono</th>
+    <th>Total (€)</th>
+    <th>Estado</th>
+    <th>Fecha</th>
+    <th></th>
+  </tr>
+
+  <!-- ✅ FILTROS -->
+  <tr>
+    <th><input id="f_ticket" placeholder="T-..." style="width:100%"></th>
+    <th><input id="f_cliente" placeholder="Nombre..." style="width:100%"></th>
+    <th><input id="f_tel" placeholder="Tel..." style="width:100%"></th>
+    <th><input id="f_total" placeholder="2.50" style="width:100%"></th>
+    <th>
+      <select id="f_estado" style="width:100%">
+        <option value="">Todos</option>
+        <option value="pendiente">pendiente</option>
+        <option value="pagado">pagado</option>
+        <option value="entregado">entregado</option>
+        <option value="cancelado">cancelado</option>
+      </select>
+    </th>
+
+    <!-- ✅ Fecha SIN hora -->
+    <th><input id="f_fecha" type="date" style="width:100%"></th>
+    <th><button id="clearFilters" type="button">🧹</button></th>
+  </tr>
+</thead>
+
       <tbody id="rows">
         <tr><td colspan="7" class="empty">Cargando pedidos…</td></tr>
       </tbody>
@@ -125,6 +147,91 @@ function statusClass(s){
     return !!data;
   }
 
+
+
+
+
+let allPedidos = [];
+
+function isoDateOnly(ts){
+  if(!ts) return "";
+  const d = new Date(ts);
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`; // ✅ solo fecha
+}
+
+function applyFilters(){
+  const fTicket  = (document.getElementById("f_ticket")?.value || "").trim().toLowerCase();
+  const fCli     = (document.getElementById("f_cliente")?.value || "").trim().toLowerCase();
+  const fTel     = (document.getElementById("f_tel")?.value || "").trim().toLowerCase();
+  const fTotal   = (document.getElementById("f_total")?.value || "").trim();
+  const fEstado  = (document.getElementById("f_estado")?.value || "").trim();
+  const fFecha   = (document.getElementById("f_fecha")?.value || "").trim(); // YYYY-MM-DD
+
+  const filtered = allPedidos.filter(p => {
+    const t  = String(p.ticket_number || "").toLowerCase();
+    const c  = String(p.customer_name || "").toLowerCase();
+    const ph = String(p.customer_phone || "").toLowerCase();
+    const st = String(p.estado || "");
+    const dt = isoDateOnly(p.created_at);
+    const tot = String(Number(p.total || 0).toFixed(2));
+
+    if (fTicket && !t.includes(fTicket)) return false;
+    if (fCli && !c.includes(fCli)) return false;
+    if (fTel && !ph.includes(fTel)) return false;
+    if (fEstado && st !== fEstado) return false;
+    if (fFecha && dt !== fFecha) return false;
+
+    // total: permite buscar "2.5" o "2.50"
+    if (fTotal && !tot.includes(fTotal.replace(",", "."))) return false;
+
+    return true;
+  });
+
+  renderPedidos(filtered);
+}
+
+function renderPedidos(data){
+  if(!data || data.length === 0){
+    rows.innerHTML = `<tr><td colspan="7" class="empty">No hay pedidos con esos filtros</td></tr>`;
+    return;
+  }
+
+  rows.innerHTML = "";
+  data.forEach(p => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${p.ticket_number || ""}</td>
+      <td>${p.customer_name || ""}</td>
+      <td>${p.customer_phone || ""}</td>
+      <td><b>${Number(p.total || 0).toFixed(2)}</b></td>
+      <td>
+        <select class="statusSel ${statusClass(p.estado)}"
+                onchange="cambiarEstado('${p.id}', this.value, this)">
+          <option value="pendiente" ${p.estado==="pendiente"?"selected":""}>pendiente</option>
+          <option value="pagado" ${p.estado==="pagado"?"selected":""}>pagado</option>
+          <option value="entregado" ${p.estado==="entregado"?"selected":""}>entregado</option>
+          <option value="cancelado" ${p.estado==="cancelado"?"selected":""}>cancelado</option>
+        </select>
+      </td>
+      <td class="muted">${fmtDate(p.created_at)}</td>
+      <td><button onclick="verTicket('${p.id}')">🧾 Ticket</button></td>
+    `;
+    const sel = tr.querySelector("select.statusSel");
+    if (sel) sel.setAttribute("data-old", p.estado || "pendiente");
+    rows.appendChild(tr);
+  });
+}
+
+
+
+
+
+
+  
+
   async function loadPedidos(){
     rows.innerHTML = `<tr><td colspan="7" class="empty">Cargando pedidos…</td></tr>`;
 
@@ -139,43 +246,13 @@ function statusClass(s){
       return;
     }
 
-    if(!data || data.length === 0){
-      rows.innerHTML = `<tr><td colspan="7" class="empty">No hay pedidos aún</td></tr>`;
-      return;
-    }
+if(!data || data.length === 0){
+  rows.innerHTML = `<tr><td colspan="7" class="empty">No hay pedidos aún</td></tr>`;
+  return;
+}
 
-    rows.innerHTML = "";
-    data.forEach(p => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${p.ticket_number || ""}</td>
-        <td>${p.customer_name || ""}</td>
-        <td>${p.customer_phone || ""}</td>
-        <td><b>${Number(p.total || 0).toFixed(2)}</b></td>
-        <td>
-  <select class="statusSel ${statusClass(p.estado)}"
-          onchange="cambiarEstado('${p.id}', this.value, this)">
-    <option value="pendiente" ${p.estado==="pendiente"?"selected":""}>pendiente</option>
-    <option value="pagado" ${p.estado==="pagado"?"selected":""}>pagado</option>
-    <option value="entregado" ${p.estado==="entregado"?"selected":""}>entregado</option>
-    <option value="cancelado" ${p.estado==="cancelado"?"selected":""}>cancelado</option>
-  </select>
-</td>
-
-        <td class="muted">${fmtDate(p.created_at)}</td>
-        <td>
-          <button onclick="verTicket('${p.id}')">🧾 Ticket</button>
-        </td>
-      `;
-
-
-const sel = tr.querySelector("select.statusSel");
-if (sel) sel.setAttribute("data-old", p.estado || "pendiente");
-
-
-      
-      rows.appendChild(tr);
-    });
+allPedidos = data;      // ✅ guardamos todos
+applyFilters();         // ✅ aplicamos filtros
   }
 
   window.verTicket = function(id){
@@ -238,6 +315,34 @@ window.cambiarEstado = async function(orderId, nuevoEstado, el){
     }
 
     loadPedidos();
+
+
+
+["f_ticket","f_cliente","f_tel","f_total"].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) el.addEventListener("input", applyFilters);
+});
+
+["f_estado","f_fecha"].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) el.addEventListener("change", applyFilters);
+});
+
+document.getElementById("clearFilters")?.addEventListener("click", () => {
+  document.getElementById("f_ticket").value = "";
+  document.getElementById("f_cliente").value = "";
+  document.getElementById("f_tel").value = "";
+  document.getElementById("f_total").value = "";
+  document.getElementById("f_estado").value = "";
+  document.getElementById("f_fecha").value = "";
+  applyFilters();
+});
+
+
+
+
+
+    
   });
 </script>
 
