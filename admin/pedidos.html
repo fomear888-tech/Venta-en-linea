@@ -64,6 +64,12 @@ select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
 <header>
   <h1>📦 Pedidos</h1>
   <div style="display:flex;gap:8px">
+
+
+    <button id="cancelBtn">❌ Cancelados</button>
+
+
+    
     <button id="invBtn">📦 Inventario</button>
     <button id="reloadBtn">🔄 Recargar</button>
     <button class="danger" id="logoutBtn">🚪 Salir</button>
@@ -274,6 +280,15 @@ applyFilters();         // ✅ aplicamos filtros
 
 document.getElementById("invBtn").addEventListener("click", () => {
   location.href = "./inventario.html";
+
+
+document.getElementById("cancelBtn").addEventListener("click", () => {
+  location.href = "./cancelados.html";
+});
+
+
+
+  
 });
 
 
