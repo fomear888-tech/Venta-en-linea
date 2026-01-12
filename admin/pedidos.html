@@ -54,6 +54,15 @@ select.statusSel.entregado{background:#ecfdf5;color:#065f46}
 select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
 
 
+
+    select.paySel{
+  padding:6px 10px;border-radius:999px;border:1px solid var(--border);
+  font-weight:800;font-size:12px;background:#fff;cursor:pointer;
+}
+
+
+
+    
     
   </style>
 </head>
@@ -86,6 +95,7 @@ select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
     <th>Teléfono</th>
     <th>Total (€)</th>
     <th>Estado</th>
+    <th>Método pago</th>
     <th>Fecha</th>
     <th></th>
   </tr>
@@ -105,6 +115,19 @@ select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
         <option value="cancelado">cancelado</option>
       </select>
     </th>
+
+
+
+    <th>
+  <select id="f_pago" style="width:100%">
+    <option value="">Todos</option>
+    <option value="efectivo">efectivo</option>
+    <option value="bizum">bizum</option>
+  </select>
+</th>
+
+
+    
 
     <!-- ✅ Fecha SIN hora -->
     <th><input id="f_fecha" type="date" style="width:100%"></th>
@@ -176,6 +199,7 @@ function applyFilters(){
   const fTel     = (document.getElementById("f_tel")?.value || "").trim().toLowerCase();
   const fTotal   = (document.getElementById("f_total")?.value || "").trim();
   const fEstado  = (document.getElementById("f_estado")?.value || "").trim();
+  const fPago   = (document.getElementById("f_pago")?.value || "").trim();
   const fFecha   = (document.getElementById("f_fecha")?.value || "").trim(); // YYYY-MM-DD
 
   const filtered = allPedidos.filter(p => {
@@ -185,6 +209,9 @@ function applyFilters(){
     const st = String(p.estado || "");
     const dt = isoDateOnly(p.created_at);
     const tot = String(Number(p.total || 0).toFixed(2));
+
+    const mp = String(p.metodo_pago || "");
+    if (fPago && mp !== fPago) return false;
 
     if (fTicket && !t.includes(fTicket)) return false;
     if (fCli && !c.includes(fCli)) return false;
@@ -232,11 +259,39 @@ function renderPedidos(data){
   }
 </td>
 
+
+
+<td>
+  ${
+    (p.estado === "cancelado")
+      ? `<span class="muted">${(p.metodo_pago || "-")}</span>`
+      : `
+        <select class="paySel"
+                onchange="cambiarMetodoPago('${p.id}', this.value, this)">
+          <option value="" ${!p.metodo_pago ? "selected" : ""}>-</option>
+          <option value="efectivo" ${p.metodo_pago==="efectivo"?"selected":""}>efectivo</option>
+          <option value="bizum" ${p.metodo_pago==="bizum"?"selected":""}>bizum</option>
+          <option value="tarjeta" ${p.metodo_pago==="tarjeta"?"selected":""}>tarjeta</option>
+          <option value="transferencia" ${p.metodo_pago==="transferencia"?"selected":""}>transferencia</option>
+        </select>
+      `
+  }
+</td>
+
+
+
+
+
       <td class="muted">${fmtDate(p.created_at)}</td>
       <td><button onclick="verTicket('${p.id}')">🧾 Ticket</button></td>
     `;
     const sel = tr.querySelector("select.statusSel");
     if (sel) sel.setAttribute("data-old", p.estado || "pendiente");
+
+
+const pay = tr.querySelector("select.paySel");
+if (pay) pay.setAttribute("data-old", p.metodo_pago || "");
+    
     rows.appendChild(tr);
   });
 }
@@ -249,11 +304,11 @@ function renderPedidos(data){
   
 
   async function loadPedidos(){
-    rows.innerHTML = `<tr><td colspan="7" class="empty">Cargando pedidos…</td></tr>`;
+    rows.innerHTML = `<tr><td colspan="8" class="empty">Cargando pedidos…</td></tr>`;
 
     const { data, error } = await sb
       .from("orders")                 // ✅ tu tabla real
-      .select("id,ticket_number,customer_name,customer_phone,total,estado,created_at")
+      .select("id,ticket_number,customer_name,customer_phone,total,estado,metodo_pago,created_at")
       .order("created_at", { ascending: false });
 
     if(error){
@@ -299,6 +354,26 @@ document.getElementById("cancelBtn").addEventListener("click", () => {
 
 window.cambiarEstado = async function(orderId, nuevoEstado, el){
   const old = el.getAttribute("data-old") || el.value;
+
+
+
+window.cambiarMetodoPago = async function(orderId, nuevoMetodo, el){
+  const old = el.getAttribute("data-old") || "";
+
+  const { error } = await sb
+    .from("orders")
+    .update({ metodo_pago: nuevoMetodo || null })
+    .eq("id", orderId);
+
+  if(error){
+    console.error(error);
+    alert("No se pudo actualizar el método de pago. Revisa policies (UPDATE).");
+    el.value = old;
+    return;
+  }
+
+  el.setAttribute("data-old", nuevoMetodo || "");
+};
 
   
   
@@ -405,7 +480,7 @@ if (old === "cancelado") {
   if(el) el.addEventListener("input", applyFilters);
 });
 
-["f_estado","f_fecha"].forEach(id=>{
+["f_estado","f_pago","f_fecha"].forEach(id=>{
   const el = document.getElementById(id);
   if(el) el.addEventListener("change", applyFilters);
 });
@@ -416,6 +491,7 @@ document.getElementById("clearFilters")?.addEventListener("click", () => {
   document.getElementById("f_tel").value = "";
   document.getElementById("f_total").value = "";
   document.getElementById("f_estado").value = "";
+  document.getElementById("f_pago").value = "";
   document.getElementById("f_fecha").value = "";
   applyFilters();
 });
