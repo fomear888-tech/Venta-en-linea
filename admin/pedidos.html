@@ -271,8 +271,6 @@ function renderPedidos(data){
           <option value="" ${!p.metodo_pago ? "selected" : ""}>-</option>
           <option value="efectivo" ${p.metodo_pago==="efectivo"?"selected":""}>efectivo</option>
           <option value="bizum" ${p.metodo_pago==="bizum"?"selected":""}>bizum</option>
-          <option value="tarjeta" ${p.metodo_pago==="tarjeta"?"selected":""}>tarjeta</option>
-          <option value="transferencia" ${p.metodo_pago==="transferencia"?"selected":""}>transferencia</option>
         </select>
       `
   }
