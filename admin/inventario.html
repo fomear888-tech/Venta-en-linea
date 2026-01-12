@@ -19,34 +19,59 @@
       background:var(--bg);color:var(--txt);padding:18px
     }
     .wrap{max-width:1200px;margin:0 auto}
-    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;flex-wrap:wrap}
     h1{font-size:18px;margin:0}
-    button{
+    .btn{
       padding:10px 12px;border-radius:12px;border:1px solid var(--border);
       background:#fff;cursor:pointer;font-weight:800;
-      display:inline-flex;align-items:center;gap:8px
+      display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--txt)
     }
-    button.primary{border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.12)}
-    button.danger{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.12)}
+    .btn.primary{border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.12)}
+    .btn.danger{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.12)}
     .card{
       background:var(--card);border:1px solid var(--border);
       border-radius:18px;box-shadow:var(--shadow);padding:14px
     }
-    .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-    input{
-      padding:10px 12px;border-radius:12px;border:1px solid var(--border);
-      background:#fff;min-width:220px
+    .topbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+    input, textarea{
+      border:1px solid var(--border);border-radius:12px;padding:10px 12px;outline:none;
+      width:100%;font-family:inherit;font-size:14px;background:#fff
     }
+    textarea{min-height:90px;resize:vertical}
+    .search{max-width:420px}
     table{width:100%;border-collapse:collapse;font-size:13px}
-    th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left}
+    th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
     th{font-size:12px;color:var(--muted)}
     tr:hover{background:#f3f4f6}
     .muted{color:var(--muted);font-size:12px}
-    .empty{padding:20px;text-align:center;color:var(--muted)}
-    .badge{
-      display:inline-block;padding:3px 8px;border-radius:999px;
-      border:1px solid var(--border);font-size:12px;background:#fff
+    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    .pill{font-size:11px;font-weight:800;border:1px solid var(--border);border-radius:999px;padding:4px 8px;background:#fff}
+    .actions{display:flex;gap:8px;align-items:center}
+    .iconbtn{
+      border:1px solid var(--border);background:#fff;border-radius:12px;padding:8px 10px;cursor:pointer;font-weight:900
     }
+    .empty{padding:20px;text-align:center;color:var(--muted)}
+
+    /* Modal */
+    .modalOverlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.35);
+      display:none;align-items:center;justify-content:center;padding:18px;z-index:99
+    }
+    .modal{
+      width:min(860px, 100%);
+      background:#fff;border:1px solid var(--border);border-radius:18px;
+      box-shadow:0 30px 80px rgba(0,0,0,.18);padding:14px
+    }
+    .modal header{margin:0 0 10px 0}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    .rowline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .label{font-size:12px;color:var(--muted);font-weight:800;margin:6px 0}
+    .imgRow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .imgBox{border:1px dashed rgba(0,0,0,.22);border-radius:14px;padding:10px}
+    .imgBox small{display:block;color:var(--muted);margin-top:6px}
+    .modalFooter{display:flex;justify-content:flex-end;gap:10px;margin-top:12px}
+    .hint{font-size:12px;color:var(--muted);margin-top:6px}
   </style>
 </head>
 
@@ -55,18 +80,20 @@
 
   <header>
     <h1>📦 Inventario</h1>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button id="backBtn">⬅️ Volver</button>
-      <button id="reloadBtn">🔄 Recargar</button>
-      <button class="danger" id="logoutBtn">🚪 Salir</button>
+    <div class="rowline">
+      <a class="btn" href="./pedidos.html">⬅️ Volver a pedidos</a>
+      <button class="btn primary" id="reloadBtn">🔄 Recargar</button>
+      <button class="btn danger" id="logoutBtn">🚪 Salir</button>
     </div>
   </header>
 
   <div class="card">
-    <div class="filters">
-      <input id="q" placeholder="Buscar por id / nombre / categoría…" />
-      <button class="primary" id="clearBtn">🧽 Limpiar</button>
-      <span class="muted" id="count"></span>
+    <div class="topbar">
+      <div class="search">
+        <input id="q" placeholder="Buscar por id, nombre, categoría..." />
+        <div class="hint">Tip: escribe “p01” o “telefono” o “humidificador” 😄</div>
+      </div>
+      <span class="pill" id="countPill">0 productos</span>
     </div>
 
     <table>
@@ -75,16 +102,100 @@
           <th>ID</th>
           <th>Nombre</th>
           <th>Categoría</th>
-          <th>Precio (€)</th>
+          <th>Precio</th>
           <th>Stock</th>
+          <th>Descripción</th>
+          <th>Actualizado</th>
+          <th></th>
         </tr>
       </thead>
       <tbody id="rows">
-        <tr><td colspan="5" class="empty">Cargando inventario…</td></tr>
+        <tr><td colspan="8" class="empty">Cargando inventario…</td></tr>
       </tbody>
     </table>
   </div>
+</div>
 
+<!-- MODAL -->
+<div class="modalOverlay" id="overlay">
+  <div class="modal">
+    <header>
+      <h1 style="margin:0;font-size:16px">✏️ Editar producto</h1>
+      <div class="muted" id="m_id"></div>
+    </header>
+
+    <div class="grid">
+      <div>
+        <div class="label">Nombre</div>
+        <input id="m_name" />
+      </div>
+      <div>
+        <div class="label">Categoría</div>
+        <input id="m_category" placeholder="ej: Telefonía, Hogar..." />
+      </div>
+    </div>
+
+    <div class="grid3" style="margin-top:10px">
+      <div>
+        <div class="label">Precio (€)</div>
+        <input id="m_price" type="number" step="0.01" />
+      </div>
+      <div>
+        <div class="label">Stock</div>
+        <input id="m_stock" type="number" step="1" />
+      </div>
+      <div>
+        <div class="label">ID (solo lectura)</div>
+        <input id="m_id_read" class="mono" disabled />
+      </div>
+    </div>
+
+    <div style="margin-top:10px">
+      <div class="label">Descripción</div>
+      <textarea id="m_desc" placeholder="Descripción del producto..."></textarea>
+    </div>
+
+    <div style="margin-top:12px">
+      <div class="label">Imágenes (máx. 5) — el orden importa (1ª es la principal)</div>
+
+      <div class="imgRow">
+        <div class="imgBox">
+          <b>Imagen 1 (img)</b>
+          <input id="m_img1" type="file" accept="image/*" />
+          <small id="m_img1_cur">Actual: -</small>
+        </div>
+        <div class="imgBox">
+          <b>Imagen 2 (img2)</b>
+          <input id="m_img2" type="file" accept="image/*" />
+          <small id="m_img2_cur">Actual: -</small>
+        </div>
+
+        <div class="imgBox">
+          <b>Imagen 3 (img3)</b>
+          <input id="m_img3" type="file" accept="image/*" />
+          <small id="m_img3_cur">Actual: -</small>
+        </div>
+        <div class="imgBox">
+          <b>Imagen 4 (img4)</b>
+          <input id="m_img4" type="file" accept="image/*" />
+          <small id="m_img4_cur">Actual: -</small>
+        </div>
+
+        <div class="imgBox" style="grid-column:1 / -1">
+          <b>Imagen 5 (img5)</b>
+          <input id="m_img5" type="file" accept="image/*" />
+          <small id="m_img5_cur">Actual: -</small>
+        </div>
+      </div>
+
+      <div class="hint">Las imágenes se subirán a Storage: <span class="mono">product-images/products/&lt;ID&gt;/1.jpg</span> etc.</div>
+    </div>
+
+    <div class="modalFooter">
+      <button class="btn" id="m_cancel">Cancelar</button>
+      <button class="btn primary" id="m_save">Guardar cambios</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -93,58 +204,72 @@
   const SUPABASE_ANON_KEY = "sb_publishable_D7A6JAiqiXAaPRYsaF6ZBQ_1hCE1UcN";
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  const BUCKET = "product-images";
+  const TABLE_PRODUCTS = "products";
+  const TABLE_ADMINS = "admins";
+
+  // ===== DOM =====
   const rows = document.getElementById("rows");
   const q = document.getElementById("q");
-  const count = document.getElementById("count");
+  const countPill = document.getElementById("countPill");
 
-  function eur(n){ return Number(n||0).toFixed(2); }
+  const overlay = document.getElementById("overlay");
+  const el = (id) => document.getElementById(id);
+
+  let all = [];
+  let current = null;
+
+  function eur(n){
+    return Number(n || 0).toFixed(2);
+  }
+  function fmtDate(ts){
+    if(!ts) return "-";
+    return new Date(ts).toLocaleString("es-ES");
+  }
 
   async function isAdmin(){
     const { data: { user } } = await sb.auth.getUser();
     if(!user) return false;
 
     const { data, error } = await sb
-      .from("admins")
+      .from(TABLE_ADMINS)
       .select("user_id")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    return !error && !!data;
+    if(error) return false;
+    return !!data;
   }
 
-  // Carga inventario (filtrado client-side para hacerlo simple y rápido)
-  async function loadInv(){
-    rows.innerHTML = `<tr><td colspan="5" class="empty">Cargando inventario…</td></tr>`;
+  async function loadProducts(){
+    rows.innerHTML = `<tr><td colspan="8" class="empty">Cargando inventario…</td></tr>`;
 
     const { data, error } = await sb
-      .from("products") // ✅ tu tabla real (según tu captura)
-      .select("id,name,category,price,stock")
-      .order("id", { ascending: true });
+      .from(TABLE_PRODUCTS)
+      .select("id,name,category,price,stock,desc,img,img2,img3,img4,img5,updated_at")
+      .order("updated_at", { ascending:false });
 
     if(error){
       console.error(error);
-      rows.innerHTML = `<tr><td colspan="5" class="empty">Error cargando inventario</td></tr>`;
+      rows.innerHTML = `<tr><td colspan="8" class="empty">Error cargando inventario</td></tr>`;
       return;
     }
 
-    const list = Array.isArray(data) ? data : [];
-    render(list);
+    all = Array.isArray(data) ? data : [];
+    applyFilter();
   }
 
-  function render(list){
+  function applyFilter(){
     const term = (q.value || "").trim().toLowerCase();
-
-    const filtered = !term ? list : list.filter(p => {
-      const id = (p.id || "").toString().toLowerCase();
-      const name = (p.name || "").toString().toLowerCase();
-      const cat = (p.category || "").toString().toLowerCase();
-      return id.includes(term) || name.includes(term) || cat.includes(term);
+    const filtered = !term ? all : all.filter(p => {
+      const s = `${p.id||""} ${p.name||""} ${p.category||""} ${p.desc||""}`.toLowerCase();
+      return s.includes(term);
     });
 
-    count.textContent = `${filtered.length} producto(s)`;
+    countPill.textContent = `${filtered.length} productos`;
 
     if(filtered.length === 0){
-      rows.innerHTML = `<tr><td colspan="5" class="empty">No hay coincidencias</td></tr>`;
+      rows.innerHTML = `<tr><td colspan="8" class="empty">No hay coincidencias</td></tr>`;
       return;
     }
 
@@ -152,56 +277,138 @@
     filtered.forEach(p => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td><span class="badge">${p.id || "-"}</span></td>
-        <td>${p.name || "-"}</td>
-        <td class="muted">${p.category || "-"}</td>
-        <td><b>${eur(p.price)} €</b></td>
-        <td><b>${Number(p.stock ?? 0)}</b></td>
+        <td class="mono">${p.id||""}</td>
+        <td><b>${p.name||""}</b></td>
+        <td>${p.category || "<span class='muted'>—</span>"}</td>
+        <td>${eur(p.price)} €</td>
+        <td>${Number(p.stock ?? 0)}</td>
+        <td class="muted">${(p.desc || "").toString().slice(0, 70)}${(p.desc||"").length>70?"…":""}</td>
+        <td class="muted">${fmtDate(p.updated_at)}</td>
+        <td class="actions">
+          <button class="iconbtn" title="Editar" onclick="openEdit('${p.id}')">✏️</button>
+        </td>
       `;
       rows.appendChild(tr);
     });
   }
 
-  // Buttons
-  document.getElementById("reloadBtn").addEventListener("click", loadInv);
-  document.getElementById("backBtn").addEventListener("click", () => location.href = "./pedidos.html");
-  document.getElementById("clearBtn").addEventListener("click", () => { q.value=""; loadInv(); });
-
-  // Buscar en vivo (sin recargar)
-  q.addEventListener("input", async () => {
-    // re-render usando lo último cargado
-    // truco simple: recargamos 1 sola vez y luego solo filtramos
-    // (para que quede simple, aquí recargamos si aún no hay cache)
-    // Mejor: guardamos cache global
-  });
-
-  // Cache simple
-  let cache = [];
-  async function loadInvCached(){
-    rows.innerHTML = `<tr><td colspan="5" class="empty">Cargando inventario…</td></tr>`;
-    const { data, error } = await sb
-      .from("products")
-      .select("id,name,category,price,stock")
-      .order("id", { ascending: true });
-
-    if(error){
-      console.error(error);
-      rows.innerHTML = `<tr><td colspan="5" class="empty">Error cargando inventario</td></tr>`;
-      return;
+  function setCur(elId, url){
+    const node = el(elId);
+    if(!url){
+      node.textContent = "Actual: -";
+    }else{
+      node.innerHTML = `Actual: <a href="${url}" target="_blank" rel="noreferrer">ver</a>`;
     }
-    cache = Array.isArray(data) ? data : [];
-    render(cache);
   }
-  // reemplaza loadInv por cacheado
-  loadInv = loadInvCached;
-  q.addEventListener("input", () => render(cache));
 
+  window.openEdit = function(id){
+    const p = all.find(x => x.id === id);
+    if(!p) return;
+
+    current = p;
+
+    el("m_id").textContent = `ID: ${p.id}`;
+    el("m_id_read").value = p.id || "";
+    el("m_name").value = p.name || "";
+    el("m_category").value = p.category || "";
+    el("m_price").value = (p.price ?? "");
+    el("m_stock").value = (p.stock ?? "");
+    el("m_desc").value = p.desc || "";
+
+    // Limpia inputs file
+    ["m_img1","m_img2","m_img3","m_img4","m_img5"].forEach(x => el(x).value = "");
+
+    // Links actuales
+    setCur("m_img1_cur", p.img);
+    setCur("m_img2_cur", p.img2);
+    setCur("m_img3_cur", p.img3);
+    setCur("m_img4_cur", p.img4);
+    setCur("m_img5_cur", p.img5);
+
+    overlay.style.display = "flex";
+  }
+
+  function closeModal(){
+    overlay.style.display = "none";
+    current = null;
+  }
+
+  async function uploadImage(productId, index1to5, file){
+    // Ruta fija por producto + índice (sobrescribe la imagen si vuelves a subir)
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const path = `products/${productId}/${index1to5}.${ext}`;
+
+    const { error: upErr } = await sb.storage
+      .from(BUCKET)
+      .upload(path, file, { upsert: true, contentType: file.type });
+
+    if(upErr) throw upErr;
+
+    // URL pública (bucket público)
+    const { data } = sb.storage.from(BUCKET).getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  async function saveModal(){
+    if(!current) return;
+
+    const id = current.id;
+
+    const patch = {
+      name: el("m_name").value.trim(),
+      category: el("m_category").value.trim() || null,
+      price: Number(el("m_price").value || 0),
+      stock: Number(el("m_stock").value || 0),
+      desc: el("m_desc").value.trim() || null,
+      updated_at: new Date().toISOString()
+    };
+
+    try{
+      // Subidas opcionales (si eliges archivo)
+      const f1 = el("m_img1").files[0];
+      const f2 = el("m_img2").files[0];
+      const f3 = el("m_img3").files[0];
+      const f4 = el("m_img4").files[0];
+      const f5 = el("m_img5").files[0];
+
+      if(f1) patch.img  = await uploadImage(id, 1, f1);
+      if(f2) patch.img2 = await uploadImage(id, 2, f2);
+      if(f3) patch.img3 = await uploadImage(id, 3, f3);
+      if(f4) patch.img4 = await uploadImage(id, 4, f4);
+      if(f5) patch.img5 = await uploadImage(id, 5, f5);
+
+      const { error } = await sb
+        .from(TABLE_PRODUCTS)
+        .update(patch)
+        .eq("id", id);
+
+      if(error) throw error;
+
+      closeModal();
+      await loadProducts();
+      alert("✅ Producto actualizado");
+    }catch(err){
+      console.error(err);
+      alert("❌ No pude guardar (revisa permisos RLS/Storage y consola).");
+    }
+  }
+
+  // ===== EVENTS =====
+  document.getElementById("reloadBtn").addEventListener("click", loadProducts);
   document.getElementById("logoutBtn").addEventListener("click", async () => {
     await sb.auth.signOut();
     location.href = "./login.html";
   });
 
-  // ===== INIT (MISMA PROTECCIÓN) =====
+  q.addEventListener("input", applyFilter);
+
+  el("m_cancel").addEventListener("click", closeModal);
+  overlay.addEventListener("click", (e) => {
+    if(e.target === overlay) closeModal();
+  });
+  el("m_save").addEventListener("click", saveModal);
+
+  // ===== INIT =====
   window.addEventListener("DOMContentLoaded", async () => {
     const { data: { user } } = await sb.auth.getUser();
     if(!user){
@@ -217,9 +424,8 @@
       return;
     }
 
-    loadInv();
+    loadProducts();
   });
 </script>
-
 </body>
 </html>
