@@ -42,6 +42,19 @@
     .pagado{background:#ecfeff;color:#155e75}
     .entregado{background:#ecfdf5;color:#065f46}
     .empty{padding:20px;text-align:center;color:var(--muted)}
+
+.cancelado{background:#fee2e2;color:#991b1b}
+select.statusSel{
+  padding:6px 10px;border-radius:999px;border:1px solid var(--border);
+  font-weight:800;font-size:12px;background:#fff;cursor:pointer;
+}
+select.statusSel.pendiente{background:#fff7ed;color:#9a3412}
+select.statusSel.pagado{background:#ecfeff;color:#155e75}
+select.statusSel.entregado{background:#ecfdf5;color:#065f46}
+select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
+
+
+    
   </style>
 </head>
 
@@ -90,10 +103,13 @@
     return new Date(ts).toLocaleString("es-ES");
   }
 
-  function statusClass(s){
-    return s === "pagado" ? "pagado" :
-           s === "entregado" ? "entregado" : "pendiente";
-  }
+function statusClass(s){
+  return s === "pagado" ? "pagado" :
+         s === "entregado" ? "entregado" :
+         s === "cancelado" ? "cancelado" :
+         "pendiente";
+}
+
 
   async function isAdmin(){
     const { data: { user } } = await sb.auth.getUser();
@@ -136,12 +152,28 @@
         <td>${p.customer_name || ""}</td>
         <td>${p.customer_phone || ""}</td>
         <td><b>${Number(p.total || 0).toFixed(2)}</b></td>
-        <td><span class="status ${statusClass(p.estado)}">${p.estado}</span></td>
+        <td>
+  <select class="statusSel ${statusClass(p.estado)}"
+          onchange="cambiarEstado('${p.id}', this.value, this)">
+    <option value="pendiente" ${p.estado==="pendiente"?"selected":""}>pendiente</option>
+    <option value="pagado" ${p.estado==="pagado"?"selected":""}>pagado</option>
+    <option value="entregado" ${p.estado==="entregado"?"selected":""}>entregado</option>
+    <option value="cancelado" ${p.estado==="cancelado"?"selected":""}>cancelado</option>
+  </select>
+</td>
+
         <td class="muted">${fmtDate(p.created_at)}</td>
         <td>
           <button onclick="verTicket('${p.id}')">🧾 Ticket</button>
         </td>
       `;
+
+
+const sel = tr.querySelector("select.statusSel");
+if (sel) sel.setAttribute("data-old", p.estado || "pendiente");
+
+
+      
       rows.appendChild(tr);
     });
   }
@@ -156,6 +188,38 @@
     await sb.auth.signOut();
     location.href = "./login.html";
   });
+
+
+
+
+window.cambiarEstado = async function(orderId, nuevoEstado, el){
+  const old = el.getAttribute("data-old") || el.value;
+
+  // UI: pinta según estado
+  el.classList.remove("pendiente","pagado","entregado","cancelado");
+  el.classList.add(statusClass(nuevoEstado));
+
+  const { error } = await sb
+    .from("orders")
+    .update({ estado: nuevoEstado })
+    .eq("id", orderId);
+
+  if(error){
+    console.error(error);
+    alert("No se pudo actualizar el estado. Revisa policies (UPDATE) y vuelve a intentar.");
+    // revert UI si falla
+    el.value = old;
+    el.classList.remove("pendiente","pagado","entregado","cancelado");
+    el.classList.add(statusClass(old));
+    return;
+  }
+
+  // guardar estado anterior “bueno”
+  el.setAttribute("data-old", nuevoEstado);
+};
+
+
+  
 
   // ===== INIT =====
   window.addEventListener("DOMContentLoaded", async () => {
