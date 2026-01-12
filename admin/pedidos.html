@@ -282,10 +282,47 @@ document.getElementById("invBtn").addEventListener("click", () => {
 window.cambiarEstado = async function(orderId, nuevoEstado, el){
   const old = el.getAttribute("data-old") || el.value;
 
+  // ✅ SI ELIGEN "cancelado": confirm + RPC + recargar
+  if (nuevoEstado === "cancelado") {
+    const ok = confirm(
+      "¿Seguro que quieres CANCELAR este pedido?\n\n" +
+      "✔ Se devolverá el stock\n" +
+      "✔ Se guardará un registro histórico\n" +
+      "✔ El pedido se eliminará de 'orders'"
+    );
+
+    if (!ok) {
+      // volver al estado anterior
+      el.value = old;
+      el.classList.remove("pendiente","pagado","entregado","cancelado");
+      el.classList.add(statusClass(old));
+      return;
+    }
+
+    // llama tu función en Supabase (RPC)
+    const { error: rpcError } = await sb.rpc("cancel_order_and_archive", {
+      p_order_id: orderId
+    });
+
+    if (rpcError) {
+      console.error(rpcError);
+      alert("❌ No se pudo cancelar. Revisa policies/RPC.");
+      el.value = old;
+      el.classList.remove("pendiente","pagado","entregado","cancelado");
+      el.classList.add(statusClass(old));
+      return;
+    }
+
+    alert("✅ Pedido cancelado y archivado");
+    await loadPedidos(); // refresca lista y filtros
+    return;
+  }
+
   // UI: pinta según estado
   el.classList.remove("pendiente","pagado","entregado","cancelado");
   el.classList.add(statusClass(nuevoEstado));
 
+  // ✅ Para estados normales: update en orders
   const { error } = await sb
     .from("orders")
     .update({ estado: nuevoEstado })
@@ -304,6 +341,7 @@ window.cambiarEstado = async function(orderId, nuevoEstado, el){
   // guardar estado anterior “bueno”
   el.setAttribute("data-old", nuevoEstado);
 };
+
 
 
   
