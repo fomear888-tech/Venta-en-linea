@@ -100,7 +100,7 @@
     if(!user) return false;
 
     const { data } = await sb
-      .from("administradores")   // ⚠️ ajusta si tu tabla se llama distinto
+      .from("admins")   // ⚠️ ajusta si tu tabla se llama distinto
       .select("user_id")
       .eq("user_id", user.id)
       .maybeSingle();
@@ -112,7 +112,7 @@
     rows.innerHTML = `<tr><td colspan="7" class="empty">Cargando pedidos…</td></tr>`;
 
     const { data, error } = await sb
-      .from("ordenes")           // ⚠️ tu tabla de pedidos
+      .from("orders")           // ⚠️ tu tabla de pedidos
       .select("*")
       .order("created_at", { ascending: false });
 
