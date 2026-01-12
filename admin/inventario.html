@@ -602,6 +602,31 @@ function paintSort(){
   sortDown?.classList.toggle("active", sortDir === "desc");
 }
 
+
+
+
+
+function fillIdWithSuggestion(){
+  // Solo tiene sentido en "Nuevo"
+  if(!isNew) return;
+
+  const input = el("m_id_read");
+  const sug = (input.placeholder || "").trim();
+
+  // Si ya escribió algo, no lo pisamos
+  if(input.value.trim()) return;
+
+  // Si hay sugerencia, la ponemos
+  if(sug) input.value = sug;
+}
+
+
+
+
+
+
+  
+
 sortUp?.addEventListener("click", () => {
   sortDir = "asc";
   paintSort();
@@ -689,6 +714,16 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
 
     loadProducts();
     paintSort();
+
+
+
+
+    // Doble click en ID => autorrellena con la sugerencia (placeholder)
+el("m_id_read").addEventListener("dblclick", fillIdWithSuggestion);
+
+
+
+    
   });
 </script>
 </body>
