@@ -13,7 +13,11 @@
       --shadow:0 12px 30px rgba(0,0,0,.08);
     }
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;color:var(--txt)}
+    body{
+      margin:0;background:var(--bg);
+      font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      color:var(--txt)
+    }
     .wrap{max-width:920px;margin:0 auto;padding:18px}
     header{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
     .btn{
@@ -23,11 +27,12 @@
     .btn.primary{background:#eef2ff;border-color:#c7d2fe}
     .btn.danger{background:#fee2e2;border-color:#fecaca}
     .btn.ok{background:#ecfdf5;border-color:#a7f3d0}
+
     .row{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
 
     /* “Papel” del ticket */
     .paper{
-      width:340px; /* similar a ticket 80mm aprox */
+      width:340px;
       background:var(--paper);
       border:1px solid var(--border);
       border-radius:18px;
@@ -46,30 +51,15 @@
     .totals{margin-top:10px}
     .bigTotal{font-size:20px;font-weight:900;letter-spacing:.6px}
     .notice{margin-top:10px;font-size:12px;text-align:center}
-    .mono{font-family:inherit}
 
-    /* Panel a la derecha (info + debug) */
-    .side{
-      flex:1;
-      min-width:280px;
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:18px;
-      box-shadow:var(--shadow);
-      padding:14px;
-    }
-    .side h2{margin:0 0 8px;font-size:14px}
-    code{background:#f3f4f6;padding:2px 6px;border-radius:8px}
-
-    /* Modo impresión */
     @media print{
       body{background:#fff}
-      header,.side{display:none !important}
+      header{display:none !important}
       .wrap{padding:0;margin:0}
       .paper{
         box-shadow:none;border:none;border-radius:0;
-        width: 80mm; /* impresora ticket */
-        padding: 0;
+        width:80mm;
+        padding:0;
       }
     }
   </style>
@@ -90,21 +80,20 @@
   </header>
 
   <div class="row">
-
-    <!-- TICKET -->
     <div class="paper" id="paper">
+
       <div class="title" id="bizName">MAS ENVIOS TELX</div>
+
       <div class="center small" id="bizLine1">
-          C. Noche del Alba, 34<br>
-          03206 Elx · Alicante
+        C. Noche del Alba, 34<br>
+        03206 Elx · Alicante
       </div>
-      
+
+      <!-- Si quieres ocultar el NIF, borra esta línea completa -->
       <div class="center small" id="bizLine2">🧾 NIF: 78131415R</div>
 
       <div class="hr"></div>
-
       <div class="center" style="font-weight:900">- TICKET -</div>
-
       <div class="hr"></div>
 
       <div class="kv"><span>Ticket</span><span id="t_ticket">-</span></div>
@@ -142,42 +131,33 @@
         Se admite cambio en 14 días presentando el ticket.<br>
         Gracias por su visita 😊
       </div>
-    </div>
 
     </div>
-
   </div>
+
 </div>
 
 <script>
-  // ===== CONFIG (IGUAL QUE EN pedidos.html) =====
   const SUPABASE_URL = "https://pujzkraozoqbriqnlikf.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_D7A6JAiqiXAaPRYsaF6ZBQ_1hCE1UcN";
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ===== HELPERS =====
   const $ = (id) => document.getElementById(id);
 
-  function eur(n){
-    return `${Number(n || 0).toFixed(2)} €`;
-  }
-  function fmtDate(ts){
-    if(!ts) return "-";
-    return new Date(ts).toLocaleString("es-ES");
-  }
+  function eur(n){ return `${Number(n || 0).toFixed(2)} €`; }
+  function fmtDate(ts){ return ts ? new Date(ts).toLocaleString("es-ES") : "-"; }
 
   async function isAdmin(){
     const { data: { user } } = await sb.auth.getUser();
     if(!user) return false;
 
     const { data, error } = await sb
-      .from("admins") // tu tabla real
+      .from("admins")
       .select("user_id")
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if(error) return false;
-    return !!data;
+    return !error && !!data;
   }
 
   function getOrderId(){
@@ -187,7 +167,6 @@
 
   async function loadTicket(){
     const orderId = getOrderId();
-    $("debugId").textContent = orderId || "-";
 
     if(!orderId){
       alert("Falta el id del pedido");
@@ -195,7 +174,6 @@
       return;
     }
 
-    // 1) Order
     const { data: order, error: e1 } = await sb
       .from("orders")
       .select("id,ticket_number,customer_name,customer_phone,total,estado,metodo_pago,created_at")
@@ -208,7 +186,6 @@
       return;
     }
 
-    // 2) Items
     const { data: items, error: e2 } = await sb
       .from("order_items")
       .select("name,price,qty,line_total")
@@ -221,22 +198,20 @@
       return;
     }
 
-    // ===== RENDER =====
     $("t_ticket").textContent = order.ticket_number || "-";
     $("t_date").textContent   = fmtDate(order.created_at);
-    $("t_customer").textContent = (order.customer_name || "-");
-    $("t_phone").textContent = (order.customer_phone || "-");
+    $("t_customer").textContent = order.customer_name || "-";
+    $("t_phone").textContent = order.customer_phone || "-";
 
-    // Pago (si tienes metodo_pago)
-    const mp = (order.metodo_pago || "").toString().toLowerCase();
+    const mp = (order.metodo_pago || "").toString().trim();
     $("t_pay").textContent = mp ? mp : "Efectivo / Bizum";
 
-    // Items
     const list = Array.isArray(items) ? items : [];
     const itemsBox = $("t_items");
 
     if(list.length === 0){
       itemsBox.innerHTML = `<div class="muted center">Sin artículos (order_items vacío)</div>`;
+      $("t_qty").textContent = "0";
     }else{
       itemsBox.innerHTML = "";
       let totalQty = 0;
@@ -245,13 +220,14 @@
         const qty = Number(it.qty || 0);
         totalQty += qty;
 
-        const lineTotal = (it.line_total != null) ? Number(it.line_total) : (Number(it.price||0) * qty);
+        const price = Number(it.price || 0);
+        const lineTotal = (it.line_total != null) ? Number(it.line_total) : (price * qty);
 
         const div = document.createElement("div");
         div.className = "item";
         div.innerHTML = `
           <div class="name">${(it.name || "Artículo").toString()}</div>
-          <div>${qty} x ${eur(it.price)}</div>
+          <div>${qty} x ${eur(price)}</div>
           <div>${eur(lineTotal)}</div>
         `;
         itemsBox.appendChild(div);
@@ -260,19 +236,17 @@
       $("t_qty").textContent = String(totalQty);
     }
 
-    // Totales + IVA (asumo precios con IVA incluido; si NO, me lo dices y lo ajusto)
     const total = Number(order.total || 0);
     const vatRate = 0.21;
     const base = total / (1 + vatRate);
     const vat  = total - base;
 
     $("t_total").textContent = eur(total);
-    $("t_subtotal").textContent = eur(total);        // (si luego manejas descuentos, aquí cambia)
+    $("t_subtotal").textContent = eur(total);
     $("t_base").textContent = eur(base);
     $("t_vat").textContent = eur(vat);
   }
 
-  // ===== BUTTONS =====
   $("printBtn").addEventListener("click", () => window.print());
   $("reloadBtn").addEventListener("click", loadTicket);
   $("backBtn").addEventListener("click", () => location.href = "./pedidos.html");
@@ -281,7 +255,6 @@
     location.href = "./login.html";
   });
 
-  // ===== INIT =====
   window.addEventListener("DOMContentLoaded", async () => {
     const { data: { user } } = await sb.auth.getUser();
     if(!user){
