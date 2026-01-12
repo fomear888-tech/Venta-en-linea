@@ -57,11 +57,47 @@
       position:fixed;inset:0;background:rgba(0,0,0,.35);
       display:none;align-items:center;justify-content:center;padding:18px;z-index:99
     }
-    .modal{
-      width:min(860px, 100%);
-      background:#fff;border:1px solid var(--border);border-radius:18px;
-      box-shadow:0 30px 80px rgba(0,0,0,.18);padding:14px
-    }
+    
+
+
+.modal{
+  width: min(860px, 100%);
+  max-height: 90vh;              /* 👈 clave */
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:18px;
+  box-shadow:0 30px 80px rgba(0,0,0,.18);
+  padding:14px;
+  display: flex;
+  flex-direction: column;
+}
+
+
+
+.modalBody{
+  overflow-y: auto;        /* 👈 scroll vertical */
+  padding-right: 6px;
+  margin-top: 6px;
+}
+
+/* Scroll bonito (opcional pero elegante 😎) */
+.modalBody::-webkit-scrollbar{
+  width: 8px;
+}
+.modalBody::-webkit-scrollbar-thumb{
+  background: rgba(0,0,0,.25);
+  border-radius: 10px;
+}
+.modalBody::-webkit-scrollbar-track{
+  background: transparent;
+}
+
+
+
+
+    
+    
+
     .modal header{margin:0 0 10px 0}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
@@ -124,6 +160,11 @@
       <div class="muted" id="m_id"></div>
     </header>
 
+
+  <div class="modalBody">
+
+
+    
     <div class="grid">
       <div>
         <div class="label">Nombre</div>
@@ -191,6 +232,13 @@
       <div class="hint">Las imágenes se subirán a Storage: <span class="mono">product-images/products/&lt;ID&gt;/1.jpg</span> etc.</div>
     </div>
 
+
+
+  </div>
+
+
+
+    
     <div class="modalFooter">
       <button class="btn" id="m_cancel">Cancelar</button>
       <button class="btn primary" id="m_save">Guardar cambios</button>
