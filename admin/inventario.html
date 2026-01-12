@@ -142,8 +142,10 @@
     <h1>📦 Inventario</h1>
     <div class="rowline">
       <a class="btn" href="./pedidos.html">⬅️ Volver a pedidos</a>
+      <button class="btn primary" id="newBtn">➕ Nuevo producto</button>
       <button class="btn primary" id="reloadBtn">🔄 Recargar</button>
       <button class="btn danger" id="logoutBtn">🚪 Salir</button>
+      
     </div>
   </header>
 
@@ -220,7 +222,9 @@
       </div>
       <div>
         <div class="label">ID (solo lectura)</div>
-        <input id="m_id_read" class="mono" disabled />
+        <input id="m_id_read" class="mono" placeholder="p083" />
+<div class="hint">En edición no se cambia el ID. En “Nuevo” sí lo eliges.</div>
+
       </div>
     </div>
 
@@ -299,11 +303,41 @@
 
   let all = [];
   let current = null;
+  let isNew = false;
   let sortDir = "asc"; // asc | desc
 
 
 
 
+function openNew(){
+  isNew = true;
+  current = null;
+
+  el("m_id").textContent = `Nuevo producto`;
+  el("m_id_read").value = "";
+  el("m_id_read").disabled = false;
+
+  el("m_name").value = "";
+  el("m_category").value = "";
+  el("m_price").value = "";
+  el("m_stock").value = "";
+  el("m_desc").value = "";
+
+  ["m_img1","m_img2","m_img3","m_img4","m_img5"].forEach(x => el(x).value = "");
+
+  // links actuales vacíos
+  setCur("m_img1_cur", null);
+  setCur("m_img2_cur", null);
+  setCur("m_img3_cur", null);
+  setCur("m_img4_cur", null);
+  setCur("m_img5_cur", null);
+
+  overlay.style.display = "flex";
+}
+
+
+
+  
   
   function eur(n){
     return Number(n || 0).toFixed(2);
@@ -401,6 +435,10 @@
 
     current = p;
 
+      isNew = false;
+    el("m_id_read").disabled = true;
+
+    
     el("m_id").textContent = `ID: ${p.id}`;
     el("m_id_read").value = p.id || "";
     el("m_name").value = p.name || "";
@@ -443,49 +481,76 @@
     return data.publicUrl;
   }
 
-  async function saveModal(){
-    if(!current) return;
+async function saveModal(){
+  const idTyped = (el("m_id_read").value || "").trim();
 
-    const id = current.id;
+  // Validaciones mínimas
+  if(isNew){
+    if(!idTyped) return alert("Pon un ID (ej: p083).");
+    if(!/^p\d{3,}$/i.test(idTyped)) return alert("ID sugerido: p083, p120, etc.");
+  }
 
-    const patch = {
-      name: el("m_name").value.trim(),
-      category: el("m_category").value.trim() || null,
-      price: Number(el("m_price").value || 0),
-      stock: Number(el("m_stock").value || 0),
-      desc: el("m_desc").value.trim() || null,
-      updated_at: new Date().toISOString()
-    };
+  const patch = {
+    id: isNew ? idTyped : undefined,   // en INSERT se usa, en UPDATE no
+    name: el("m_name").value.trim(),
+    category: el("m_category").value.trim() || null,
+    price: Number(el("m_price").value || 0),
+    stock: Number(el("m_stock").value || 0),
+    desc: el("m_desc").value.trim() || null,
+    updated_at: new Date().toISOString()
+  };
 
-    try{
-      // Subidas opcionales (si eliges archivo)
-      const f1 = el("m_img1").files[0];
-      const f2 = el("m_img2").files[0];
-      const f3 = el("m_img3").files[0];
-      const f4 = el("m_img4").files[0];
-      const f5 = el("m_img5").files[0];
+  if(!patch.name) return alert("El nombre es obligatorio.");
 
-      if(f1) patch.img  = await uploadImage(id, 1, f1);
-      if(f2) patch.img2 = await uploadImage(id, 2, f2);
-      if(f3) patch.img3 = await uploadImage(id, 3, f3);
-      if(f4) patch.img4 = await uploadImage(id, 4, f4);
-      if(f5) patch.img5 = await uploadImage(id, 5, f5);
-
+  try{
+    // 1) INSERT o UPDATE primero (para que exista el producto antes de subir imágenes)
+    if(isNew){
+      const { error } = await sb.from(TABLE_PRODUCTS).insert([patch]);
+      if(error) throw error;
+    }else{
       const { error } = await sb
         .from(TABLE_PRODUCTS)
         .update(patch)
-        .eq("id", id);
-
+        .eq("id", current.id);
       if(error) throw error;
-
-      closeModal();
-      await loadProducts();
-      alert("✅ Producto actualizado");
-    }catch(err){
-      console.error(err);
-      alert("❌ No pude guardar (revisa permisos RLS/Storage y consola).");
     }
+
+    const productId = isNew ? idTyped : current.id;
+
+    // 2) Subidas opcionales (si eliges archivo)
+    const f1 = el("m_img1").files[0];
+    const f2 = el("m_img2").files[0];
+    const f3 = el("m_img3").files[0];
+    const f4 = el("m_img4").files[0];
+    const f5 = el("m_img5").files[0];
+
+    const imgPatch = {};
+    if(f1) imgPatch.img  = await uploadImage(productId, 1, f1);
+    if(f2) imgPatch.img2 = await uploadImage(productId, 2, f2);
+    if(f3) imgPatch.img3 = await uploadImage(productId, 3, f3);
+    if(f4) imgPatch.img4 = await uploadImage(productId, 4, f4);
+    if(f5) imgPatch.img5 = await uploadImage(productId, 5, f5);
+
+    if(Object.keys(imgPatch).length){
+      imgPatch.updated_at = new Date().toISOString();
+      const { error: uerr } = await sb
+        .from(TABLE_PRODUCTS)
+        .update(imgPatch)
+        .eq("id", productId);
+      if(uerr) throw uerr;
+    }
+
+    closeModal();
+    await loadProducts();
+    alert(isNew ? "✅ Producto creado" : "✅ Producto actualizado");
+
+  }catch(err){
+    console.error(err);
+    // si el id ya existe, supabase suele decir duplicate key value...
+    alert("❌ No pude guardar. Mira la consola (F12) para ver el motivo.");
   }
+}
+
 
   // ===== EVENTS =====
 
@@ -516,6 +581,8 @@ sortDown?.addEventListener("click", () => {
   
   document.getElementById("reloadBtn").addEventListener("click", loadProducts);
   document.getElementById("logoutBtn").addEventListener("click", async () => {
+  document.getElementById("newBtn").addEventListener("click", openNew);
+
     await sb.auth.signOut();
     location.href = "./login.html";
   });
