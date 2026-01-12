@@ -99,12 +99,13 @@
     const { data: { user } } = await sb.auth.getUser();
     if(!user) return false;
 
-    const { data } = await sb
-      .from("admins")   // ⚠️ ajusta si tu tabla se llama distinto
+    const { data, error } = await sb
+      .from("admins")                 // ✅ tu tabla real
       .select("user_id")
       .eq("user_id", user.id)
       .maybeSingle();
 
+    if (error) return false;
     return !!data;
   }
 
@@ -112,8 +113,8 @@
     rows.innerHTML = `<tr><td colspan="7" class="empty">Cargando pedidos…</td></tr>`;
 
     const { data, error } = await sb
-      .from("orders")           // ⚠️ tu tabla de pedidos
-      .select("*")
+      .from("orders")                 // ✅ tu tabla real
+      .select("id,ticket_number,customer_name,customer_phone,total,estado,created_at")
       .order("created_at", { ascending: false });
 
     if(error){
@@ -131,9 +132,9 @@
     data.forEach(p => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${p.numero_ticket || ""}</td>
-        <td>${p.nombre_del_cliente || ""}</td>
-        <td>${p.telefono_del_cliente || ""}</td>
+        <td>${p.ticket_number || ""}</td>
+        <td>${p.customer_name || ""}</td>
+        <td>${p.customer_phone || ""}</td>
         <td><b>${Number(p.total || 0).toFixed(2)}</b></td>
         <td><span class="status ${statusClass(p.estado)}">${p.estado}</span></td>
         <td class="muted">${fmtDate(p.created_at)}</td>
@@ -146,7 +147,6 @@
   }
 
   window.verTicket = function(id){
-    // luego creamos ticket.html
     location.href = `./ticket.html?id=${encodeURIComponent(id)}`;
   }
 
@@ -176,5 +176,6 @@
     loadPedidos();
   });
 </script>
+
 </body>
 </html>
