@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin · Cancelados</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --bg:#f9fafb; --card:#fff; --txt:#111827; --muted:#6b7280;
+      --border:rgba(0,0,0,.08); --danger:#ef4444;
+      --shadow:0 10px 28px rgba(0,0,0,.06);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;
+      background:var(--bg);color:var(--txt);padding:18px
+    }
+    .wrap{max-width:1100px;margin:0 auto}
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+    h1{font-size:18px;margin:0}
+    button,a.btn{
+      padding:10px 12px;border-radius:12px;border:1px solid var(--border);
+      background:#fff;cursor:pointer;font-weight:800;
+      display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--txt)
+    }
+    button.danger{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.12)}
+    .card{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:18px;box-shadow:var(--shadow);padding:14px
+    }
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+    th{font-size:12px;color:var(--muted)}
+    tr:hover{background:#f3f4f6}
+    .muted{color:var(--muted);font-size:12px}
+    .empty{padding:20px;text-align:center;color:var(--muted)}
+    .status{
+      padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900;
+      background:#fee2e2;color:#991b1b;border:1px solid rgba(239,68,68,.25);
+      display:inline-flex;align-items:center;gap:6px;
+    }
+
+    /* filtros */
+    thead input{
+      width:100%;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      outline:none;
+      font-size:12px;
+    }
+    thead input:focus{
+      border-color:rgba(17,24,39,.25);
+      box-shadow:0 0 0 3px rgba(17,24,39,.06);
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>❌ Pedidos cancelados</h1>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a class="btn" href="./pedidos.html">⬅️ Volver a pedidos</a>
+      <button id="reloadBtn">🔄 Recargar</button>
+      <button class="danger" id="logoutBtn">🚪 Salir</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Ticket</th>
+          <th>Cliente</th>
+          <th>Teléfono</th>
+          <th>Total (€)</th>
+          <th>Estado</th>
+          <th>Fecha</th>
+          <th></th>
+        </tr>
+
+        <!-- FILTROS -->
+        <tr>
+          <th><input id="f_ticket" placeholder="T-..." /></th>
+          <th><input id="f_cliente" placeholder="Nombre..." /></th>
+          <th><input id="f_tel" placeholder="Tel..." /></th>
+          <th><input id="f_total" placeholder="2.50" /></th>
+          <th><span class="muted">Solo cancelado</span></th>
+          <th><input id="f_fecha" type="date" /></th>
+          <th><button id="clearFilters" type="button">🧹</button></th>
+        </tr>
+      </thead>
+
+      <tbody id="rows">
+        <tr><td colspan="7" class="empty">Cargando…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL = "https://pujzkraozoqbriqnlikf.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_D7A6JAiqiXAaPRYsaF6ZBQ_1hCE1UcN";
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const rows = document.getElementById("rows");
+  let all = [];
+
+  function fmtDate(ts){
+    if(!ts) return "";
+    return new Date(ts).toLocaleString("es-ES");
+  }
+
+  function isoDateOnly(ts){
+    if(!ts) return "";
+    const d = new Date(ts);
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+
+  async function isAdmin(){
+    const { data: { user } } = await sb.auth.getUser();
+    if(!user) return false;
+
+    const { data, error } = await sb
+      .from("admins")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (error) return false;
+    return !!data;
+  }
+
+  function applyFilters(){
+    const fTicket  = (document.getElementById("f_ticket")?.value || "").trim().toLowerCase();
+    const fCli     = (document.getElementById("f_cliente")?.value || "").trim().toLowerCase();
+    const fTel     = (document.getElementById("f_tel")?.value || "").trim().toLowerCase();
+    const fTotal   = (document.getElementById("f_total")?.value || "").trim();
+    const fFecha   = (document.getElementById("f_fecha")?.value || "").trim();
+
+    const filtered = all.filter(p => {
+      const t  = String(p.ticket_number || "").toLowerCase();
+      const c  = String(p.customer_name || "").toLowerCase();
+      const ph = String(p.customer_phone || "").toLowerCase();
+      const dt = isoDateOnly(p.created_at);
+      const tot = String(Number(p.total || 0).toFixed(2));
+
+      if (fTicket && !t.includes(fTicket)) return false;
+      if (fCli && !c.includes(fCli)) return false;
+      if (fTel && !ph.includes(fTel)) return false;
+      if (fFecha && dt !== fFecha) return false;
+      if (fTotal && !tot.includes(fTotal.replace(",", "."))) return false;
+
+      return true;
+    });
+
+    render(filtered);
+  }
+
+  function render(data){
+    if(!data || data.length === 0){
+      rows.innerHTML = `<tr><td colspan="7" class="empty">No hay cancelados con esos filtros</td></tr>`;
+      return;
+    }
+
+    rows.innerHTML = "";
+    data.forEach(p => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${p.ticket_number || ""}</td>
+        <td>${p.customer_name || ""}</td>
+        <td>${p.customer_phone || ""}</td>
+        <td><b>${Number(p.total || 0).toFixed(2)}</b></td>
+        <td><span class="status">❌ cancelado</span></td>
+        <td class="muted">${fmtDate(p.created_at)}</td>
+        <td><button onclick="verTicket('${p.id}')">🧾 Ticket</button></td>
+      `;
+      rows.appendChild(tr);
+    });
+  }
+
+  window.verTicket = function(id){
+    location.href = `./ticket.html?id=${encodeURIComponent(id)}`;
+  }
+
+  async function loadCancelados(){
+    rows.innerHTML = `<tr><td colspan="7" class="empty">Cargando cancelados…</td></tr>`;
+
+    const { data, error } = await sb
+      .from("orders")
+      .select("id,ticket_number,customer_name,customer_phone,total,estado,created_at")
+      .eq("estado", "cancelado")
+      .order("created_at", { ascending: false });
+
+    if(error){
+      console.error(error);
+      rows.innerHTML = `<tr><td colspan="7" class="empty">Error cargando cancelados</td></tr>`;
+      return;
+    }
+
+    all = data || [];
+    applyFilters();
+  }
+
+  document.getElementById("reloadBtn").addEventListener("click", loadCancelados);
+
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await sb.auth.signOut();
+    location.href = "./login.html";
+  });
+
+  ["f_ticket","f_cliente","f_tel","f_total"].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.addEventListener("input", applyFilters);
+  });
+  document.getElementById("f_fecha")?.addEventListener("change", applyFilters);
+
+  document.getElementById("clearFilters")?.addEventListener("click", () => {
+    document.getElementById("f_ticket").value = "";
+    document.getElementById("f_cliente").value = "";
+    document.getElementById("f_tel").value = "";
+    document.getElementById("f_total").value = "";
+    document.getElementById("f_fecha").value = "";
+    applyFilters();
+  });
+
+  window.addEventListener("DOMContentLoaded", async () => {
+    const { data: { user } } = await sb.auth.getUser();
+    if(!user){
+      location.href = "./login.html";
+      return;
+    }
+
+    const ok = await isAdmin();
+    if(!ok){
+      await sb.auth.signOut();
+      alert("Acceso no autorizado");
+      location.href = "/";
+      return;
+    }
+
+    loadCancelados();
+  });
+</script>
+</body>
+</html>
