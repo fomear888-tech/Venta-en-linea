@@ -181,7 +181,7 @@
         <td>${p.customer_phone || ""}</td>
         <td><b>${Number(p.total || 0).toFixed(2)}</b></td>
         <td><span class="status">❌ cancelado</span></td>
-        <td class="muted">${fmtDate(p.created_at)}</td>
+        <td class="muted">${fmtDate(p.canceled_at || p.created_at)}</td>
         <td><button onclick="verTicket('${p.id}')">🧾 Ticket</button></td>
       `;
       rows.appendChild(tr);
@@ -195,11 +195,11 @@
   async function loadCancelados(){
     rows.innerHTML = `<tr><td colspan="7" class="empty">Cargando cancelados…</td></tr>`;
 
-    const { data, error } = await sb
-      .from("orders")
-      .select("id,ticket_number,customer_name,customer_phone,total,estado,created_at")
-      .eq("estado", "cancelado")
-      .order("created_at", { ascending: false });
+const { data, error } = await sb
+  .from("orders_cancelled")
+  .select("id,ticket_number,customer_name,customer_phone,total,canceled_at,created_at")
+  .order("canceled_at", { ascending: false });
+;
 
     if(error){
       console.error(error);
