@@ -165,27 +165,24 @@
     return u.searchParams.get("id");
   }
 
-  async function loadTicket(){
-    const orderId = getOrderId();
+async function loadTicket(){
+  const orderId = getOrderId();
 
-    if(!orderId){
-      alert("Falta el id del pedido");
-      location.href = "./pedidos.html";
-      return;
-    }
+  if(!orderId){
+    alert("Falta el id del pedido");
+    location.href = "./pedidos.html";
+    return;
+  }
 
-    const { data: order, error: e1 } = await sb
-      .from("orders")
-      .select("id,ticket_number,customer_name,customer_phone,total,estado,metodo_pago,created_at")
-      .eq("id", orderId)
-      .maybeSingle();
+  // 1) intento normal: orders
+  const { data: order, error: e1 } = await sb
+    .from("orders")
+    .select("id,ticket_number,customer_name,customer_phone,total,estado,metodo_pago,created_at")
+    .eq("id", orderId)
+    .maybeSingle();
 
-    if(e1 || !order){
-      console.error(e1);
-      alert("No pude cargar el pedido (permisos o id inválido).");
-      return;
-    }
-
+  if(order && !e1){
+    // items normales
     const { data: items, error: e2 } = await sb
       .from("order_items")
       .select("name,price,qty,line_total")
@@ -198,54 +195,96 @@
       return;
     }
 
-    $("t_ticket").textContent = order.ticket_number || "-";
-    $("t_date").textContent   = fmtDate(order.created_at);
-    $("t_customer").textContent = order.customer_name || "-";
-    $("t_phone").textContent = order.customer_phone || "-";
-
-    const mp = (order.metodo_pago || "").toString().trim();
-    $("t_pay").textContent = mp ? mp : "Efectivo / Bizum";
-
-    const list = Array.isArray(items) ? items : [];
-    const itemsBox = $("t_items");
-
-    if(list.length === 0){
-      itemsBox.innerHTML = `<div class="muted center">Sin artículos (order_items vacío)</div>`;
-      $("t_qty").textContent = "0";
-    }else{
-      itemsBox.innerHTML = "";
-      let totalQty = 0;
-
-      list.forEach(it => {
-        const qty = Number(it.qty || 0);
-        totalQty += qty;
-
-        const price = Number(it.price || 0);
-        const lineTotal = (it.line_total != null) ? Number(it.line_total) : (price * qty);
-
-        const div = document.createElement("div");
-        div.className = "item";
-        div.innerHTML = `
-          <div class="name">${(it.name || "Artículo").toString()}</div>
-          <div>${qty} x ${eur(price)}</div>
-          <div>${eur(lineTotal)}</div>
-        `;
-        itemsBox.appendChild(div);
-      });
-
-      $("t_qty").textContent = String(totalQty);
-    }
-
-    const total = Number(order.total || 0);
-    const vatRate = 0.21;
-    const base = total / (1 + vatRate);
-    const vat  = total - base;
-
-    $("t_total").textContent = eur(total);
-    $("t_subtotal").textContent = eur(total);
-    $("t_base").textContent = eur(base);
-    $("t_vat").textContent = eur(vat);
+    renderTicketFromOrder(order, items || []);
+    return;
   }
+
+  // 2) fallback: cancelled_orders (snapshots)
+  const { data: c, error: ce } = await sb
+    .from("cancelled_orders")
+    .select("id, created_at, cancelled_at, order_snapshot, items_snapshot")
+    .eq("id", orderId)
+    .maybeSingle();
+
+  if(ce || !c){
+    console.error(e1 || ce);
+    alert("No pude cargar el ticket (id inválido o permisos).");
+    return;
+  }
+
+  const snap = c.order_snapshot || {};
+  const itemsSnap = Array.isArray(c.items_snapshot) ? c.items_snapshot : [];
+
+  // adaptamos al mismo formato
+  const order2 = {
+    ticket_number: snap.ticket_number,
+    customer_name: snap.customer_name,
+    customer_phone: snap.customer_phone,
+    total: snap.total,
+    metodo_pago: snap.metodo_pago,
+    created_at: c.cancelled_at || c.created_at
+  };
+
+  const items2 = itemsSnap.map(it => ({
+    name: it.name,
+    price: it.price,
+    qty: it.qty,
+    line_total: it.line_total
+  }));
+
+  renderTicketFromOrder(order2, items2);
+}
+
+function renderTicketFromOrder(order, items){
+  $("t_ticket").textContent = order.ticket_number || "-";
+  $("t_date").textContent   = fmtDate(order.created_at);
+  $("t_customer").textContent = order.customer_name || "-";
+  $("t_phone").textContent = order.customer_phone || "-";
+
+  const mp = (order.metodo_pago || "").toString().trim();
+  $("t_pay").textContent = mp ? mp : "Efectivo / Bizum";
+
+  const list = Array.isArray(items) ? items : [];
+  const itemsBox = $("t_items");
+
+  if(list.length === 0){
+    itemsBox.innerHTML = `<div class="muted center">Sin artículos</div>`;
+    $("t_qty").textContent = "0";
+  }else{
+    itemsBox.innerHTML = "";
+    let totalQty = 0;
+
+    list.forEach(it => {
+      const qty = Number(it.qty || 0);
+      totalQty += qty;
+
+      const price = Number(it.price || 0);
+      const lineTotal = (it.line_total != null) ? Number(it.line_total) : (price * qty);
+
+      const div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML = `
+        <div class="name">${(it.name || "Artículo").toString()}</div>
+        <div>${qty} x ${eur(price)}</div>
+        <div>${eur(lineTotal)}</div>
+      `;
+      itemsBox.appendChild(div);
+    });
+
+    $("t_qty").textContent = String(totalQty);
+  }
+
+  const total = Number(order.total || 0);
+  const vatRate = 0.21;
+  const base = total / (1 + vatRate);
+  const vat  = total - base;
+
+  $("t_total").textContent = eur(total);
+  $("t_subtotal").textContent = eur(total);
+  $("t_base").textContent = eur(base);
+  $("t_vat").textContent = eur(vat);
+}
+
 
   $("printBtn").addEventListener("click", () => window.print());
   $("reloadBtn").addEventListener("click", loadTicket);
