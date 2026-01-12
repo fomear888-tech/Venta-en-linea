@@ -74,6 +74,19 @@
     .iconbtn{
       border:1px solid var(--border);background:#fff;border-radius:12px;padding:8px 10px;cursor:pointer;font-weight:900
     }
+
+
+
+    .iconbtn.danger{
+  border-color: rgba(239,68,68,.35);
+  background: rgba(239,68,68,.10);
+}
+.iconbtn.danger:hover{
+  background: rgba(239,68,68,.18);
+}
+
+
+    
     .empty{padding:20px;text-align:center;color:var(--muted)}
 
     /* Modal */
@@ -412,9 +425,11 @@ function openNew(){
         <td>${Number(p.stock ?? 0)}</td>
         <td class="muted">${(p.desc || "").toString().slice(0, 70)}${(p.desc||"").length>70?"…":""}</td>
         <td class="muted">${fmtDate(p.updated_at)}</td>
-        <td class="actions">
-          <button class="iconbtn" title="Editar" onclick="openEdit('${p.id}')">✏️</button>
-        </td>
+<td class="actions">
+  <button class="iconbtn" title="Editar" onclick="openEdit('${p.id}')">✏️</button>
+  <button class="iconbtn danger" title="Borrar" onclick="deleteProduct('${p.id}')">🗑️</button>
+</td>
+
       `;
       rows.appendChild(tr);
     });
@@ -595,6 +610,43 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
     if(e.target === overlay) closeModal();
   });
   el("m_save").addEventListener("click", saveModal);
+
+
+
+
+  window.deleteProduct = async function(id){
+  const p = all.find(x => x.id === id);
+  const name = p?.name ? ` (${p.name})` : "";
+
+  const ok = confirm(
+    `¿Seguro que quieres BORRAR este producto${name}?\n\n` +
+    `⚠️ Esto lo elimina de la base de datos.\n` +
+    `🖼️ Las imágenes en Storage NO se borran automáticamente.\n\n` +
+    `Escribe OK mentalmente y dale Aceptar 😅`
+  );
+
+  if(!ok) return;
+
+  try{
+    const { error } = await sb
+      .from(TABLE_PRODUCTS)
+      .delete()
+      .eq("id", id);
+
+    if(error) throw error;
+
+    alert("✅ Producto borrado");
+    await loadProducts();
+
+  }catch(err){
+    console.error(err);
+    alert("❌ No se pudo borrar. Revisa RLS (DELETE) y consola (F12).");
+  }
+};
+
+
+
+  
 
   // ===== INIT =====
   window.addEventListener("DOMContentLoaded", async () => {
