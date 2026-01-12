@@ -42,6 +42,30 @@
     table{width:100%;border-collapse:collapse;font-size:13px}
     th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
     th{font-size:12px;color:var(--muted)}
+
+
+
+    .sortArrows{
+  display:inline-flex;
+  gap:6px;
+  margin-left:8px;
+  vertical-align:middle;
+}
+.sortArrows span{
+  cursor:pointer;
+  user-select:none;
+  opacity:.45;
+  font-size:12px;
+  line-height:1;
+}
+.sortArrows span.active{
+  opacity:1;
+}
+
+
+
+
+    
     tr:hover{background:#f3f4f6}
     .muted{color:var(--muted);font-size:12px}
     .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
@@ -135,7 +159,16 @@
     <table>
       <thead>
         <tr>
-          <th>ID</th>
+
+          
+          <th>
+  ID
+  <span class="sortArrows">
+    <span id="sortUp" title="Orden ascendente">⬆️</span>
+    <span id="sortDown" title="Orden descendente">⬇️</span>
+  </span>
+</th>
+
           <th>Nombre</th>
           <th>Categoría</th>
           <th>Precio</th>
@@ -266,7 +299,12 @@
 
   let all = [];
   let current = null;
+  let sortDir = "asc"; // asc | desc
 
+
+
+
+  
   function eur(n){
     return Number(n || 0).toFixed(2);
   }
@@ -313,6 +351,14 @@
       const s = `${p.id||""} ${p.name||""} ${p.category||""} ${p.desc||""}`.toLowerCase();
       return s.includes(term);
     });
+
+
+    filtered.sort((a,b) => {
+  const A = String(a.id || "").toLowerCase();
+  const B = String(b.id || "").toLowerCase();
+  return sortDir === "asc" ? A.localeCompare(B) : B.localeCompare(A);
+});
+    
 
     countPill.textContent = `${filtered.length} productos`;
 
@@ -442,6 +488,32 @@
   }
 
   // ===== EVENTS =====
+
+
+
+const sortUp = document.getElementById("sortUp");
+const sortDown = document.getElementById("sortDown");
+
+function paintSort(){
+  sortUp?.classList.toggle("active", sortDir === "asc");
+  sortDown?.classList.toggle("active", sortDir === "desc");
+}
+
+sortUp?.addEventListener("click", () => {
+  sortDir = "asc";
+  paintSort();
+  applyFilter();
+});
+
+sortDown?.addEventListener("click", () => {
+  sortDir = "desc";
+  paintSort();
+  applyFilter();
+});
+
+
+
+  
   document.getElementById("reloadBtn").addEventListener("click", loadProducts);
   document.getElementById("logoutBtn").addEventListener("click", async () => {
     await sb.auth.signOut();
@@ -473,6 +545,7 @@
     }
 
     loadProducts();
+    paintSort();
   });
 </script>
 </body>
