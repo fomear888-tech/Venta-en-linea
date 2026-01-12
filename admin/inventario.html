@@ -579,13 +579,14 @@ sortDown?.addEventListener("click", () => {
 
 
   
-  document.getElementById("reloadBtn").addEventListener("click", loadProducts);
-  document.getElementById("logoutBtn").addEventListener("click", async () => {
-  document.getElementById("newBtn").addEventListener("click", openNew);
+document.getElementById("newBtn").addEventListener("click", openNew);
+document.getElementById("reloadBtn").addEventListener("click", loadProducts);
 
-    await sb.auth.signOut();
-    location.href = "./login.html";
-  });
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+  await sb.auth.signOut();
+  location.href = "./login.html";
+});
+
 
   q.addEventListener("input", applyFilter);
 
