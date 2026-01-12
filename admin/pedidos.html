@@ -61,13 +61,15 @@ select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
 <body>
 <div class="wrap">
 
-  <header>
-    <h1>📦 Pedidos</h1>
-    <div style="display:flex;gap:8px">
-      <button id="reloadBtn">🔄 Recargar</button>
-      <button class="danger" id="logoutBtn">🚪 Salir</button>
-    </div>
-  </header>
+<header>
+  <h1>📦 Pedidos</h1>
+  <div style="display:flex;gap:8px">
+    <button id="invBtn">📦 Inventario</button>
+    <button id="reloadBtn">🔄 Recargar</button>
+    <button class="danger" id="logoutBtn">🚪 Salir</button>
+  </div>
+</header>
+
 
   <div class="card">
     <table>
@@ -260,6 +262,14 @@ applyFilters();         // ✅ aplicamos filtros
   }
 
   document.getElementById("reloadBtn").addEventListener("click", loadPedidos);
+
+
+document.getElementById("invBtn").addEventListener("click", () => {
+  location.href = "./inventario.html";
+});
+
+
+  
 
   document.getElementById("logoutBtn").addEventListener("click", async () => {
     await sb.auth.signOut();
