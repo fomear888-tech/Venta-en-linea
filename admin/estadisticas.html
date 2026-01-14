@@ -176,7 +176,7 @@
     const sortedDesc = [...arr].sort((a,b)=> (b.qty||0) - (a.qty||0));
     const sortedAsc  = [...arr].sort((a,b)=> (a.qty||0) - (b.qty||0));
 
-    const top10 = sortedDesc.slice(0, 10);
+const top10 = sortedDesc.filter(x => (x.qty||0) > 0).slice(0, 10);
 const low10 = sortedAsc.slice(0, 10); // 👈 incluye 0 ventas
 
 
