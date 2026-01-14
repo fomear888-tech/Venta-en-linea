@@ -1,1 +1,246 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin · Estadísticas</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+
+  <style>
+    :root{
+      --bg:#f9fafb; --card:#fff; --txt:#111827; --muted:#6b7280;
+      --border:rgba(0,0,0,.08); --shadow:0 10px 28px rgba(0,0,0,.06);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;background:var(--bg);color:var(--txt);padding:18px}
+    .wrap{max-width:1100px;margin:0 auto}
+    header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+    h1{font-size:18px;margin:0}
+    .btn{
+      padding:10px 12px;border-radius:12px;border:1px solid var(--border);
+      background:#fff;cursor:pointer;font-weight:800;
+      display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--txt)
+    }
+    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:14px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    select,input{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:#fff}
+    .muted{color:var(--muted);font-size:12px}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>📊 Estadísticas de ventas</h1>
+    <div class="row">
+      <a class="btn" href="./pedidos.html">⬅️ Volver</a>
+      <button class="btn" id="reloadBtn">🔄 Actualizar</button>
+      <button class="btn" id="logoutBtn">🚪 Salir</button>
+    </div>
+  </header>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="row">
+      <label class="muted">Ver por:</label>
+      <select id="mode">
+        <option value="day">Día</option>
+        <option value="month">Mes</option>
+        <option value="year">Año</option>
+      </select>
+
+      <input id="pickDay" type="date" />
+      <input id="pickMonth" type="month" style="display:none" />
+      <select id="pickYear" style="display:none"></select>
+
+      <span class="muted" id="rangeTxt"></span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2 style="margin:0 0 8px;font-size:14px">🏆 Más vendidos (Top 10)</h2>
+      <canvas id="topChart" height="220"></canvas>
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 8px;font-size:14px">🪫 Menos vendidos (Bottom 10)</h2>
+      <canvas id="lowChart" height="220"></canvas>
+    </div>
+  </div>
+
+  <p class="muted" id="status" style="margin-top:10px"></p>
+</div>
+
+<script>
+  // ===== CONFIG =====
+  const SUPABASE_URL = "https://pujzkraozoqbriqnlikf.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_D7A6JAiqiXAaPRYsaF6ZBQ_1hCE1UcN";
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const $ = (id) => document.getElementById(id);
+  function setStatus(msg){ $("status").textContent = msg || ""; }
+
+  async function isAdmin(){
+    const { data: { user } } = await sb.auth.getUser();
+    if(!user) return false;
+
+    const { data, error } = await sb
+      .from("admins")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    return !error && !!data;
+  }
+
+  // ===== DATE RANGE HELPERS =====
+  function pad2(n){ return String(n).padStart(2,"0"); }
+
+  function computeRange(){
+    const mode = $("mode").value;
+
+    const now = new Date();
+    let from, to, label;
+
+    if(mode === "day"){
+      const v = $("pickDay").value || `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
+      from = v;
+      to = v;
+      label = `Día: ${v}`;
+    }
+
+    if(mode === "month"){
+      const v = $("pickMonth").value || `${now.getFullYear()}-${pad2(now.getMonth()+1)}`;
+      const y = Number(v.split("-")[0]);
+      const m = Number(v.split("-")[1]); // 1-12
+      const lastDay = new Date(y, m, 0).getDate();
+      from = `${y}-${pad2(m)}-01`;
+      to   = `${y}-${pad2(m)}-${pad2(lastDay)}`;
+      label = `Mes: ${v}`;
+    }
+
+    if(mode === "year"){
+      const y = Number($("pickYear").value || now.getFullYear());
+      from = `${y}-01-01`;
+      to   = `${y}-12-31`;
+      label = `Año: ${y}`;
+    }
+
+    $("rangeTxt").textContent = `Rango: ${from} → ${to} (${label})`;
+    return { from, to };
+  }
+
+  function setPickers(){
+    const mode = $("mode").value;
+    $("pickDay").style.display   = mode==="day" ? "" : "none";
+    $("pickMonth").style.display = mode==="month" ? "" : "none";
+    $("pickYear").style.display  = mode==="year" ? "" : "none";
+  }
+
+  // ===== CHARTS =====
+  let topChart = null;
+  let lowChart = null;
+
+  function renderCharts(rows){
+    const arr = Array.isArray(rows) ? rows : [];
+    const sortedDesc = [...arr].sort((a,b)=> (b.qty||0) - (a.qty||0));
+    const sortedAsc  = [...arr].sort((a,b)=> (a.qty||0) - (b.qty||0));
+
+    const top10 = sortedDesc.slice(0, 10);
+    const low10 = sortedAsc.filter(x => (x.qty||0) > 0).slice(0, 10);
+
+    const topLabels = top10.map(x=>x.product);
+    const topData   = top10.map(x=>Number(x.qty||0));
+
+    const lowLabels = low10.map(x=>x.product);
+    const lowData   = low10.map(x=>Number(x.qty||0));
+
+    if(topChart) topChart.destroy();
+    if(lowChart) lowChart.destroy();
+
+    topChart = new Chart($("topChart"), {
+      type: "bar",
+      data: { labels: topLabels, datasets: [{ label:"Unidades", data: topData }] },
+      options: { responsive:true, plugins:{ legend:{ display:false } } }
+    });
+
+    lowChart = new Chart($("lowChart"), {
+      type: "bar",
+      data: { labels: lowLabels, datasets: [{ label:"Unidades", data: lowData }] },
+      options: { responsive:true, plugins:{ legend:{ display:false } } }
+    });
+  }
+
+  async function loadStats(){
+    setStatus("Cargando estadísticas…");
+    const { from, to } = computeRange();
+
+    const { data, error } = await sb.rpc("product_sales_totals", {
+      p_from: from,
+      p_to: to
+    });
+
+    if(error){
+      console.error(error);
+      setStatus("❌ Error cargando stats. Revisa RPC/permisos.");
+      return;
+    }
+
+    renderCharts(data || []);
+    setStatus(`✅ Listo. Productos con ventas en el rango: ${(data||[]).length}`);
+  }
+
+  // ===== EVENTS =====
+  $("mode").addEventListener("change", () => {
+    setPickers();
+    loadStats();
+  });
+
+  $("pickDay").addEventListener("change", loadStats);
+  $("pickMonth").addEventListener("change", loadStats);
+  $("pickYear").addEventListener("change", loadStats);
+
+  $("reloadBtn").addEventListener("click", loadStats);
+
+  $("logoutBtn").addEventListener("click", async () => {
+    await sb.auth.signOut();
+    location.href = "./login.html";
+  });
+
+  // ===== INIT =====
+  window.addEventListener("DOMContentLoaded", async () => {
+    const { data: { user } } = await sb.auth.getUser();
+    if(!user){ location.href = "./login.html"; return; }
+
+    const ok = await isAdmin();
+    if(!ok){
+      await sb.auth.signOut();
+      alert("Acceso no autorizado");
+      location.href = "/";
+      return;
+    }
+
+    // llena años
+    const nowY = new Date().getFullYear();
+    for(let y = nowY; y >= nowY - 5; y--){
+      const op = document.createElement("option");
+      op.value = String(y);
+      op.textContent = String(y);
+      $("pickYear").appendChild(op);
+    }
+
+    // default pickers
+    $("pickDay").value = new Date().toISOString().slice(0,10);
+
+    setPickers();
+    loadStats();
+  });
+</script>
+</body>
+</html>
 
