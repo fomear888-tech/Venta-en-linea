@@ -340,14 +340,27 @@ const { data, error } = await sb.rpc("product_sales_with_zero", {
 
 
 
-  async function loadVsStock(from, to){
+async function loadVsStock(from, to){
   const { data, error } = await sb.rpc("product_sales_vs_stock", { p_from: from, p_to: to });
   if(error){
     console.error(error);
     return;
   }
 
-  const arr = (data || []).slice(0, 12); // top 12
+  const arr = (data || []).filter(x => Number(x.sold || 0) > 0).slice(0, 12);
+
+  // Si no hay ventas en el rango: no dibujes barras fantasma
+  if(arr.length === 0){
+    if(vsChart){ vsChart.destroy(); vsChart = null; }
+    // Opcional: muestra un texto bonito dentro del card
+    const canvas = $("vsChart");
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = "14px system-ui";
+    ctx.fillText("Sin ventas en este rango.", 10, 30);
+    return;
+  }
+
   const labels = arr.map(x => x.product);
   const sold = arr.map(x => Number(x.sold||0));
   const stock = arr.map(x => Number(x.stock||0));
@@ -366,6 +379,7 @@ const { data, error } = await sb.rpc("product_sales_with_zero", {
     options: { responsive:true }
   });
 }
+
 
 
 
