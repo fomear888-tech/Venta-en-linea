@@ -221,7 +221,10 @@ const { data, error } = await sb.rpc("product_sales_with_zero", {
     renderCharts(data || []);
     await loadVsStock(from, to);
     await loadPay(from, to);
-    setStatus(`✅ Listo. Productos con ventas en el rango: ${(data||[]).length}`);
+    
+    const soldCount = (data || []).filter(x => Number(x.qty || 0) > 0).length;
+    setStatus(`✅ Listo. Productos con ventas en el rango: ${soldCount}`);
+
   }
 
 
