@@ -75,6 +75,9 @@ select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
   <div style="display:flex;gap:8px">
 
 
+    <button id="statsBtn">📊 Estadísticas</button>
+
+
     <button id="cancelBtn">❌ Cancelados</button>
 
 
@@ -346,6 +349,14 @@ document.getElementById("cancelBtn").addEventListener("click", () => {
     await sb.auth.signOut();
     location.href = "./login.html";
   });
+
+
+
+
+  document.getElementById("statsBtn").addEventListener("click", () => {
+  location.href = "./estadisticas.html";
+});
+
 
 
 
