@@ -71,7 +71,30 @@
       <h2 style="margin:0 0 8px;font-size:14px">🪫 Menos vendidos (Bottom 10)</h2>
       <canvas id="lowChart" height="220"></canvas>
     </div>
+
+
+
+
+    <div class="card" style="margin-top:12px">
+  <h2 style="margin:0 0 8px;font-size:14px">🔥 Ventas vs Stock (Top 12 vendidos)</h2>
+  <canvas id="vsChart" height="140"></canvas>
+</div>
+
+
+
+  <div class="card" style="margin-top:12px">
+  <h2 style="margin:0 0 8px;font-size:14px">💰 Ventas por método de pago</h2>
+  <canvas id="payChart" height="140"></canvas>
+</div>
+
+
+
+
+    
   </div>
+
+
+  
 
   <p class="muted" id="status" style="margin-top:10px"></p>
 </div>
@@ -143,6 +166,8 @@
   }
 
   // ===== CHARTS =====
+  let payChart = null;
+  let vsChart = null;
   let topChart = null;
   let lowChart = null;
 
@@ -152,7 +177,8 @@
     const sortedAsc  = [...arr].sort((a,b)=> (a.qty||0) - (b.qty||0));
 
     const top10 = sortedDesc.slice(0, 10);
-    const low10 = sortedAsc.filter(x => (x.qty||0) > 0).slice(0, 10);
+const low10 = sortedAsc.slice(0, 10); // 👈 incluye 0 ventas
+
 
     const topLabels = top10.map(x=>x.product);
     const topData   = top10.map(x=>Number(x.qty||0));
@@ -180,10 +206,11 @@
     setStatus("Cargando estadísticas…");
     const { from, to } = computeRange();
 
-    const { data, error } = await sb.rpc("product_sales_totals", {
-      p_from: from,
-      p_to: to
-    });
+const { data, error } = await sb.rpc("product_sales_with_zero", {
+  p_from: from,
+  p_to: to
+});
+
 
     if(error){
       console.error(error);
@@ -192,8 +219,74 @@
     }
 
     renderCharts(data || []);
+    await loadVsStock(from, to);
+    await loadPay(from, to);
     setStatus(`✅ Listo. Productos con ventas en el rango: ${(data||[]).length}`);
   }
+
+
+
+
+
+  async function loadVsStock(from, to){
+  const { data, error } = await sb.rpc("product_sales_vs_stock", { p_from: from, p_to: to });
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  const arr = (data || []).slice(0, 12); // top 12
+  const labels = arr.map(x => x.product);
+  const sold = arr.map(x => Number(x.sold||0));
+  const stock = arr.map(x => Number(x.stock||0));
+
+  if(vsChart) vsChart.destroy();
+
+  vsChart = new Chart($("vsChart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        { label: "Vendidas", data: sold },
+        { label: "Stock", data: stock }
+      ]
+    },
+    options: { responsive:true }
+  });
+}
+
+
+
+
+
+
+  async function loadPay(from, to){
+  const { data, error } = await sb.rpc("sales_by_payment_method", { p_from: from, p_to: to });
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  const arr = data || [];
+  const labels = arr.map(x => x.metodo);
+  const totals = arr.map(x => Number(x.total||0));
+
+  if(payChart) payChart.destroy();
+
+  payChart = new Chart($("payChart"), {
+    type: "bar",
+    data: { labels, datasets: [{ label: "€ Total", data: totals }] },
+    options: { responsive:true }
+  });
+}
+
+
+
+
+
+
+  
+  
 
   // ===== EVENTS =====
   $("mode").addEventListener("change", () => {
