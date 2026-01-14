@@ -503,21 +503,26 @@ function openNew(){
     current = null;
   }
 
-  async function uploadImage(productId, index1to5, file){
-    // Ruta fija por producto + índice (sobrescribe la imagen si vuelves a subir)
-    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-    const path = `products/${productId}/${index1to5}.${ext}`;
+async function uploadImage(productId, index1to5, file){
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+  const path = `products/${productId}/${index1to5}.${ext}`;
 
-    const { error: upErr } = await sb.storage
-      .from(BUCKET)
-      .upload(path, file, { upsert: true, contentType: file.type });
+  const { error: upErr } = await sb.storage
+    .from(BUCKET)
+    .upload(path, file, {
+      upsert: true,
+      contentType: file.type,
+      cacheControl: "0" // 👈 evita cache fuerte
+    });
 
-    if(upErr) throw upErr;
+  if (upErr) throw upErr;
 
-    // URL pública (bucket público)
-    const { data } = sb.storage.from(BUCKET).getPublicUrl(path);
-    return data.publicUrl;
-  }
+  const { data } = sb.storage.from(BUCKET).getPublicUrl(path);
+
+  // 👇 “rompe caché” cambiando la URL cada vez que subes
+  return `${data.publicUrl}?v=${Date.now()}`;
+}
+
 
 async function saveModal(){
   const idTyped = (el("m_id_read").value || "").trim();
