@@ -29,6 +29,52 @@
     .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     select,input{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:#fff}
     .muted{color:var(--muted);font-size:12px}
+
+
+
+
+
+    .restList{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  max-height:340px;
+  overflow:auto;
+  padding-right:6px;
+}
+.restRow{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:10px 12px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:#fff;
+}
+.restLeft{display:flex;gap:10px;align-items:center;min-width:0}
+.badge{
+  font-weight:900;
+  font-size:12px;
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:#f3f4f6;
+}
+.restName{
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:720px;
+}
+.restQty{
+  font-weight:900;
+  white-space:nowrap;
+}
+
+
+
+    
   </style>
 </head>
 
@@ -85,6 +131,15 @@
   <div class="card" style="margin-top:12px">
   <h2 style="margin:0 0 8px;font-size:14px">💰 Ventas por método de pago</h2>
   <canvas id="payChart" height="140"></canvas>
+</div>
+
+
+
+    <div class="card" style="grid-column:1/-1">
+  <h2 style="margin:0 0 8px;font-size:14px">📋 Fuera del Top 10 (de mayor a menor)</h2>
+  <div id="restList" class="restList">
+    <div class="muted">Cargando…</div>
+  </div>
 </div>
 
 
@@ -177,6 +232,12 @@
     const sortedAsc  = [...arr].sort((a,b)=> (a.qty||0) - (b.qty||0));
 
 const top10 = sortedDesc.filter(x => (x.qty||0) > 0).slice(0, 10);
+
+
+    renderRestList(sortedDesc);
+
+
+    
 const low10 = sortedAsc.slice(0, 10); // 👈 incluye 0 ventas
 
 
@@ -201,6 +262,54 @@ const low10 = sortedAsc.slice(0, 10); // 👈 incluye 0 ventas
       options: { responsive:true, plugins:{ legend:{ display:false } } }
     });
   }
+
+
+
+
+  function escapeHTML(s){
+  return String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function renderRestList(sortedDesc){
+  const box = document.getElementById("restList");
+  if(!box) return;
+
+  // Solo productos con ventas > 0, y quitamos el top 10
+  const rest = (sortedDesc || [])
+    .filter(x => Number(x.qty || 0) > 0)
+    .slice(10); // 👈 fuera del Top 10
+
+  if(rest.length === 0){
+    box.innerHTML = `<div class="muted">No hay productos fuera del Top 10 en este rango.</div>`;
+    return;
+  }
+
+  box.innerHTML = rest.map((x, i) => {
+    const rank = i + 11; // porque empieza después del 10
+    const name = escapeHTML(x.product);
+    const qty  = Number(x.qty || 0);
+
+    return `
+      <div class="restRow">
+        <div class="restLeft">
+          <span class="badge">#${rank}</span>
+          <div class="restName" title="${name}">${name}</div>
+        </div>
+        <div class="restQty">${qty}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+
+
+
+  
 
   async function loadStats(){
     setStatus("Cargando estadísticas…");
