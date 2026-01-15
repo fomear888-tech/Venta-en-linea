@@ -390,6 +390,21 @@ function nextProductIdSuggestion(){
 
 
 
+  function escapeHTML(s){
+  return String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+
+
+
+  
+
+
 
   async function loadCategories(){
   const { data, error } = await sb
@@ -806,13 +821,15 @@ sortDown?.addEventListener("click", () => {
 document.getElementById("newBtn").addEventListener("click", openNew);
 document.getElementById("reloadBtn").addEventListener("click", loadProducts);
 
+document.getElementById("newBtn").addEventListener("click", openNew);
+document.getElementById("reloadBtn").addEventListener("click", loadProducts);
+
 document.getElementById("logoutBtn").addEventListener("click", async () => {
   await sb.auth.signOut();
   location.href = "./login.html";
+});
 
-
-
-
+// ✅ Categorías (FUERA del logout)
 document.getElementById("catBtn").addEventListener("click", openCatModal);
 document.getElementById("closeCatBtn").addEventListener("click", closeCatModal);
 document.getElementById("addCatBtn").addEventListener("click", addCategory);
@@ -821,13 +838,6 @@ document.getElementById("catOverlay").addEventListener("click", (e) => {
   if(e.target.id === "catOverlay") closeCatModal();
 });
 
-
-
-
-
-
-  
-});
 
 
   q.addEventListener("input", applyFilter);
