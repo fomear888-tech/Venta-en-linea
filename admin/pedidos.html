@@ -62,6 +62,62 @@ select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
 
 
 
+
+
+
+    /* ===== Modal formas de pago ===== */
+.payModalOverlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.35);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  z-index:99;
+}
+.payModal{
+  width:min(420px,100%);
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:18px;
+  box-shadow:0 30px 80px rgba(0,0,0,.18);
+  padding:14px;
+}
+.payModal h2{margin:0 0 8px;font-size:16px}
+.payList{
+  max-height:260px;
+  overflow:auto;
+  margin:8px 0;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.payRow{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:8px 10px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#f9fafb;
+  font-size:13px;
+}
+.payRowName{font-weight:600}
+.payModalFooter{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:10px;
+}
+
+
+
+
+
+
+
+
+
     
     
   </style>
@@ -74,19 +130,18 @@ select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
   <h1>📦 Pedidos</h1>
   <div style="display:flex;gap:8px">
 
-
     <button id="statsBtn">📊 Estadísticas</button>
-
-
     <button id="cancelBtn">❌ Cancelados</button>
-
-
-    
     <button id="invBtn">📦 Inventario</button>
+
+    <!-- 👇 nuevo botón -->
+    <button id="payAdminBtn">⚙️ Formas de pago</button>
+
     <button id="reloadBtn">🔄 Recargar</button>
     <button class="danger" id="logoutBtn">🚪 Salir</button>
   </div>
 </header>
+
 
 
   <div class="card">
@@ -122,11 +177,10 @@ select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
 
 
     <th>
-  <select id="f_pago" style="width:100%">
-    <option value="">Todos</option>
-    <option value="efectivo">efectivo</option>
-    <option value="bizum">bizum</option>
-  </select>
+<select id="f_pago" style="width:100%">
+  <option value="">Todos</option>
+  <!-- las opciones nuevas se agregarán automáticamente por JS -->
+</select>
 </th>
 
 
@@ -146,6 +200,46 @@ select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
 
 </div>
 
+
+
+
+
+
+
+
+  <!-- MODAL FORMAS DE PAGO -->
+<div class="payModalOverlay" id="payOverlay">
+  <div class="payModal">
+    <h2>Formas de pago</h2>
+    <p class="muted" style="margin:4px 0 8px">
+      Aquí puedes agregar o borrar métodos de pago.  
+      Los pedidos antiguos mantienen el método que ya tenían.
+    </p>
+
+    <div id="payList" class="payList">
+      <div class="muted">Cargando métodos…</div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <input id="newPayName" placeholder="ej: tarjeta, transferencia..." style="flex:1">
+      <button class="btn primary" id="addPayBtn" type="button">➕ Agregar</button>
+    </div>
+
+    <div class="payModalFooter">
+      <button class="btn" id="closePayModal" type="button">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+  
+
+  
+
 <script>
   // ===== CONFIG =====
   const SUPABASE_URL = "https://pujzkraozoqbriqnlikf.supabase.co";
@@ -153,6 +247,8 @@ select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const rows = document.getElementById("rows");
+  let paymentMethods = [];   // 👈 aquí guardaremos las formas de pago
+
 
   function fmtDate(ts){
     if(!ts) return "";
@@ -183,6 +279,45 @@ function statusClass(s){
 
 
 
+
+
+
+
+  async function loadPaymentMethods(){
+  const { data, error } = await sb
+    .from("payment_methods")
+    .select("id,label,active")
+    .eq("active", true)
+    .order("label", { ascending: true });
+
+  if (error) {
+    console.error("Error cargando payment_methods:", error);
+    paymentMethods = [];
+  } else {
+    paymentMethods = data || [];
+  }
+
+  // Rellenar filtro f_pago
+  const fPago = document.getElementById("f_pago");
+  if (fPago) {
+    const current = fPago.value;
+    fPago.innerHTML = `<option value="">Todos</option>` +
+      paymentMethods.map(m => `<option value="${m.label}">${m.label}</option>`).join("");
+    if (current) fPago.value = current; // intenta mantener el filtro
+  }
+
+  // Si ya tengo pedidos cargados, vuelvo a pintarlos para que el select tenga las nuevas opciones
+  if (allPedidos.length) {
+    renderPedidos(allPedidos);
+  }
+}
+
+
+
+
+
+
+  
 
 
 let allPedidos = [];
@@ -249,18 +384,25 @@ function renderPedidos(data){
 <td>
   ${
     (p.estado === "cancelado")
-      ? `<span class="status cancelado">cancelado</span>`
-      : `
-        <select class="statusSel ${statusClass(p.estado)}"
-                onchange="cambiarEstado('${p.id}', this.value, this)">
-          <option value="pendiente" ${p.estado==="pendiente"?"selected":""}>pendiente</option>
-          <option value="pagado" ${p.estado==="pagado"?"selected":""}>pagado</option>
-          <option value="entregado" ${p.estado==="entregado"?"selected":""}>entregado</option>
-          <option value="cancelado" ${p.estado==="cancelado"?"selected":""}>cancelado</option>
-        </select>
-      `
+      ? `<span class="muted">${(p.metodo_pago || "-")}</span>`
+      : (function(){
+          // construimos las opciones con los métodos cargados
+          const current = p.metodo_pago || "";
+          let opts = `<option value="" ${!current ? "selected" : ""}>-</option>`;
+          (paymentMethods || []).forEach(m => {
+            const sel = (m.label === current) ? "selected" : "";
+            opts += `<option value="${m.label}" ${sel}>${m.label}</option>`;
+          });
+          return `
+            <select class="paySel"
+                    onchange="cambiarMetodoPago('${p.id}', this.value, this)">
+              ${opts}
+            </select>
+          `;
+        })()
   }
 </td>
+
 
 
 
@@ -355,6 +497,25 @@ document.getElementById("cancelBtn").addEventListener("click", () => {
 
   document.getElementById("statsBtn").addEventListener("click", () => {
   location.href = "./estadisticas.html";
+
+
+
+
+
+document.getElementById("payAdminBtn").addEventListener("click", openPayModal);
+document.getElementById("closePayModal").addEventListener("click", closePayModal);
+
+document.getElementById("addPayBtn").addEventListener("click", addPayMethod);
+
+// cerrar al hacer clic fuera
+document.getElementById("payOverlay").addEventListener("click", (e) => {
+  if (e.target.id === "payOverlay") closePayModal();
+});
+
+
+
+
+    
 });
 
 
@@ -468,6 +629,85 @@ if (old === "cancelado") {
 
 
 
+
+
+
+
+
+  function openPayModal(){
+  document.getElementById("payOverlay").style.display = "flex";
+  renderPayList();
+}
+
+function closePayModal(){
+  document.getElementById("payOverlay").style.display = "none";
+}
+
+function renderPayList(){
+  const box = document.getElementById("payList");
+  if (!paymentMethods.length) {
+    box.innerHTML = `<div class="muted">No hay métodos guardados todavía.</div>`;
+    return;
+  }
+
+  box.innerHTML = paymentMethods.map(m => `
+    <div class="payRow">
+      <span class="payRowName">${m.label}</span>
+      <button class="btn danger" type="button" onclick="deletePayMethod('${m.id}')">🗑️ Borrar</button>
+    </div>
+  `).join("");
+}
+
+window.deletePayMethod = async function(id){
+  const ok = confirm(
+    "¿Seguro que quieres borrar esta forma de pago?\n\n" +
+    "Los pedidos antiguos NO se modifican; solo deja de aparecer en la lista."
+  );
+  if (!ok) return;
+
+  const { error } = await sb
+    .from("payment_methods")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error(error);
+    alert("No se pudo borrar el método. Revisa permisos (DELETE).");
+    return;
+  }
+
+  await loadPaymentMethods();
+};
+
+async function addPayMethod(){
+  const input = document.getElementById("newPayName");
+  const name = (input.value || "").trim();
+  if (!name) {
+    alert("Escribe un nombre para la forma de pago.");
+    return;
+  }
+
+  const { error } = await sb
+    .from("payment_methods")
+    .insert({ label: name });
+
+  if (error) {
+    console.error(error);
+    alert("No se pudo agregar. ¿Quizá ya existe con el mismo nombre?");
+    return;
+  }
+
+  input.value = "";
+  await loadPaymentMethods();
+}
+
+
+
+
+
+
+
+  
   
 
   // ===== INIT =====
@@ -486,6 +726,9 @@ if (old === "cancelado") {
       return;
     }
 
+
+
+    await loadPaymentMethods(); // 👈 primero métodos
     loadPedidos();
 
 
