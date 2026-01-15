@@ -41,173 +41,133 @@
     .pendiente{background:#fff7ed;color:#9a3412}
     .pagado{background:#ecfeff;color:#155e75}
     .entregado{background:#ecfdf5;color:#065f46}
+    .cancelado{background:#fee2e2;color:#991b1b}
     .empty{padding:20px;text-align:center;color:var(--muted)}
 
-.cancelado{background:#fee2e2;color:#991b1b}
-select.statusSel{
-  padding:6px 10px;border-radius:999px;border:1px solid var(--border);
-  font-weight:800;font-size:12px;background:#fff;cursor:pointer;
-}
-select.statusSel.pendiente{background:#fff7ed;color:#9a3412}
-select.statusSel.pagado{background:#ecfeff;color:#155e75}
-select.statusSel.entregado{background:#ecfdf5;color:#065f46}
-select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
-
-
+    select.statusSel{
+      padding:6px 10px;border-radius:999px;border:1px solid var(--border);
+      font-weight:800;font-size:12px;background:#fff;cursor:pointer;
+    }
+    select.statusSel.pendiente{background:#fff7ed;color:#9a3412}
+    select.statusSel.pagado{background:#ecfeff;color:#155e75}
+    select.statusSel.entregado{background:#ecfdf5;color:#065f46}
+    select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
 
     select.paySel{
-  padding:6px 10px;border-radius:999px;border:1px solid var(--border);
-  font-weight:800;font-size:12px;background:#fff;cursor:pointer;
-}
-
-
-
-
-
+      padding:6px 10px;border-radius:999px;border:1px solid var(--border);
+      font-weight:800;font-size:12px;background:#fff;cursor:pointer;
+    }
 
     /* ===== Modal formas de pago ===== */
-.payModalOverlay{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.35);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
-  z-index:99;
-}
-.payModal{
-  width:min(420px,100%);
-  background:#fff;
-  border:1px solid var(--border);
-  border-radius:18px;
-  box-shadow:0 30px 80px rgba(0,0,0,.18);
-  padding:14px;
-}
-.payModal h2{margin:0 0 8px;font-size:16px}
-.payList{
-  max-height:260px;
-  overflow:auto;
-  margin:8px 0;
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
-.payRow{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:8px 10px;
-  border-radius:12px;
-  border:1px solid var(--border);
-  background:#f9fafb;
-  font-size:13px;
-}
-.payRowName{font-weight:600}
-.payModalFooter{
-  display:flex;
-  justify-content:flex-end;
-  gap:8px;
-  margin-top:10px;
-}
-
-
-
-
-
-
-
-
-
-    
-    
+    .payModalOverlay{
+      position:fixed;inset:0;
+      background:rgba(0,0,0,.35);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:99;
+    }
+    .payModal{
+      width:min(420px,100%);
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:0 30px 80px rgba(0,0,0,.18);
+      padding:14px;
+    }
+    .payModal h2{margin:0 0 8px;font-size:16px}
+    .payList{
+      max-height:260px;
+      overflow:auto;
+      margin:8px 0;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .payRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#f9fafb;
+      font-size:13px;
+    }
+    .payRowName{font-weight:600}
+    .payModalFooter{
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+      margin-top:10px;
+    }
   </style>
 </head>
 
 <body>
 <div class="wrap">
 
-<header>
-  <h1>📦 Pedidos</h1>
-  <div style="display:flex;gap:8px">
-
-    <button id="statsBtn">📊 Estadísticas</button>
-    <button id="cancelBtn">❌ Cancelados</button>
-    <button id="invBtn">📦 Inventario</button>
-
-    <!-- 👇 nuevo botón -->
-    <button id="payAdminBtn">⚙️ Formas de pago</button>
-
-    <button id="reloadBtn">🔄 Recargar</button>
-    <button class="danger" id="logoutBtn">🚪 Salir</button>
-  </div>
-</header>
-
-
+  <header>
+    <h1>📦 Pedidos</h1>
+    <div style="display:flex;gap:8px">
+      <button id="statsBtn">📊 Estadísticas</button>
+      <button id="cancelBtn">❌ Cancelados</button>
+      <button id="invBtn">📦 Inventario</button>
+      <button id="payAdminBtn">⚙️ Formas de pago</button>
+      <button id="reloadBtn">🔄 Recargar</button>
+      <button class="danger" id="logoutBtn">🚪 Salir</button>
+    </div>
+  </header>
 
   <div class="card">
     <table>
       <thead>
-  <tr>
-    <th>Ticket</th>
-    <th>Cliente</th>
-    <th>Teléfono</th>
-    <th>Total (€)</th>
-    <th>Estado</th>
-    <th>Método pago</th>
-    <th>Fecha</th>
-    <th></th>
-  </tr>
+        <tr>
+          <th>Ticket</th>
+          <th>Cliente</th>
+          <th>Teléfono</th>
+          <th>Total (€)</th>
+          <th>Estado</th>
+          <th>Método pago</th>
+          <th>Fecha</th>
+          <th></th>
+        </tr>
 
-  <!-- ✅ FILTROS -->
-  <tr>
-    <th><input id="f_ticket" placeholder="T-..." style="width:100%"></th>
-    <th><input id="f_cliente" placeholder="Nombre..." style="width:100%"></th>
-    <th><input id="f_tel" placeholder="Tel..." style="width:100%"></th>
-    <th><input id="f_total" placeholder="2.50" style="width:100%"></th>
-    <th>
-      <select id="f_estado" style="width:100%">
-        <option value="">Todos</option>
-        <option value="pendiente">pendiente</option>
-        <option value="pagado">pagado</option>
-        <option value="entregado">entregado</option>
-        <option value="cancelado">cancelado</option>
-      </select>
-    </th>
-
-
-
-    <th>
-<select id="f_pago" style="width:100%">
-  <option value="">Todos</option>
-  <!-- las opciones nuevas se agregarán automáticamente por JS -->
-</select>
-</th>
-
-
-    
-
-    <!-- ✅ Fecha SIN hora -->
-    <th><input id="f_fecha" type="date" style="width:100%"></th>
-    <th><button id="clearFilters" type="button">🧹</button></th>
-  </tr>
-</thead>
+        <!-- FILTROS -->
+        <tr>
+          <th><input id="f_ticket" placeholder="T-..." style="width:100%"></th>
+          <th><input id="f_cliente" placeholder="Nombre..." style="width:100%"></th>
+          <th><input id="f_tel" placeholder="Tel..." style="width:100%"></th>
+          <th><input id="f_total" placeholder="2.50" style="width:100%"></th>
+          <th>
+            <select id="f_estado" style="width:100%">
+              <option value="">Todos</option>
+              <option value="pendiente">pendiente</option>
+              <option value="pagado">pagado</option>
+              <option value="entregado">entregado</option>
+              <option value="cancelado">cancelado</option>
+            </select>
+          </th>
+          <th>
+            <select id="f_pago" style="width:100%">
+              <option value="">Todos</option>
+              <!-- el resto lo rellena JS -->
+            </select>
+          </th>
+          <th><input id="f_fecha" type="date" style="width:100%"></th>
+          <th><button id="clearFilters" type="button">🧹</button></th>
+        </tr>
+      </thead>
 
       <tbody id="rows">
         <tr><td colspan="8" class="empty">Cargando pedidos…</td></tr>
       </tbody>
     </table>
   </div>
-
 </div>
 
-
-
-
-
-
-
-
-  <!-- MODAL FORMAS DE PAGO -->
+<!-- MODAL FORMAS DE PAGO -->
 <div class="payModalOverlay" id="payOverlay">
   <div class="payModal">
     <h2>Formas de pago</h2>
@@ -231,15 +191,6 @@ select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
   </div>
 </div>
 
-
-
-
-
-
-  
-
-  
-
 <script>
   // ===== CONFIG =====
   const SUPABASE_URL = "https://pujzkraozoqbriqnlikf.supabase.co";
@@ -247,28 +198,27 @@ select.statusSel.cancelado{background:#fee2e2;color:#991b1b}
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const rows = document.getElementById("rows");
-  let paymentMethods = [];   // 👈 aquí guardaremos las formas de pago
-
+  let paymentMethods = [];
+  let allPedidos = [];
 
   function fmtDate(ts){
     if(!ts) return "";
     return new Date(ts).toLocaleString("es-ES");
   }
 
-function statusClass(s){
-  return s === "pagado" ? "pagado" :
-         s === "entregado" ? "entregado" :
-         s === "cancelado" ? "cancelado" :
-         "pendiente";
-}
-
+  function statusClass(s){
+    return s === "pagado" ? "pagado" :
+           s === "entregado" ? "entregado" :
+           s === "cancelado" ? "cancelado" :
+           "pendiente";
+  }
 
   async function isAdmin(){
     const { data: { user } } = await sb.auth.getUser();
     if(!user) return false;
 
     const { data, error } = await sb
-      .from("admins")                 // ✅ tu tabla real
+      .from("admins")
       .select("user_id")
       .eq("user_id", user.id)
       .maybeSingle();
@@ -277,180 +227,142 @@ function statusClass(s){
     return !!data;
   }
 
-
-
-
-
-
-
   async function loadPaymentMethods(){
-  const { data, error } = await sb
-    .from("payment_methods")
-    .select("id,label,active")
-    .eq("active", true)
-    .order("label", { ascending: true });
+    const { data, error } = await sb
+      .from("payment_methods")
+      .select("id,label,active")
+      .eq("active", true)
+      .order("label", { ascending: true });
 
-  if (error) {
-    console.error("Error cargando payment_methods:", error);
-    paymentMethods = [];
-  } else {
-    paymentMethods = data || [];
+    if (error) {
+      console.error("Error cargando payment_methods:", error);
+      paymentMethods = [];
+    } else {
+      paymentMethods = data || [];
+    }
+
+    // filtro
+    const fPago = document.getElementById("f_pago");
+    if (fPago) {
+      const current = fPago.value;
+      fPago.innerHTML = `<option value="">Todos</option>` +
+        paymentMethods.map(m => `<option value="${m.label}">${m.label}</option>`).join("");
+      if (current) fPago.value = current;
+    }
+
+    // si ya hay pedidos, los repinto para que el select use las nuevas opciones
+    if (allPedidos.length) {
+      renderPedidos(allPedidos);
+    }
   }
 
-  // Rellenar filtro f_pago
-  const fPago = document.getElementById("f_pago");
-  if (fPago) {
-    const current = fPago.value;
-    fPago.innerHTML = `<option value="">Todos</option>` +
-      paymentMethods.map(m => `<option value="${m.label}">${m.label}</option>`).join("");
-    if (current) fPago.value = current; // intenta mantener el filtro
+  function isoDateOnly(ts){
+    if(!ts) return "";
+    const d = new Date(ts);
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
   }
 
-  // Si ya tengo pedidos cargados, vuelvo a pintarlos para que el select tenga las nuevas opciones
-  if (allPedidos.length) {
-    renderPedidos(allPedidos);
-  }
-}
+  function applyFilters(){
+    const fTicket  = (document.getElementById("f_ticket")?.value || "").trim().toLowerCase();
+    const fCli     = (document.getElementById("f_cliente")?.value || "").trim().toLowerCase();
+    const fTel     = (document.getElementById("f_tel")?.value || "").trim().toLowerCase();
+    const fTotal   = (document.getElementById("f_total")?.value || "").trim();
+    const fEstado  = (document.getElementById("f_estado")?.value || "").trim();
+    const fPago    = (document.getElementById("f_pago")?.value || "").trim();
+    const fFecha   = (document.getElementById("f_fecha")?.value || "").trim();
 
+    const filtered = allPedidos.filter(p => {
+      const t  = String(p.ticket_number || "").toLowerCase();
+      const c  = String(p.customer_name || "").toLowerCase();
+      const ph = String(p.customer_phone || "").toLowerCase();
+      const st = String(p.estado || "");
+      const dt = isoDateOnly(p.created_at);
+      const tot = String(Number(p.total || 0).toFixed(2));
+      const mp = String(p.metodo_pago || "");
 
+      if (fPago && mp !== fPago) return false;
+      if (fTicket && !t.includes(fTicket)) return false;
+      if (fCli && !c.includes(fCli)) return false;
+      if (fTel && !ph.includes(fTel)) return false;
+      if (fEstado && st !== fEstado) return false;
+      if (fFecha && dt !== fFecha) return false;
+      if (fTotal && !tot.includes(fTotal.replace(",", "."))) return false;
 
+      return true;
+    });
 
-
-
-  
-
-
-let allPedidos = [];
-
-function isoDateOnly(ts){
-  if(!ts) return "";
-  const d = new Date(ts);
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,"0");
-  const day = String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${day}`; // ✅ solo fecha
-}
-
-function applyFilters(){
-  const fTicket  = (document.getElementById("f_ticket")?.value || "").trim().toLowerCase();
-  const fCli     = (document.getElementById("f_cliente")?.value || "").trim().toLowerCase();
-  const fTel     = (document.getElementById("f_tel")?.value || "").trim().toLowerCase();
-  const fTotal   = (document.getElementById("f_total")?.value || "").trim();
-  const fEstado  = (document.getElementById("f_estado")?.value || "").trim();
-  const fPago   = (document.getElementById("f_pago")?.value || "").trim();
-  const fFecha   = (document.getElementById("f_fecha")?.value || "").trim(); // YYYY-MM-DD
-
-  const filtered = allPedidos.filter(p => {
-    const t  = String(p.ticket_number || "").toLowerCase();
-    const c  = String(p.customer_name || "").toLowerCase();
-    const ph = String(p.customer_phone || "").toLowerCase();
-    const st = String(p.estado || "");
-    const dt = isoDateOnly(p.created_at);
-    const tot = String(Number(p.total || 0).toFixed(2));
-
-    const mp = String(p.metodo_pago || "");
-    if (fPago && mp !== fPago) return false;
-
-    if (fTicket && !t.includes(fTicket)) return false;
-    if (fCli && !c.includes(fCli)) return false;
-    if (fTel && !ph.includes(fTel)) return false;
-    if (fEstado && st !== fEstado) return false;
-    if (fFecha && dt !== fFecha) return false;
-
-    // total: permite buscar "2.5" o "2.50"
-    if (fTotal && !tot.includes(fTotal.replace(",", "."))) return false;
-
-    return true;
-  });
-
-  renderPedidos(filtered);
-}
-
-function renderPedidos(data){
-  if(!data || data.length === 0){
-    rows.innerHTML = `<tr><td colspan="8" class="empty">No hay pedidos con esos filtros</td></tr>`;
-    return;
+    renderPedidos(filtered);
   }
 
-  rows.innerHTML = "";
-  data.forEach(p => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${p.ticket_number || ""}</td>
-      <td>${p.customer_name || ""}</td>
-      <td>${p.customer_phone || ""}</td>
-      <td><b>${Number(p.total || 0).toFixed(2)}</b></td>
-      
-<td>
-  ${
-    (p.estado === "cancelado")
-      ? `<span class="muted">${(p.metodo_pago || "-")}</span>`
-      : (function(){
-          // construimos las opciones con los métodos cargados
-          const current = p.metodo_pago || "";
-          let opts = `<option value="" ${!current ? "selected" : ""}>-</option>`;
-          (paymentMethods || []).forEach(m => {
-            const sel = (m.label === current) ? "selected" : "";
-            opts += `<option value="${m.label}" ${sel}>${m.label}</option>`;
-          });
-          return `
-            <select class="paySel"
-                    onchange="cambiarMetodoPago('${p.id}', this.value, this)">
-              ${opts}
+  function renderPedidos(data){
+    if(!data || data.length === 0){
+      rows.innerHTML = `<tr><td colspan="8" class="empty">No hay pedidos con esos filtros</td></tr>`;
+      return;
+    }
+
+    rows.innerHTML = "";
+    data.forEach(p => {
+      const estadoHtml =
+        (p.estado === "cancelado")
+          ? `<span class="status cancelado">cancelado</span>`
+          : `
+            <select class="statusSel ${statusClass(p.estado)}"
+                    onchange="cambiarEstado('${p.id}', this.value, this)">
+              <option value="pendiente" ${p.estado==="pendiente"?"selected":""}>pendiente</option>
+              <option value="pagado" ${p.estado==="pagado"?"selected":""}>pagado</option>
+              <option value="entregado" ${p.estado==="entregado"?"selected":""}>entregado</option>
+              <option value="cancelado" ${p.estado==="cancelado"?"selected":""}>cancelado</option>
             </select>
           `;
-        })()
+
+      const metodoHtml =
+        (p.estado === "cancelado")
+          ? `<span class="muted">${(p.metodo_pago || "-")}</span>`
+          : (function(){
+              const current = p.metodo_pago || "";
+              let opts = `<option value="" ${!current ? "selected" : ""}>-</option>`;
+              (paymentMethods || []).forEach(m => {
+                const sel = (m.label === current) ? "selected" : "";
+                opts += `<option value="${m.label}" ${sel}>${m.label}</option>`;
+              });
+              return `
+                <select class="paySel"
+                        onchange="cambiarMetodoPago('${p.id}', this.value, this)">
+                  ${opts}
+                </select>
+              `;
+            })();
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${p.ticket_number || ""}</td>
+        <td>${p.customer_name || ""}</td>
+        <td>${p.customer_phone || ""}</td>
+        <td><b>${Number(p.total || 0).toFixed(2)}</b></td>
+        <td>${estadoHtml}</td>
+        <td>${metodoHtml}</td>
+        <td class="muted">${fmtDate(p.created_at)}</td>
+        <td><button onclick="verTicket('${p.id}')">🧾 Ticket</button></td>
+      `;
+
+      const sel = tr.querySelector("select.statusSel");
+      if (sel) sel.setAttribute("data-old", p.estado || "pendiente");
+
+      const pay = tr.querySelector("select.paySel");
+      if (pay) pay.setAttribute("data-old", p.metodo_pago || "");
+
+      rows.appendChild(tr);
+    });
   }
-</td>
-
-
-
-
-<td>
-  ${
-    (p.estado === "cancelado")
-      ? `<span class="muted">${(p.metodo_pago || "-")}</span>`
-      : `
-        <select class="paySel"
-                onchange="cambiarMetodoPago('${p.id}', this.value, this)">
-          <option value="" ${!p.metodo_pago ? "selected" : ""}>-</option>
-          <option value="efectivo" ${p.metodo_pago==="efectivo"?"selected":""}>efectivo</option>
-          <option value="bizum" ${p.metodo_pago==="bizum"?"selected":""}>bizum</option>
-        </select>
-      `
-  }
-</td>
-
-
-
-
-
-      <td class="muted">${fmtDate(p.created_at)}</td>
-      <td><button onclick="verTicket('${p.id}')">🧾 Ticket</button></td>
-    `;
-    const sel = tr.querySelector("select.statusSel");
-    if (sel) sel.setAttribute("data-old", p.estado || "pendiente");
-
-
-const pay = tr.querySelector("select.paySel");
-if (pay) pay.setAttribute("data-old", p.metodo_pago || "");
-    
-    rows.appendChild(tr);
-  });
-}
-
-
-
-
-
-
-  
 
   async function loadPedidos(){
     rows.innerHTML = `<tr><td colspan="8" class="empty">Cargando pedidos…</td></tr>`;
 
     const { data, error } = await sb
-      .from("orders")                 // ✅ tu tabla real
+      .from("orders")
       .select("id,ticket_number,customer_name,customer_phone,total,estado,metodo_pago,created_at")
       .order("created_at", { ascending: false });
 
@@ -460,13 +372,13 @@ if (pay) pay.setAttribute("data-old", p.metodo_pago || "");
       return;
     }
 
-if(!data || data.length === 0){
-  rows.innerHTML = `<tr><td colspan="8" class="empty">No hay pedidos aún</td></tr>`;
-  return;
-}
+    if(!data || data.length === 0){
+      rows.innerHTML = `<tr><td colspan="8" class="empty">No hay pedidos aún</td></tr>`;
+      return;
+    }
 
-allPedidos = data;      // ✅ guardamos todos
-applyFilters();         // ✅ aplicamos filtros
+    allPedidos = data;
+    applyFilters();
   }
 
   window.verTicket = function(id){
@@ -474,241 +386,174 @@ applyFilters();         // ✅ aplicamos filtros
   }
 
   document.getElementById("reloadBtn").addEventListener("click", loadPedidos);
-
-
-document.getElementById("invBtn").addEventListener("click", () => {
-  location.href = "./inventario.html";
-});
-
-  
-document.getElementById("cancelBtn").addEventListener("click", () => {
-  location.href = "./cancelados.html";
-});
-
-  
-
+  document.getElementById("invBtn").addEventListener("click", () => {
+    location.href = "./inventario.html";
+  });
+  document.getElementById("cancelBtn").addEventListener("click", () => {
+    location.href = "./cancelados.html";
+  });
   document.getElementById("logoutBtn").addEventListener("click", async () => {
     await sb.auth.signOut();
     location.href = "./login.html";
   });
-
-
-
-
   document.getElementById("statsBtn").addEventListener("click", () => {
-  location.href = "./estadisticas.html";
+    location.href = "./estadisticas.html";
+  });
 
-
-
-
-
-document.getElementById("payAdminBtn").addEventListener("click", openPayModal);
-document.getElementById("closePayModal").addEventListener("click", closePayModal);
-
-document.getElementById("addPayBtn").addEventListener("click", addPayMethod);
-
-// cerrar al hacer clic fuera
-document.getElementById("payOverlay").addEventListener("click", (e) => {
-  if (e.target.id === "payOverlay") closePayModal();
-});
-
-
-
-
-    
-});
-
-
-
-
-
-
+  // botones modal formas de pago
+  document.getElementById("payAdminBtn").addEventListener("click", openPayModal);
+  document.getElementById("closePayModal").addEventListener("click", closePayModal);
+  document.getElementById("addPayBtn").addEventListener("click", addPayMethod);
+  document.getElementById("payOverlay").addEventListener("click", (e) => {
+    if (e.target.id === "payOverlay") closePayModal();
+  });
 
   window.cambiarMetodoPago = async function(orderId, nuevoMetodo, el){
-  const old = el.getAttribute("data-old") || "";
+    const old = el.getAttribute("data-old") || "";
 
-  const { error } = await sb
-    .from("orders")
-    .update({ metodo_pago: (nuevoMetodo || null) })
-    .eq("id", orderId);
+    const { error } = await sb
+      .from("orders")
+      .update({ metodo_pago: (nuevoMetodo || null) })
+      .eq("id", orderId);
 
-  if(error){
-    console.error(error);
-    alert("No se pudo actualizar el método de pago. Revisa policies (UPDATE).");
-    el.value = old;
-    return;
-  }
-
-  el.setAttribute("data-old", nuevoMetodo || "");
-};
-
-
-
-
-
-
-
-  
-
-window.cambiarEstado = async function(orderId, nuevoEstado, el){
-  const old = el.getAttribute("data-old") || el.value;
-  
-  
-  // ✅ SI ELIGEN "cancelado": confirm + RPC + recargar
-  if (nuevoEstado === "cancelado") {
-    const ok = confirm(
-      "¿Seguro que quieres CANCELAR este pedido?\n\n" +
-      "✔ Se devolverá el stock\n" +
-      "✔ Se guardará un registro histórico\n" +
-      "✔ El pedido se eliminará de 'orders'"
-    );
-
-    if (!ok) {
-      // volver al estado anterior
+    if(error){
+      console.error(error);
+      alert("No se pudo actualizar el método de pago. Revisa policies (UPDATE).");
       el.value = old;
-      el.classList.remove("pendiente","pagado","entregado","cancelado");
-      el.classList.add(statusClass(old));
       return;
     }
 
-    // llama tu función en Supabase (RPC)
-    const { error: rpcError } = await sb.rpc("cancel_order_and_archive", {
-      p_order_id: orderId
-    });
+    el.setAttribute("data-old", nuevoMetodo || "");
+  };
 
-    if (rpcError) {
-      console.error(rpcError);
-      alert("❌ No se pudo cancelar. Revisa policies/RPC.");
-      el.value = old;
-      el.classList.remove("pendiente","pagado","entregado","cancelado");
-      el.classList.add(statusClass(old));
+  window.cambiarEstado = async function(orderId, nuevoEstado, el){
+    const old = el.getAttribute("data-old") || el.value;
+
+    if (nuevoEstado === "cancelado") {
+      const ok = confirm(
+        "¿Seguro que quieres CANCELAR este pedido?\n\n" +
+        "✔ Se devolverá el stock\n" +
+        "✔ Se guardará un registro histórico\n" +
+        "✔ El pedido se eliminará de 'orders'"
+      );
+
+      if (!ok) {
+        el.value = old;
+        el.classList.remove("pendiente","pagado","entregado","cancelado");
+        el.classList.add(statusClass(old));
+        return;
+      }
+
+      const { error: rpcError } = await sb.rpc("cancel_order_and_archive", {
+        p_order_id: orderId
+      });
+
+      if (rpcError) {
+        console.error(rpcError);
+        alert("❌ No se pudo cancelar. Revisa policies/RPC.");
+        el.value = old;
+        el.classList.remove("pendiente","pagado","entregado","cancelado");
+        el.classList.add(statusClass(old));
+        return;
+      }
+
+      alert("✅ Pedido cancelado y archivado");
+      await loadPedidos();
       return;
     }
 
-    alert("✅ Pedido cancelado y archivado");
-    await loadPedidos(); // refresca lista y filtros
-    return;
-  }
+    if (old === "cancelado") {
+      alert("Este pedido está cancelado y ya no se puede editar.");
+      el.value = old;
+      return;
+    }
 
-
-
-if (old === "cancelado") {
-  alert("Este pedido está cancelado y ya no se puede editar.");
-  el.value = old;
-  return;
-}
-
-
-
-
-  
-
-  // UI: pinta según estado
-  el.classList.remove("pendiente","pagado","entregado","cancelado");
-  el.classList.add(statusClass(nuevoEstado));
-
-  // ✅ Para estados normales: update en orders
-  const { error } = await sb
-    .from("orders")
-    .update({ estado: nuevoEstado })
-    .eq("id", orderId);
-
-  if(error){
-    console.error(error);
-    alert("No se pudo actualizar el estado. Revisa policies (UPDATE) y vuelve a intentar.");
-    // revert UI si falla
-    el.value = old;
     el.classList.remove("pendiente","pagado","entregado","cancelado");
-    el.classList.add(statusClass(old));
-    return;
-  }
+    el.classList.add(statusClass(nuevoEstado));
 
-  // guardar estado anterior “bueno”
-  el.setAttribute("data-old", nuevoEstado);
-};
+    const { error } = await sb
+      .from("orders")
+      .update({ estado: nuevoEstado })
+      .eq("id", orderId);
 
+    if(error){
+      console.error(error);
+      alert("No se pudo actualizar el estado. Revisa policies (UPDATE).");
+      el.value = old;
+      el.classList.remove("pendiente","pagado","entregado","cancelado");
+      el.classList.add(statusClass(old));
+      return;
+    }
 
-
-
-
-
-
+    el.setAttribute("data-old", nuevoEstado);
+  };
 
   function openPayModal(){
-  document.getElementById("payOverlay").style.display = "flex";
-  renderPayList();
-}
-
-function closePayModal(){
-  document.getElementById("payOverlay").style.display = "none";
-}
-
-function renderPayList(){
-  const box = document.getElementById("payList");
-  if (!paymentMethods.length) {
-    box.innerHTML = `<div class="muted">No hay métodos guardados todavía.</div>`;
-    return;
+    document.getElementById("payOverlay").style.display = "flex";
+    renderPayList();
   }
 
-  box.innerHTML = paymentMethods.map(m => `
-    <div class="payRow">
-      <span class="payRowName">${m.label}</span>
-      <button class="btn danger" type="button" onclick="deletePayMethod('${m.id}')">🗑️ Borrar</button>
-    </div>
-  `).join("");
-}
-
-window.deletePayMethod = async function(id){
-  const ok = confirm(
-    "¿Seguro que quieres borrar esta forma de pago?\n\n" +
-    "Los pedidos antiguos NO se modifican; solo deja de aparecer en la lista."
-  );
-  if (!ok) return;
-
-  const { error } = await sb
-    .from("payment_methods")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error(error);
-    alert("No se pudo borrar el método. Revisa permisos (DELETE).");
-    return;
+  function closePayModal(){
+    document.getElementById("payOverlay").style.display = "none";
   }
 
-  await loadPaymentMethods();
-};
+  function renderPayList(){
+    const box = document.getElementById("payList");
+    if (!paymentMethods.length) {
+      box.innerHTML = `<div class="muted">No hay métodos guardados todavía.</div>`;
+      return;
+    }
 
-async function addPayMethod(){
-  const input = document.getElementById("newPayName");
-  const name = (input.value || "").trim();
-  if (!name) {
-    alert("Escribe un nombre para la forma de pago.");
-    return;
+    box.innerHTML = paymentMethods.map(m => `
+      <div class="payRow">
+        <span class="payRowName">${m.label}</span>
+        <button class="btn danger" type="button" onclick="deletePayMethod('${m.id}')">🗑️ Borrar</button>
+      </div>
+    `).join("");
   }
 
-  const { error } = await sb
-    .from("payment_methods")
-    .insert({ label: name });
+  window.deletePayMethod = async function(id){
+    const ok = confirm(
+      "¿Seguro que quieres borrar esta forma de pago?\n\n" +
+      "Los pedidos antiguos NO se modifican; solo deja de aparecer en la lista."
+    );
+    if (!ok) return;
 
-  if (error) {
-    console.error(error);
-    alert("No se pudo agregar. ¿Quizá ya existe con el mismo nombre?");
-    return;
+    const { error } = await sb
+      .from("payment_methods")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error(error);
+      alert("No se pudo borrar el método. Revisa permisos (DELETE).");
+      return;
+    }
+
+    await loadPaymentMethods();
+  };
+
+  async function addPayMethod(){
+    const input = document.getElementById("newPayName");
+    const name = (input.value || "").trim();
+    if (!name) {
+      alert("Escribe un nombre para la forma de pago.");
+      return;
+    }
+
+    const { error } = await sb
+      .from("payment_methods")
+      .insert({ label: name });
+
+    if (error) {
+      console.error(error);
+      alert("No se pudo agregar. ¿Quizá ya existe con el mismo nombre?");
+      return;
+    }
+
+    input.value = "";
+    await loadPaymentMethods();
   }
-
-  input.value = "";
-  await loadPaymentMethods();
-}
-
-
-
-
-
-
-
-  
-  
 
   // ===== INIT =====
   window.addEventListener("DOMContentLoaded", async () => {
@@ -726,39 +571,29 @@ async function addPayMethod(){
       return;
     }
 
+    await loadPaymentMethods();
+    await loadPedidos();
 
+    ["f_ticket","f_cliente","f_tel","f_total"].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.addEventListener("input", applyFilters);
+    });
 
-    await loadPaymentMethods(); // 👈 primero métodos
-    loadPedidos();
+    ["f_estado","f_pago","f_fecha"].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.addEventListener("change", applyFilters);
+    });
 
-
-
-["f_ticket","f_cliente","f_tel","f_total"].forEach(id=>{
-  const el = document.getElementById(id);
-  if(el) el.addEventListener("input", applyFilters);
-});
-
-["f_estado","f_pago","f_fecha"].forEach(id=>{
-  const el = document.getElementById(id);
-  if(el) el.addEventListener("change", applyFilters);
-});
-
-document.getElementById("clearFilters")?.addEventListener("click", () => {
-  document.getElementById("f_ticket").value = "";
-  document.getElementById("f_cliente").value = "";
-  document.getElementById("f_tel").value = "";
-  document.getElementById("f_total").value = "";
-  document.getElementById("f_estado").value = "";
-  document.getElementById("f_pago").value = "";
-  document.getElementById("f_fecha").value = "";
-  applyFilters();
-});
-
-
-
-
-
-    
+    document.getElementById("clearFilters")?.addEventListener("click", () => {
+      document.getElementById("f_ticket").value = "";
+      document.getElementById("f_cliente").value = "";
+      document.getElementById("f_tel").value = "";
+      document.getElementById("f_total").value = "";
+      document.getElementById("f_estado").value = "";
+      document.getElementById("f_pago").value = "";
+      document.getElementById("f_fecha").value = "";
+      applyFilters();
+    });
   });
 </script>
 
