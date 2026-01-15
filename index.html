@@ -855,37 +855,46 @@ a,
 
 
 
-    /* ✅ Chips de categorías debajo de Catálogo */
+/* ✅ Categorías estilo texto + separador vertical */
 .catChips{
   display:flex;
-  gap:8px;
+  align-items:center;
+  gap:0;                 /* sin gaps, usamos separadores */
   flex-wrap:wrap;
   justify-content:flex-end;
 }
 
 .catChip{
-  border:1px solid var(--border);
-  background:#fff;
-  border-radius:999px;
-  padding:7px 10px;
-  font-size:12px;
-  color: rgba(17,24,39,.75);
+  appearance:none;
+  border:0;
+  background:transparent;
+  padding:0 10px;        /* espacio a los lados */
+  font-size:13px;
+  color: rgba(17,24,39,.65);
   cursor:pointer;
   user-select:none;
+  font-weight:500;
 }
 
 .catChip:hover{
-  border-color: rgba(16,185,129,.35);
+  color: rgba(17,24,39,.95);
 }
 
+/* Activo = más negrito */
 .catChip.active{
-  background: rgba(16,185,129,.12);
-  border-color: rgba(16,185,129,.35);
   color: rgba(17,24,39,1);
   font-weight:800;
 }
 
-/* 📱 en móvil: que no se desordene */
+/* ✅ Palito vertical entre items */
+.catSep{
+  width:1px;
+  height:14px;
+  background: rgba(0,0,0,.18);
+  display:inline-block;
+}
+
+/* 📱 Móvil: que se pueda deslizar si hay muchas */
 @media (max-width:520px){
   .catChips{
     width:100%;
@@ -893,9 +902,12 @@ a,
     overflow:auto;
     -webkit-overflow-scrolling:touch;
     padding-bottom:4px;
+    flex-wrap:nowrap;
+    white-space:nowrap;
   }
   .catChip{ white-space:nowrap; }
 }
+
 
 
 
@@ -2150,7 +2162,7 @@ function renderCategoryChips(){
   const cats = getCategoriesFromProducts();
   catChipsEl.innerHTML = "";
 
-  cats.forEach(cat => {
+  cats.forEach((cat, idx) => {
     const b = document.createElement("button");
     b.type = "button";
     b.className = "catChip" + (cat === currentCategory ? " active" : "");
@@ -2159,12 +2171,20 @@ function renderCategoryChips(){
     b.addEventListener("click", () => {
       currentCategory = cat;
       renderCategoryChips();
-      renderProducts(); // 👈 filtra al instante
+      renderProducts();
     });
 
     catChipsEl.appendChild(b);
+
+    // ✅ separador | (no al final)
+    if (idx !== cats.length - 1) {
+      const sep = document.createElement("span");
+      sep.className = "catSep";
+      catChipsEl.appendChild(sep);
+    }
   });
 }
+
 
 
 
