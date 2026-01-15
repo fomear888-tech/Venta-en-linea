@@ -162,6 +162,7 @@
     <div class="rowline">
       <a class="btn" href="./pedidos.html">⬅️ Volver a pedidos</a>
       <button class="btn primary" id="newBtn">➕ Nuevo producto</button>
+      <button class="btn" id="catBtn">🏷️ Categorías</button>
       <button class="btn primary" id="reloadBtn">🔄 Recargar</button>
       <button class="btn danger" id="logoutBtn">🚪 Salir</button>
       
@@ -224,10 +225,14 @@
         <div class="label">Nombre</div>
         <input id="m_name" />
       </div>
-      <div>
-        <div class="label">Categoría</div>
-        <input id="m_category" placeholder="ej: Telefonía, Hogar..." />
-      </div>
+<div>
+  <div class="label">Categoría</div>
+  <select id="m_category" style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:#fff">
+    <option value="">— Sin categoría —</option>
+  </select>
+  <div class="hint">Tip: gestiona la lista en “🏷️ Categorías”.</div>
+</div>
+
     </div>
 
     <div class="grid3" style="margin-top:10px">
@@ -302,6 +307,42 @@
   </div>
 </div>
 
+
+
+
+
+<!-- MODAL CATEGORÍAS -->
+<div class="modalOverlay" id="catOverlay">
+  <div class="modal" style="width:min(560px,100%)">
+    <header>
+      <h1 style="margin:0;font-size:16px">🏷️ Gestionar categorías</h1>
+      <div class="muted">Agrega o borra categorías para el selector.</div>
+    </header>
+
+    <div class="modalBody">
+      <div id="catList" class="restList" style="max-height:360px">
+        <div class="muted">Cargando…</div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input id="newCatName" placeholder="ej: tecnología, hogar, accesorios..." style="flex:1" />
+        <button class="btn primary" id="addCatBtn" type="button">➕ Agregar</button>
+      </div>
+      <div class="hint">Consejo: usa nombres cortos y consistentes (ej: “Tecnología”).</div>
+    </div>
+
+    <div class="modalFooter">
+      <button class="btn" id="closeCatBtn" type="button">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
 <script>
   // ===== CONFIG =====
   const SUPABASE_URL = "https://pujzkraozoqbriqnlikf.supabase.co";
@@ -311,6 +352,8 @@
   const BUCKET = "product-images";
   const TABLE_PRODUCTS = "products";
   const TABLE_ADMINS = "admins";
+  const TABLE_CATEGORIES = "product_categories";
+  let categories = [];
 
   // ===== DOM =====
   const rows = document.getElementById("rows");
@@ -343,6 +386,109 @@ function nextProductIdSuggestion(){
 }
 
   
+
+
+
+
+
+  async function loadCategories(){
+  const { data, error } = await sb
+    .from(TABLE_CATEGORIES)
+    .select("id,name")
+    .order("name", { ascending: true });
+
+  if(error){
+    console.error("Error cargando categorías:", error);
+    categories = [];
+    renderCategorySelect();
+    renderCategoryList();
+    return;
+  }
+
+  categories = data || [];
+  renderCategorySelect();
+  renderCategoryList();
+}
+
+function renderCategorySelect(){
+  const sel = el("m_category");
+  if(!sel) return;
+
+  const current = sel.value || "";
+  sel.innerHTML = `<option value="">— Sin categoría —</option>` +
+    categories.map(c => `<option value="${c.name}">${c.name}</option>`).join("");
+
+  // intenta conservar selección si existe
+  if(current) sel.value = current;
+}
+
+function renderCategoryList(){
+  const box = document.getElementById("catList");
+  if(!box) return;
+
+  if(!categories.length){
+    box.innerHTML = `<div class="muted">No hay categorías todavía.</div>`;
+    return;
+  }
+
+  box.innerHTML = categories.map(c => `
+    <div class="restRow">
+      <div class="restLeft">
+        <span class="badge">🏷️</span>
+        <div class="restName" title="${escapeHTML(c.name)}">${escapeHTML(c.name)}</div>
+      </div>
+      <div class="actions">
+        <button class="iconbtn danger" type="button" onclick="deleteCategory('${c.id}','${escapeHTML(c.name)}')">🗑️</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function openCatModal(){
+  document.getElementById("catOverlay").style.display = "flex";
+  // refresca lista por si cambió
+  loadCategories();
+}
+
+function closeCatModal(){
+  document.getElementById("catOverlay").style.display = "none";
+}
+
+async function addCategory(){
+  const inp = document.getElementById("newCatName");
+  const name = (inp.value || "").trim();
+  if(!name) return alert("Escribe un nombre de categoría.");
+
+  const { error } = await sb.from(TABLE_CATEGORIES).insert([{ name }]);
+  if(error){
+    console.error(error);
+    alert("No se pudo agregar. ¿Quizá ya existe esa categoría?");
+    return;
+  }
+
+  inp.value = "";
+  await loadCategories();
+}
+
+window.deleteCategory = async function(id, name){
+  const ok = confirm(`¿Borrar la categoría "${name}"?\n\nLos productos que ya la tengan NO se cambian automáticamente.`);
+  if(!ok) return;
+
+  const { error } = await sb.from(TABLE_CATEGORIES).delete().eq("id", id);
+  if(error){
+    console.error(error);
+    alert("No se pudo borrar. Revisa permisos (RLS).");
+    return;
+  }
+
+  await loadCategories();
+};
+
+
+
+
+
+
   
 
 
@@ -373,6 +519,9 @@ function openNew(){
   setCur("m_img4_cur", null);
   setCur("m_img5_cur", null);
 
+
+
+  renderCategorySelect();
   overlay.style.display = "flex";
 }
 
@@ -486,6 +635,7 @@ function openNew(){
     el("m_id").textContent = `ID: ${p.id}`;
     el("m_id_read").value = p.id || "";
     el("m_name").value = p.name || "";
+    renderCategorySelect();
     el("m_category").value = p.category || "";
     el("m_price").value = (p.price ?? "");
     el("m_stock").value = (p.stock ?? "");
@@ -659,6 +809,24 @@ document.getElementById("reloadBtn").addEventListener("click", loadProducts);
 document.getElementById("logoutBtn").addEventListener("click", async () => {
   await sb.auth.signOut();
   location.href = "./login.html";
+
+
+
+
+document.getElementById("catBtn").addEventListener("click", openCatModal);
+document.getElementById("closeCatBtn").addEventListener("click", closeCatModal);
+document.getElementById("addCatBtn").addEventListener("click", addCategory);
+
+document.getElementById("catOverlay").addEventListener("click", (e) => {
+  if(e.target.id === "catOverlay") closeCatModal();
+});
+
+
+
+
+
+
+  
 });
 
 
@@ -724,6 +892,7 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
     }
 
     loadProducts();
+    await loadCategories();
     paintSort();
 
 
