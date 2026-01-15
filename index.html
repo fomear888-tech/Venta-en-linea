@@ -852,6 +852,60 @@ a,
 
 
 
+
+
+
+    /* ✅ Chips de categorías debajo de Catálogo */
+.catChips{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.catChip{
+  border:1px solid var(--border);
+  background:#fff;
+  border-radius:999px;
+  padding:7px 10px;
+  font-size:12px;
+  color: rgba(17,24,39,.75);
+  cursor:pointer;
+  user-select:none;
+}
+
+.catChip:hover{
+  border-color: rgba(16,185,129,.35);
+}
+
+.catChip.active{
+  background: rgba(16,185,129,.12);
+  border-color: rgba(16,185,129,.35);
+  color: rgba(17,24,39,1);
+  font-weight:800;
+}
+
+/* 📱 en móvil: que no se desordene */
+@media (max-width:520px){
+  .catChips{
+    width:100%;
+    justify-content:flex-start;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:4px;
+  }
+  .catChip{ white-space:nowrap; }
+}
+
+
+
+
+
+
+
+    
+
+
   /* ✅ Navegación tipo Amazon (fila fija debajo del header) */
 .subnav{
   display:flex;
@@ -1172,12 +1226,16 @@ body{ position:relative; }  /* 👈 importante */
 
   <div class="grid onecol">
     <!-- ✅ PANEL CATALOGO -->
-    <section class="panel" aria-label="Catálogo">
-      <h2>Catálogo</h2>
-      <div class="content">
-        <div id="products" class="products"></div>
-      </div>
-    </section>
+<section class="panel" aria-label="Catálogo">
+  <div class="panelHead">
+    <h2>Catálogo</h2>
+    <div id="catChips" class="catChips" aria-label="Categorías"></div>
+  </div>
+  <div class="content">
+    <div id="products" class="products"></div>
+  </div>
+</section>
+
 
     <!-- (Opcional) si NO quieres carrito al lado en desktop, quítalo.
          Si lo quieres al lado, déjalo. Si quieres solo pantalla separada, quítalo.
@@ -1602,6 +1660,15 @@ if (!cartEl) console.warn("Falta #cart en el DOM");
   
   const qEl = $('#q');
 
+
+
+  const catChipsEl = document.getElementById("catChips");
+  let currentCategory = "Todos";
+
+
+
+  
+
   const cartCountEl = $('#cartCount strong');
   const itemsCountEl = $('#itemsCount');
   const subtotalEl = $('#subtotal');
@@ -1645,6 +1712,7 @@ if (!cartEl) console.warn("Falta #cart en el DOM");
     renderProducts();
     renderCart();
     fillAdminProducts();
+    renderCategoryChips();
   }
 
   // ====== TIEMPO REAL (TABLA: products) ======
@@ -2058,15 +2126,70 @@ window.addEventListener("keydown", (e) => {
   
 
 
+
+
+
+  function normalizeCat(c){
+  const s = String(c || "").trim();
+  return s ? s : "Sin categoría";
+}
+
+function getCategoriesFromProducts(){
+  const set = new Set();
+  PRODUCTS.forEach(p => set.add(normalizeCat(p.category)));
+  // Orden alfabético, “Sin categoría” al final si existe
+  const cats = [...set].sort((a,b) => a.localeCompare(b, "es"));
+  const idx = cats.indexOf("Sin categoría");
+  if(idx !== -1){ cats.splice(idx,1); cats.push("Sin categoría"); }
+  return ["Todos", ...cats];
+}
+
+function renderCategoryChips(){
+  if(!catChipsEl) return;
+
+  const cats = getCategoriesFromProducts();
+  catChipsEl.innerHTML = "";
+
+  cats.forEach(cat => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "catChip" + (cat === currentCategory ? " active" : "");
+    b.textContent = cat;
+
+    b.addEventListener("click", () => {
+      currentCategory = cat;
+      renderCategoryChips();
+      renderProducts(); // 👈 filtra al instante
+    });
+
+    catChipsEl.appendChild(b);
+  });
+}
+
+
+
+
+
+
+
+
+  
   
 
   // ====== RENDER ======
   function renderProducts(){
     const q = qEl.value.trim().toLowerCase();
-    const list = PRODUCTS.filter(p => {
-      if(!q) return true;
-      return (p.name + ' ' + p.category + ' ' + (p.desc||'')).toLowerCase().includes(q);
-    });
+const list = PRODUCTS.filter(p => {
+  const cat = normalizeCat(p.category);
+
+  // ✅ filtro categoría
+  const passCat = (currentCategory === "Todos") || (cat === currentCategory);
+  if(!passCat) return false;
+
+  // ✅ filtro búsqueda
+  if(!q) return true;
+  return (p.name + ' ' + cat + ' ' + (p.desc||'')).toLowerCase().includes(q);
+});
 
     productsEl.innerHTML = '';
     list.forEach(p => {
