@@ -2187,20 +2187,24 @@ window.addEventListener("keydown", (e) => {
 
 
 
-  function normalizeCat(c){
+function normalizeCat(c){
   const s = String(c || "").trim();
-  return s ? s : "Sin categoría";
+  return s || null;   // 👈 null si no hay categoría
 }
+
 
 function getCategoriesFromProducts(){
   const set = new Set();
-  PRODUCTS.forEach(p => set.add(normalizeCat(p.category)));
-  // Orden alfabético, “Sin categoría” al final si existe
+
+  PRODUCTS.forEach(p => {
+    const cat = normalizeCat(p.category);
+    if (cat) set.add(cat);   // 👈 solo categorías reales
+  });
+
   const cats = [...set].sort((a,b) => a.localeCompare(b, "es"));
-  const idx = cats.indexOf("Sin categoría");
-  if(idx !== -1){ cats.splice(idx,1); cats.push("Sin categoría"); }
   return ["Todos", ...cats];
 }
+
 
 function renderCategoryChips(){
   if(!catChipsEl) return;
