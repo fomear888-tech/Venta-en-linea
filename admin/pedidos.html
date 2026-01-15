@@ -171,6 +171,29 @@
       </tbody>
     </table>
   </div>
+
+
+
+
+  <div class="card" style="margin-top:12px">
+    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+      <div>
+        <div style="font-weight:900">💰 Total según filtros</div>
+        <div class="muted">Suma de los pedidos que ves en pantalla (cambia con filtros).</div>
+      </div>
+
+      <div style="display:flex;gap:12px;align-items:baseline;flex-wrap:wrap">
+        <div><span class="muted">Pedidos:</span> <b id="sumCount">0</b></div>
+        <div style="font-size:18px"><span class="muted">Total:</span> <b id="sumTotal">0.00 €</b></div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+
+  
 </div>
 
 <!-- MODAL FORMAS DE PAGO -->
@@ -303,7 +326,34 @@
     renderPedidos(filtered);
   }
 
+
+
+
+
+
+
+    function updateSummary(list){
+    const arr = Array.isArray(list) ? list : [];
+    const sum = arr.reduce((acc, p) => acc + Number(p.total || 0), 0);
+
+    const cEl = document.getElementById("sumCount");
+    const tEl = document.getElementById("sumTotal");
+
+    if(cEl) cEl.textContent = String(arr.length);
+    if(tEl) tEl.textContent = `${sum.toFixed(2)} €`;
+  }
+
+
+
+
+
+
+
+
+  
   function renderPedidos(data){
+    updateSummary(data);
+    
     if(!data || data.length === 0){
       rows.innerHTML = `<tr><td colspan="8" class="empty">No hay pedidos con esos filtros</td></tr>`;
       return;
@@ -363,6 +413,7 @@
       rows.appendChild(tr);
     });
   }
+  
 
   async function loadPedidos(){
     rows.innerHTML = `<tr><td colspan="8" class="empty">Cargando pedidos…</td></tr>`;
