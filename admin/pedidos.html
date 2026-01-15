@@ -178,7 +178,7 @@
   <div class="card" style="margin-top:12px">
     <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
       <div>
-        <div style="font-weight:900">💰 Total según filtros</div>
+        <div style="font-weight:900">💰 Total (Pagados)</div>
         <div class="muted">Suma de los pedidos que ves en pantalla (cambia con filtros).</div>
       </div>
 
@@ -332,16 +332,26 @@
 
 
 
-    function updateSummary(list){
-    const arr = Array.isArray(list) ? list : [];
-    const sum = arr.reduce((acc, p) => acc + Number(p.total || 0), 0);
+function updateSummary(list){
+  const arr = Array.isArray(list) ? list : [];
 
-    const cEl = document.getElementById("sumCount");
-    const tEl = document.getElementById("sumTotal");
+  // 👉 SOLO ventas reales
+  const ventasReales = arr.filter(p =>
+    p.estado === "pagado" || p.estado === "entregado"
+  );
 
-    if(cEl) cEl.textContent = String(arr.length);
-    if(tEl) tEl.textContent = `${sum.toFixed(2)} €`;
-  }
+  const sum = ventasReales.reduce(
+    (acc, p) => acc + Number(p.total || 0),
+    0
+  );
+
+  const cEl = document.getElementById("sumCount");
+  const tEl = document.getElementById("sumTotal");
+
+  if(cEl) cEl.textContent = String(ventasReales.length);
+  if(tEl) tEl.textContent = `${sum.toFixed(2)} €`;
+}
+
 
 
 
