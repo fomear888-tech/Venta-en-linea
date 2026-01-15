@@ -804,6 +804,30 @@ html{ scroll-behavior:smooth; }
 
 
 
+    /* 📱 Línea sutil debajo de "Catálogo" (especialmente en móvil) */
+.panelHead h2{
+  position: relative;
+}
+
+@media (max-width: 520px){
+  .panelHead h2::after{
+    content: "";
+    display: block;
+    width: 32px;              /* cortita y elegante */
+    height: 2px;
+    margin-top: 6px;
+    background: rgba(16,185,129,.55);  /* verde suave */
+    border-radius: 999px;
+  }
+}
+
+
+
+
+    
+
+
+
     
 
 
