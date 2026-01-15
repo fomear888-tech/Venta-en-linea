@@ -1143,6 +1143,77 @@ body{ position:relative; }  /* 👈 importante */
     
 
 
+
+
+
+    /* ✅ Acordeón servicios estilo “ventanitas” */
+.svcAcc{ display:grid; gap:12px; margin-top:12px; }
+
+.svcItem{
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:#fff;
+  overflow:hidden;
+}
+
+.svcHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 14px;
+  cursor:pointer;
+  user-select:none;
+}
+
+.svcTitle{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:800;
+}
+
+.svcIcon{
+  width:34px;height:34px;border-radius:12px;
+  border:1px solid rgba(16,185,129,.25);
+  background: rgba(16,185,129,.10);
+  display:grid;place-items:center;
+  font-size:16px;
+}
+
+.svcToggle{
+  width:34px;height:34px;border-radius:12px;
+  border:1px solid var(--border);
+  background:#fff;
+  display:grid;place-items:center;
+  font-size:22px;
+  line-height:1;
+}
+
+.svcBody{
+  display:none;
+  padding:0 14px 14px;
+  border-top:1px solid var(--border);
+  color: var(--txt);
+}
+
+.svcBody p{
+  margin:12px 0 0;
+  color: var(--muted);
+  font-size:13px;
+  line-height:1.5;
+  white-space:pre-line;
+}
+
+.svcItem.open .svcBody{ display:block; }
+.svcItem.open .svcToggle{ font-size:20px; }
+
+
+
+
+
+
+    
     
     
 
@@ -1254,6 +1325,10 @@ body{ position:relative; }  /* 👈 importante */
 <section class="panel" id="servicesInfo" aria-label="Servicios">
   <h2>Servicios</h2>
   <div class="content">
+
+
+
+    <div id="servicesAccordion" class="svcAcc"></div>
 
 
 
@@ -1398,6 +1473,51 @@ body{ position:relative; }  /* 👈 importante */
 
 
 
+
+  <hr style="border:none;border-top:1px solid rgba(0,0,0,.08)">
+
+<div style="display:grid;gap:10px;">
+  <div class="muted" style="font-weight:900;">Servicios (web pública)</div>
+
+  <select id="adminService" style="padding:10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:#fff;color:#111827;outline:0;"></select>
+
+  <input id="adminServiceTitle" placeholder="Título del servicio"
+    style="padding:10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:#fff;color:#111827;outline:0;">
+
+  <textarea id="adminServiceBody" placeholder="Contenido (puedes usar saltos de línea)"
+    rows="6"
+    style="padding:10px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:#fff;color:#111827;outline:0;resize:vertical;"></textarea>
+
+  <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+    <label class="muted" style="display:flex; gap:8px; align-items:center;">
+      <input type="checkbox" id="adminServiceActive" checked>
+      Visible al público
+    </label>
+
+    <label class="muted" style="display:flex; gap:8px; align-items:center;">
+      Orden:
+      <input id="adminServiceSort" type="number" value="0"
+        style="width:90px;padding:8px;border-radius:10px;border:1px solid rgba(0,0,0,.12);background:#fff;color:#111827;outline:0;">
+    </label>
+  </div>
+
+  <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <button class="btn" id="adminServiceSaveBtn">Guardar servicio</button>
+    <button class="btn secondary" id="adminServiceNewBtn">Nuevo</button>
+  </div>
+
+  <div class="muted" id="adminServiceStatus"></div>
+</div>
+
+
+
+
+
+
+
+  
+
+
   <div style="display:grid;gap:10px;">
   <label class="muted">Foto del producto</label>
   <select id="adminImgSlot"
@@ -1519,6 +1639,118 @@ body{ position:relative; }  /* 👈 importante */
   
 <script>
 
+
+
+
+
+
+
+
+
+  async function loadAllServicesForAdmin(){
+  const { data, error } = await sb
+    .from("services")
+    .select("id,title,body,sort,is_active")
+    .order("sort", { ascending: true });
+
+  if(error){
+    console.error(error);
+    toast("Error cargando servicios ❌");
+    return [];
+  }
+  return data || [];
+}
+
+async function fillAdminServices(){
+  const sel = document.getElementById("adminService");
+  if(!sel) return;
+
+  const list = await loadAllServicesForAdmin();
+
+  sel.innerHTML = "";
+  list.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s.id;
+    opt.textContent = `${s.title} (${s.is_active ? "visible" : "oculto"})`;
+    opt.dataset.payload = JSON.stringify(s);
+    sel.appendChild(opt);
+  });
+
+  // cargar primero
+  if(list[0]) loadAdminServiceIntoForm(list[0]);
+
+  sel.onchange = () => {
+    const opt = sel.selectedOptions?.[0];
+    if(!opt) return;
+    const s = JSON.parse(opt.dataset.payload || "{}");
+    loadAdminServiceIntoForm(s);
+  };
+}
+
+function loadAdminServiceIntoForm(s){
+  document.getElementById("adminServiceTitle").value = s.title || "";
+  document.getElementById("adminServiceBody").value = s.body || "";
+  document.getElementById("adminServiceActive").checked = !!s.is_active;
+  document.getElementById("adminServiceSort").value = Number(s.sort) || 0;
+}
+
+function clearAdminServiceForm(){
+  const sel = document.getElementById("adminService");
+  if(sel) sel.value = "";
+  document.getElementById("adminServiceTitle").value = "";
+  document.getElementById("adminServiceBody").value = "";
+  document.getElementById("adminServiceActive").checked = true;
+  document.getElementById("adminServiceSort").value = 0;
+}
+
+async function adminSaveService(){
+  const status = document.getElementById("adminServiceStatus");
+  const sel = document.getElementById("adminService");
+
+  const title = (document.getElementById("adminServiceTitle").value || "").trim();
+  const body  = (document.getElementById("adminServiceBody").value || "").trim();
+  const is_active = !!document.getElementById("adminServiceActive").checked;
+  const sort = Number(document.getElementById("adminServiceSort").value) || 0;
+
+  if(!title || !body){
+    toast("Falta título o contenido");
+    return;
+  }
+
+  const id = sel?.value || null;
+
+  const payload = {
+    title, body, sort, is_active,
+    updated_at: new Date().toISOString(),
+  };
+  if(id) payload.id = id;
+
+  const { error } = await sb
+    .from("services")
+    .upsert(payload, { onConflict: "id" });
+
+  if(error){
+    console.error(error);
+    toast("No se pudo guardar ❌");
+    if(status) status.textContent = error.message || String(error);
+    return;
+  }
+
+  toast("Servicio guardado ✅");
+  if(status) status.textContent = "Guardado ✅";
+
+  // refrescar admin + vista pública (si está en servicios)
+  await fillAdminServices();
+  await loadServicesFromSupabase();
+}
+
+
+
+
+
+
+
+  
 
 async function isAdmin(){
   const { data: { user } } = await sb.auth.getUser();
@@ -1737,6 +1969,81 @@ if (!cartEl) console.warn("Falta #cart en el DOM");
 
   const eur = (n) =>
     new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n);
+
+
+
+
+
+
+
+  // ====== SERVICIOS (tabla: services) ======
+let SERVICES = [];
+
+async function loadServicesFromSupabase(){
+  const { data, error } = await sb
+    .from("services")
+    .select("id,title,body,sort,is_active")
+    .eq("is_active", true)
+    .order("sort", { ascending: true });
+
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  SERVICES = data || [];
+  renderServicesAccordion();
+}
+
+function renderServicesAccordion(){
+  const box = document.getElementById("servicesAccordion");
+  if(!box) return;
+
+  if(!SERVICES.length){
+    box.innerHTML = `<p class="empty">No hay servicios disponibles por ahora.</p>`;
+    return;
+  }
+
+  box.innerHTML = "";
+
+  SERVICES.forEach((s, idx) => {
+    const item = document.createElement("div");
+    item.className = "svcItem" + (idx === 0 ? " open" : ""); // primera abierta (puedes quitarlo si no quieres)
+
+    item.innerHTML = `
+      <div class="svcHead" role="button" aria-expanded="${idx===0 ? "true":"false"}">
+        <div class="svcTitle">
+          <div class="svcIcon">🔒</div>
+          <div>${escapeHtml(s.title)}</div>
+        </div>
+        <div class="svcToggle">${idx===0 ? "−" : "+"}</div>
+      </div>
+      <div class="svcBody">
+        <p>${escapeHtml(s.body)}</p>
+      </div>
+    `;
+
+    const head = item.querySelector(".svcHead");
+    const toggle = item.querySelector(".svcToggle");
+
+    head.addEventListener("click", () => {
+      const open = item.classList.toggle("open");
+      head.setAttribute("aria-expanded", open ? "true" : "false");
+      toggle.textContent = open ? "−" : "+";
+    });
+
+    box.appendChild(item);
+  });
+}
+
+
+
+
+
+
+
+
+  
 
   // ====== CARGAR PRODUCTOS (TABLA: products) ======
   async function loadProductsFromSupabase() {
@@ -2699,6 +3006,7 @@ document.getElementById("backToCatalog")?.addEventListener("click", () => naviga
   
 
   await loadProductsFromSupabase();
+  await loadServicesFromSupabase();
   reconcileCartWithStock(false);
   renderCart();
   subscribeRealtimeProducts();
@@ -2706,6 +3014,31 @@ document.getElementById("backToCatalog")?.addEventListener("click", () => naviga
 
   // 🔐 AUTO LOGOUT SI NO ESTÁS EN ?admin=1
   await autoLogoutIfNotAdminPage();
+
+
+
+
+
+
+
+  // Admin Servicios
+if (wantsAdminUI()) {
+  // Solo si realmente es admin logueado
+  const ok = await isAdmin();
+  if(ok){
+    await fillAdminServices();
+    document.getElementById("adminServiceSaveBtn")?.addEventListener("click", adminSaveService);
+    document.getElementById("adminServiceNewBtn")?.addEventListener("click", clearAdminServiceForm);
+  }
+}
+
+
+
+
+
+
+
+  
 
   // Admin (solo si entras con ?admin=1)
   await showAdminPanel();
