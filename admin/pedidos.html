@@ -490,6 +490,17 @@ function updateSummary(list){
       return;
     }
 
+
+// ✅ actualiza en memoria y refresca tabla + total
+const idx = allPedidos.findIndex(p => p.id === orderId);
+if (idx >= 0) {
+  allPedidos[idx].metodo_pago = (nuevoMetodo || null);
+}
+applyFilters();
+
+
+    
+
     el.setAttribute("data-old", nuevoMetodo || "");
   };
 
@@ -551,6 +562,15 @@ function updateSummary(list){
       el.classList.add(statusClass(old));
       return;
     }
+
+
+
+    const idx = allPedidos.findIndex(p => p.id === orderId);
+if (idx >= 0) allPedidos[idx].estado = nuevoEstado;
+applyFilters();
+
+
+    
 
     el.setAttribute("data-old", nuevoEstado);
   };
