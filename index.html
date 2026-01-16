@@ -1547,51 +1547,17 @@ body{ position:relative; }  /* 👈 importante */
 
   
 
-async function isAdmin(){
-  const { data: { user } } = await sb.auth.getUser();
-  if(!user) return false;
-
-  const { data, error } = await sb
-    .from('admins')
-    .select('user_id')
-    .eq('user_id', user.id)
-    .maybeSingle();
-
-  if(error) return false;
-  return !!data;
-}
 
 
 
-function wantsAdminUI(){
-  return new URLSearchParams(location.search).get('admin') === '1';
-}
 
 
 
-// 🔐 Cierra la sesión si NO estás en ?admin=1
-async function autoLogoutIfNotAdminPage() {
-  if (!wantsAdminUI()) {
-    const { data: { user } } = await sb.auth.getUser();
-    if (user) {
-      await sb.auth.signOut();
-      console.log("Admin session closed automatically ✅");
-    }
-  }
-}
+
+
 
 
   
-
-async function showAdminPanel(){
-  const panel = document.getElementById('adminPanel');
-  if(!panel) return;
-
-  // Solo si entras con ?admin=1
-  if(!wantsAdminUI()){
-    panel.style.display = 'none';
-    return;
-  }
 
 
   
@@ -1615,117 +1581,14 @@ async function showAdminPanel(){
   }
 }
 
-async function adminLogin(){
-  const email = document.getElementById('adminEmail')?.value.trim();
-  const pass  = document.getElementById('adminPass')?.value.trim();
-  if(!email || !pass) return toast("Pon email y contraseña");
-
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
-
-  if(error){
-    console.error("LOGIN ERROR:", error);
-    toast("Login falló ❌ " + (error.message || ""));
-    return;
-  }
-
-  console.log("LOGIN OK:", data);
-  toast("Login OK ✅");
-  await loadProductsFromSupabase();
-  await showAdminPanel();
-}
-  
-
-async function adminLogout(){
-  await sb.auth.signOut();
-  toast("Sesión cerrada 👋");
-  await showAdminPanel();
-}
-
-function fillAdminProducts(){
-  const sel = document.getElementById('adminProduct');
-  if(!sel) return;
-  if(!PRODUCTS || PRODUCTS.length === 0) { sel.innerHTML = ''; return; }
-
-  sel.innerHTML = '';
-  PRODUCTS.forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p.id;
-    opt.textContent = `${p.name} (${p.id})`;
-    sel.appendChild(opt);
-
-
-const slotSel = document.getElementById("adminImgSlot");
-if (slotSel) slotSel.value = "img";
-    
-  });
-}
-
-async function adminUploadAndAssign(){
-  const status = document.getElementById('adminStatus');
-  const sel = document.getElementById('adminProduct');
-  const slotSel = document.getElementById('adminImgSlot');
-  const fileInput = document.getElementById('adminFile');
-  const btn = document.getElementById('adminUploadBtn');
-
-  if(!sel?.value) return toast("Selecciona un producto");
-  const productId = sel.value;
-  const slot = (slotSel?.value || "img").trim(); // img, img2, img3, img4, img5
-
 
   
 
-  const file = fileInput?.files?.[0];
-  if(!file) return toast("Selecciona una imagen");
-  if(file.size > 3 * 1024 * 1024) return toast("Imagen muy grande (máx 3MB)");
 
-  btn.disabled = true;
-  const prev = btn.textContent;
-  btn.textContent = "Subiendo…";
-  if(status) status.textContent = "";
 
-  try{
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-    const path = `products/${productId}_${slot}.${ext}`;
 
-    const { error: upErr } = await sb.storage
-      .from('product-images')
-      .upload(path, file, { upsert: true, contentType: file.type });
 
-    if (upErr) {
-  console.error(upErr);
-  const msg = upErr.message || JSON.stringify(upErr);
-  toast("Error subiendo imagen ❌ " + msg);
-  if (status) status.textContent = msg;
-  return;
-}
 
-    const { data: pub } = sb.storage.from('product-images').getPublicUrl(path);
-    const publicUrl = pub?.publicUrl;
-    if(!publicUrl) return toast("No pude obtener URL pública ❌");
-
-    const { error: updErr } = await sb
-      .from('products')
-      .update({ [slot]: publicUrl })
-      .eq('id', productId);
-
-    if(updErr){
-      console.error(updErr);
-      toast("Error guardando en products ❌");
-      if(status) status.textContent = updErr.message || String(updErr);
-      return;
-    }
-
-    toast("Imagen asignada ✅");
-    if(status) status.textContent = "OK: " + publicUrl;
-
-    await loadProductsFromSupabase();
-
-  } finally {
-    btn.disabled = false;
-    btn.textContent = prev;
-    if(fileInput) fileInput.value = "";
-  }
-}
 
 
 
@@ -1871,7 +1734,6 @@ function renderServicesAccordion(){
 
     renderProducts();
     renderCart();
-    fillAdminProducts();
     renderCategoryChips();
   }
 
@@ -2807,8 +2669,6 @@ document.getElementById("backToCatalog")?.addEventListener("click", () => naviga
   subscribeRealtimeProducts();
   updatePayButton();
 
-  // 🔐 AUTO LOGOUT SI NO ESTÁS EN ?admin=1
-  await autoLogoutIfNotAdminPage();
 
 
 
@@ -2816,16 +2676,7 @@ document.getElementById("backToCatalog")?.addEventListener("click", () => naviga
 
 
 
-  // Admin Servicios
-if (wantsAdminUI()) {
-  // Solo si realmente es admin logueado
-  const ok = await isAdmin();
-  if(ok){
-    await fillAdminServices();
-    document.getElementById("adminServiceSaveBtn")?.addEventListener("click", adminSaveService);
-    document.getElementById("adminServiceNewBtn")?.addEventListener("click", clearAdminServiceForm);
-  }
-}
+
 
 
 
@@ -2835,24 +2686,9 @@ if (wantsAdminUI()) {
 
   
 
-  // Admin (solo si entras con ?admin=1)
-  await showAdminPanel();
 
-  if (wantsAdminUI()) {
-    window.addEventListener("pagehide", async () => {
-      await sb.auth.signOut();
-    });
-  }
 
-  document.getElementById("adminLoginBtn")?.addEventListener("click", adminLogin);
-  document.getElementById("adminLogoutBtn")?.addEventListener("click", adminLogout);
-  document.getElementById("adminUploadBtn")?.addEventListener("click", adminUploadAndAssign);
 
-  document.getElementById("adminRefreshBtn")?.addEventListener("click", async () => {
-    await loadProductsFromSupabase();
-    fillAdminProducts();
-    toast("Productos recargados ✅");
-  });
 
 
 // ✅ al iniciar, pinta lo que diga la URL
