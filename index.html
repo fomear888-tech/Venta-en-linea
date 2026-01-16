@@ -1625,12 +1625,12 @@ function renderServicesAccordion(){
 
   SERVICES.forEach((s, idx) => {
     const item = document.createElement("div");
-    item.className = "svcItem" + (idx === 0 ? " open" : ""); // primera abierta (puedes quitarlo si no quieres)
+    item.className = "svcItem";
 
     item.innerHTML = `
       <div class="svcHead" role="button" aria-expanded="${idx===0 ? "true":"false"}">
         <div class="svcTitle">
-          <div class="svcIcon">🔒</div>
+          <div class="svcIcon">📄</div>
           <div>${escapeHtml(s.title)}</div>
         </div>
         <div class="svcToggle">${idx===0 ? "−" : "+"}</div>
