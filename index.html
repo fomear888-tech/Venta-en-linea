@@ -2497,8 +2497,9 @@ document.getElementById("backHomeFromProducts")?.addEventListener("click", () =>
 
 // ====== ROUTER SIMPLE (HOME / SERVICES / CATALOG / CART) ======
 function getRouteFromUrl(){
-  return new URLSearchParams(location.search).get("view") || "home";
+  return new URLSearchParams(location.search).get("view") || "catalog";
 }
+
 
 function writeRoute(view, { replace = false } = {}){
   const url = new URL(location.href);
