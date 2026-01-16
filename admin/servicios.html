@@ -95,11 +95,7 @@
 
       <div class="row" style="gap:8px">
         <input id="q" placeholder="Buscar por título..." style="flex:1;min-width:220px">
-        <select id="f_active" class="pill">
-          <option value="">Todos</option>
-          <option value="true">Activos</option>
-          <option value="false">Inactivos</option>
-        </select>
+
       </div>
 
       <div class="hr"></div>
@@ -109,7 +105,6 @@
           <tr>
             <th style="width:80px">Orden</th>
             <th>Título</th>
-            <th style="width:110px">Activo</th>
             <th style="width:90px"></th>
           </tr>
         </thead>
@@ -144,10 +139,7 @@
       </div>
 
       <div class="row" style="margin-top:10px;justify-content:space-between">
-        <label class="row" style="gap:8px;align-items:center">
-          <input id="is_active" type="checkbox" style="width:auto;transform:scale(1.1)">
-          <span class="small" style="font-weight:800">Activo</span>
-        </label>
+
 
         <div class="row">
           <button id="saveBtn" class="primary">💾 Guardar</button>
@@ -191,22 +183,18 @@
     return !!data;
   }
 
-  function applyFilters(){
-    const q = ($("q").value || "").trim().toLowerCase();
-    const f = ($("f_active").value || "").trim(); // "", "true", "false"
+function applyFilters(){
+  const q = ($("q").value || "").trim().toLowerCase();
 
-    const filtered = all.filter(s => {
-      const title = String(s.title || "").toLowerCase();
-      if (q && !title.includes(q)) return false;
+  const filtered = all.filter(s => {
+    const title = String(s.title || "").toLowerCase();
+    if (q && !title.includes(q)) return false;
+    return true;
+  });
 
-      if (f === "true" && !s.is_active) return false;
-      if (f === "false" && s.is_active) return false;
+  render(filtered);
+}
 
-      return true;
-    });
-
-    render(filtered);
-  }
 
   function render(list){
     const rows = $("rows");
@@ -223,9 +211,6 @@
       tr.innerHTML = `
         <td><b>${Number(s.sort ?? 0)}</b></td>
         <td>${escapeHtml(s.title || "")}</td>
-        <td>
-          <span class="pill ${s.is_active ? "on":"off"}">${s.is_active ? "activo":"inactivo"}</span>
-        </td>
         <td><button type="button" class="pill" data-pick="${s.id}">Editar</button></td>
       `;
       rows.appendChild(tr);
@@ -247,7 +232,6 @@
     $("title").value = s.title || "";
     $("body").value = s.body || "";
     $("sort").value = (s.sort ?? "");
-    $("is_active").checked = !!s.is_active;
 
     setStatus(`Editando: ${s.title || s.id}`);
   }
@@ -257,7 +241,6 @@
     $("title").value = "";
     $("body").value = "";
     $("sort").value = "";
-    $("is_active").checked = true;
     setStatus("Nuevo servicio (aún no guardado).");
   }
 
@@ -287,7 +270,6 @@
     const title = ($("title").value || "").trim();
     const body  = ($("body").value || "").trim();
     const sort  = Number(($("sort").value || "").trim() || 0);
-    const is_active = $("is_active").checked;
 
     if(!title) return setStatus("Falta el título.", "err");
 
@@ -296,7 +278,7 @@
     if(current){
       const { error } = await sb
         .from("services")
-        .update({ title, body, sort, is_active })
+        .update({ title, body, sort })
         .eq("id", current);
 
       if(error){
@@ -308,7 +290,7 @@
     } else {
       const { data, error } = await sb
         .from("services")
-        .insert({ title, body, sort, is_active })
+        .insert({ title, body, sort })
         .select("id")
         .maybeSingle();
 
@@ -365,7 +347,6 @@
   $("deleteBtn").addEventListener("click", del);
 
   $("q").addEventListener("input", applyFilters);
-  $("f_active").addEventListener("change", applyFilters);
 
   $("logoutBtn").addEventListener("click", async () => {
     await sb.auth.signOut();
