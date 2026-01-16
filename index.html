@@ -1620,30 +1620,40 @@ function renderServicesAccordion(){
   box.innerHTML = "";
 
   SERVICES.forEach((s, idx) => {
+    const hasBody = (s.body || "").trim().length > 0;
+
     const item = document.createElement("div");
     item.className = "svcItem";
 
-    item.innerHTML = `
-      <div class="svcHead" role="button" aria-expanded="${idx===0 ? "true":"false"}">
-        <div class="svcTitle">
-          <div class="svcIcon">📄</div>
-          <div>${escapeHtml(s.title)}</div>
-        </div>
-        <div class="svcToggle">+</div>
-      </div>
-      <div class="svcBody">
-        <p>${escapeHtml(s.body)}</p>
-      </div>
-    `;
+item.innerHTML = `
+  <div class="svcHead" role="button" ${hasBody ? `aria-expanded="${idx===0 ? "true":"false"}"` : ""}>
+    <div class="svcTitle">
+      <div class="svcIcon">📄</div>
+      <div>${escapeHtml(s.title)}</div>
+    </div>
+
+    ${hasBody ? `<div class="svcToggle">+</div>` : ``}
+  </div>
+
+  ${hasBody ? `
+    <div class="svcBody">
+      <p>${escapeHtml(s.body)}</p>
+    </div>
+  ` : ``}
+`;
+
 
     const head = item.querySelector(".svcHead");
     const toggle = item.querySelector(".svcToggle");
 
-    head.addEventListener("click", () => {
-      const open = item.classList.toggle("open");
-      head.setAttribute("aria-expanded", open ? "true" : "false");
-      toggle.textContent = open ? "−" : "+";
-    });
+if(hasBody){
+  head.addEventListener("click", () => {
+    const open = item.classList.toggle("open");
+    head.setAttribute("aria-expanded", open ? "true" : "false");
+    toggle.textContent = open ? "−" : "+";
+  });
+}
+
 
     box.appendChild(item);
   });
