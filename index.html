@@ -2053,9 +2053,7 @@ igZoom?.addEventListener("click", (e) => {
 
 
 
-  
-  if (clickedBgOrClose || clickedImage) closeZoom();
-});
+
 
 // ✅ Cerrar con ESC
 window.addEventListener("keydown", (e) => {
@@ -2748,6 +2746,16 @@ window.addEventListener("popstate", (e) => {
   
  // ====== INIT ======
 window.addEventListener("DOMContentLoaded", async () => {
+
+
+
+  // ✅ al iniciar, pinta lo que diga la URL
+const initial = getRouteFromUrl();
+writeRoute(initial, { replace: true }); // fija state para que popstate tenga view
+setView(initial);
+
+
+
   
   qEl.addEventListener("input", renderProducts);
 
@@ -2836,10 +2844,6 @@ if (wantsAdminUI()) {
   });
 
 
-// ✅ al iniciar, pinta lo que diga la URL
-const initial = getRouteFromUrl();
-writeRoute(initial, { replace: true }); // fija state para que popstate tenga view
-setView(initial);
 
 
   
