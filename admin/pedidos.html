@@ -108,24 +108,59 @@
       gap:8px;
       margin-top:10px;
     }
+
+
+
+
+    .topActions{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rowMain,
+.rowSecondary{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Opcional: que la fila secundaria se vea más “auxiliar” */
+.rowSecondary button{
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+
+
+
+
+    
   </style>
 </head>
 
 <body>
 <div class="wrap">
 
-  <header>
-    <h1>📦 Pedidos</h1>
-    <div style="display:flex;gap:8px">
+<header>
+  <h1>📦 Pedidos</h1>
+
+  <div class="topActions">
+    <div class="rowMain">
       <button id="statsBtn">📊 Estadísticas</button>
       <button id="cancelBtn">❌ Cancelados</button>
       <button id="servicesBtn">🧩 Servicios</button>
       <button id="invBtn">📦 Inventario</button>
+    </div>
+
+    <div class="rowSecondary">
       <button id="payAdminBtn">⚙️ Formas de pago</button>
       <button id="reloadBtn">🔄 Recargar</button>
       <button class="danger" id="logoutBtn">🚪 Salir</button>
     </div>
-  </header>
+  </div>
+</header>
+
 
   <div class="card">
     <table>
