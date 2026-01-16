@@ -119,6 +119,7 @@
     <div style="display:flex;gap:8px">
       <button id="statsBtn">📊 Estadísticas</button>
       <button id="cancelBtn">❌ Cancelados</button>
+      <button id="servicesBtn">🧩 Servicios</button>
       <button id="invBtn">📦 Inventario</button>
       <button id="payAdminBtn">⚙️ Formas de pago</button>
       <button id="reloadBtn">🔄 Recargar</button>
@@ -466,6 +467,14 @@ function updateSummary(list){
   document.getElementById("statsBtn").addEventListener("click", () => {
     location.href = "./estadisticas.html";
   });
+
+
+
+  document.getElementById("servicesBtn").addEventListener("click", () => {
+    location.href = "./servicios.html";
+  });
+
+  
 
   // botones modal formas de pago
   document.getElementById("payAdminBtn").addEventListener("click", openPayModal);
