@@ -52,9 +52,68 @@
     .hr{border-top:1px dashed rgba(0,0,0,.28);margin:10px 0}
     .small{font-size:12px}
     .kv{display:flex;justify-content:space-between;gap:10px;font-size:12px}
-    .items{margin-top:8px}
-    .item{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin:6px 0}
-    .item .name{max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+
+
+
+
+    /* ===== Items con columnas alineadas (ticket pro) ===== */
+
+.items{ margin-top:8px; }
+
+.item{
+  display:grid;
+  grid-template-columns: 1fr 140px; /* 👈 140px es la “columna de números” */
+  column-gap: 10px;
+  row-gap: 4px;
+  font-size:12px;
+  margin:8px 0;
+}
+
+.itemName{
+  grid-column: 1 / 2;
+  white-space: normal;       /* 👈 el nombre puede bajar */
+  overflow-wrap: anywhere;   /* 👈 si hay nombres largos */
+}
+
+.itemNums{
+  grid-column: 2 / 3;
+  display:grid;
+  grid-template-columns: 1fr 1fr; /* unit a la izq + total a la der */
+  column-gap: 8px;
+  align-items:baseline;
+
+  justify-self: start;       /* 👈 NO pegado a la derecha del ticket */
+}
+
+.itemUnit{
+  text-align:left;
+  white-space:nowrap;        /* 👈 se mantiene en una línea si cabe */
+}
+
+.itemLine{
+  text-align:right;          /* 👈 el total se alinea dentro de la columna */
+  white-space:nowrap;
+  font-weight:700;
+}
+
+/* Si en pantallas muy pequeñas se aprieta, reducimos un poco la columna */
+@media (max-width:420px){
+  .item{ grid-template-columns: 1fr 124px; }
+}
+
+/* Para impresión 80mm, suele ir mejor un pelín más estrecha */
+@media print{
+  .item{ grid-template-columns: 1fr 120px; }
+}
+
+
+
+    
+
+
+
+    
     .totals{margin-top:10px}
     .bigTotal{font-size:20px;font-weight:900;letter-spacing:.6px}
     .notice{margin-top:10px;font-size:12px;text-align:center}
@@ -276,11 +335,16 @@ function renderTicketFromOrder(order, items){
 
       const div = document.createElement("div");
       div.className = "item";
+
+      
       div.innerHTML = `
-        <div class="name">${(it.name || "Artículo").toString()}</div>
-        <div>${qty} x ${eur(price)}</div>
-        <div>${eur(lineTotal)}</div>
-      `;
+  <div class="itemName">${(it.name || "Artículo").toString()}</div>
+  <div class="itemNums">
+    <span class="itemUnit">${qty} x ${eur(price)}</span>
+    <span class="itemLine">${eur(lineTotal)}</span>
+  </div>
+`;
+
       itemsBox.appendChild(div);
     });
 
