@@ -1,1 +1,396 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <link rel="icon" type="image/png" href="/img/favicon.png">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin · Servicios</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --bg:#f9fafb; --card:#fff; --txt:#111827; --muted:#6b7280;
+      --border:rgba(0,0,0,.08); --accent:#10b981; --danger:#ef4444;
+      --shadow:0 10px 28px rgba(0,0,0,.06);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;
+      background:var(--bg);color:var(--txt);padding:18px
+    }
+    .wrap{max-width:1100px;margin:0 auto}
+    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+    h1{font-size:18px;margin:0}
+    button,a.btn{
+      padding:10px 12px;border-radius:12px;border:1px solid var(--border);
+      background:#fff;cursor:pointer;font-weight:800;
+      display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:var(--txt)
+    }
+    button.primary{border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.12)}
+    button.danger{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.12)}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:12px;align-items:start}
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+    .card{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:18px;box-shadow:var(--shadow);padding:14px
+    }
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+    th{font-size:12px;color:var(--muted)}
+    tr:hover{background:#f3f4f6}
+    .muted{color:var(--muted);font-size:12px}
+    input, textarea{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      outline:none;
+      font-size:14px;
+      background:#fff;color:var(--txt);
+    }
+    textarea{min-height:140px;resize:vertical}
+    input:focus, textarea:focus{
+      border-color:rgba(16,185,129,.55);
+      box-shadow:0 0 0 3px rgba(16,185,129,.15)
+    }
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .pill{
+      padding:6px 10px;border-radius:999px;border:1px solid var(--border);
+      font-size:12px;font-weight:800;background:#fff
+    }
+    .on{border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.12)}
+    .off{border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.10)}
+    .small{font-size:12px}
+    .hint{font-size:12px;color:var(--muted);line-height:1.45}
+    .hr{height:1px;background:var(--border);margin:12px 0}
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>🧩 Servicios</h1>
+    <div class="row">
+      <a class="btn" href="./pedidos.html">⬅️ Volver a pedidos</a>
+      <button id="reloadBtn">🔄 Recargar</button>
+      <button class="danger" id="logoutBtn">🚪 Salir</button>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- LISTA -->
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <div style="font-weight:900">Listado</div>
+          <div class="hint">Clic en un servicio para editarlo a la derecha.</div>
+        </div>
+        <button class="primary" id="newBtn">➕ Nuevo</button>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="row" style="gap:8px">
+        <input id="q" placeholder="Buscar por título..." style="flex:1;min-width:220px">
+        <select id="f_active" class="pill">
+          <option value="">Todos</option>
+          <option value="true">Activos</option>
+          <option value="false">Inactivos</option>
+        </select>
+      </div>
+
+      <div class="hr"></div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:80px">Orden</th>
+            <th>Título</th>
+            <th style="width:110px">Activo</th>
+            <th style="width:90px"></th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <tr><td colspan="4" class="muted">Cargando…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- EDITOR -->
+    <div class="card">
+      <div style="font-weight:900">Editor</div>
+      <div class="hint">Aquí editas lo que verá el cliente en “Servicios”.</div>
+
+      <div class="hr"></div>
+
+      <div class="row">
+        <div style="flex:1;min-width:220px">
+          <label class="muted small">Título</label>
+          <input id="title" placeholder="Ej: Citas Seguridad Social">
+        </div>
+
+        <div style="width:130px">
+          <label class="muted small">Orden (sort)</label>
+          <input id="sort" type="number" placeholder="1">
+        </div>
+      </div>
+
+      <div style="margin-top:10px">
+        <label class="muted small">Descripción</label>
+        <textarea id="body" placeholder="Texto del servicio..."></textarea>
+      </div>
+
+      <div class="row" style="margin-top:10px;justify-content:space-between">
+        <label class="row" style="gap:8px;align-items:center">
+          <input id="is_active" type="checkbox" style="width:auto;transform:scale(1.1)">
+          <span class="small" style="font-weight:800">Activo</span>
+        </label>
+
+        <div class="row">
+          <button id="saveBtn" class="primary">💾 Guardar</button>
+          <button id="deleteBtn" class="danger">🗑️ Borrar</button>
+        </div>
+      </div>
+
+      <p class="hint" id="status" style="margin-top:10px"></p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://pujzkraozoqbriqnlikf.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_D7A6JAiqiXAaPRYsaF6ZBQ_1hCE1UcN";
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const $ = (id) => document.getElementById(id);
+
+  let all = [];
+  let current = null; // fila seleccionada (id)
+
+  function setStatus(msg, cls=""){
+    const el = $("status");
+    el.className = "hint " + cls;
+    el.textContent = msg || "";
+  }
+
+  async function isAdmin(){
+    const { data: { user } } = await sb.auth.getUser();
+    if(!user) return false;
+
+    const { data, error } = await sb
+      .from("admins")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (error) return false;
+    return !!data;
+  }
+
+  function applyFilters(){
+    const q = ($("q").value || "").trim().toLowerCase();
+    const f = ($("f_active").value || "").trim(); // "", "true", "false"
+
+    const filtered = all.filter(s => {
+      const title = String(s.title || "").toLowerCase();
+      if (q && !title.includes(q)) return false;
+
+      if (f === "true" && !s.is_active) return false;
+      if (f === "false" && s.is_active) return false;
+
+      return true;
+    });
+
+    render(filtered);
+  }
+
+  function render(list){
+    const rows = $("rows");
+
+    if(!list.length){
+      rows.innerHTML = `<tr><td colspan="4" class="muted">No hay servicios con esos filtros</td></tr>`;
+      return;
+    }
+
+    rows.innerHTML = "";
+    list.forEach(s => {
+      const tr = document.createElement("tr");
+      tr.style.cursor = "pointer";
+      tr.innerHTML = `
+        <td><b>${Number(s.sort ?? 0)}</b></td>
+        <td>${escapeHtml(s.title || "")}</td>
+        <td>
+          <span class="pill ${s.is_active ? "on":"off"}">${s.is_active ? "activo":"inactivo"}</span>
+        </td>
+        <td><button type="button" class="pill" data-pick="${s.id}">Editar</button></td>
+      `;
+      rows.appendChild(tr);
+    });
+
+    rows.querySelectorAll("[data-pick]").forEach(b => {
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        pick(b.getAttribute("data-pick"));
+      });
+    });
+  }
+
+  function pick(id){
+    const s = all.find(x => x.id === id);
+    if(!s) return;
+    current = s.id;
+
+    $("title").value = s.title || "";
+    $("body").value = s.body || "";
+    $("sort").value = (s.sort ?? "");
+    $("is_active").checked = !!s.is_active;
+
+    setStatus(`Editando: ${s.title || s.id}`);
+  }
+
+  function clearForm(){
+    current = null;
+    $("title").value = "";
+    $("body").value = "";
+    $("sort").value = "";
+    $("is_active").checked = true;
+    setStatus("Nuevo servicio (aún no guardado).");
+  }
+
+  async function load(){
+    setStatus("");
+    $("rows").innerHTML = `<tr><td colspan="4" class="muted">Cargando…</td></tr>`;
+
+    const { data, error } = await sb
+      .from("services")
+      .select("id,title,body,sort,is_active")
+      .order("sort", { ascending: true });
+
+    if(error){
+      console.error(error);
+      $("rows").innerHTML = `<tr><td colspan="4" class="muted">Error cargando services</td></tr>`;
+      return;
+    }
+
+    all = data || [];
+    applyFilters();
+
+    // si no hay seleccionado, selecciona el primero
+    if(!current && all.length) pick(all[0].id);
+  }
+
+  async function save(){
+    const title = ($("title").value || "").trim();
+    const body  = ($("body").value || "").trim();
+    const sort  = Number(($("sort").value || "").trim() || 0);
+    const is_active = $("is_active").checked;
+
+    if(!title) return setStatus("Falta el título.", "err");
+
+    setStatus("Guardando…");
+
+    if(current){
+      const { error } = await sb
+        .from("services")
+        .update({ title, body, sort, is_active })
+        .eq("id", current);
+
+      if(error){
+        console.error(error);
+        return setStatus("No se pudo guardar (UPDATE). Revisa policies.", "err");
+      }
+
+      setStatus("✅ Guardado");
+    } else {
+      const { data, error } = await sb
+        .from("services")
+        .insert({ title, body, sort, is_active })
+        .select("id")
+        .maybeSingle();
+
+      if(error){
+        console.error(error);
+        return setStatus("No se pudo crear (INSERT). Revisa policies.", "err");
+      }
+
+      current = data?.id || null;
+      setStatus("✅ Creado");
+    }
+
+    await load();
+    if(current) pick(current);
+  }
+
+  async function del(){
+    if(!current) return setStatus("No hay un servicio seleccionado.", "err");
+
+    const s = all.find(x => x.id === current);
+    const ok = confirm(`¿Borrar este servicio?\n\n${s?.title || current}\n\nEsto lo elimina de la BD.`);
+    if(!ok) return;
+
+    setStatus("Borrando…");
+
+    const { error } = await sb
+      .from("services")
+      .delete()
+      .eq("id", current);
+
+    if(error){
+      console.error(error);
+      return setStatus("No se pudo borrar (DELETE). Revisa policies.", "err");
+    }
+
+    setStatus("✅ Borrado");
+    current = null;
+    clearForm();
+    await load();
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'",'&#039;');
+  }
+
+  $("reloadBtn").addEventListener("click", load);
+  $("newBtn").addEventListener("click", clearForm);
+  $("saveBtn").addEventListener("click", save);
+  $("deleteBtn").addEventListener("click", del);
+
+  $("q").addEventListener("input", applyFilters);
+  $("f_active").addEventListener("change", applyFilters);
+
+  $("logoutBtn").addEventListener("click", async () => {
+    await sb.auth.signOut();
+    location.href = "./login.html";
+  });
+
+  window.addEventListener("DOMContentLoaded", async () => {
+    const { data: { user } } = await sb.auth.getUser();
+    if(!user){
+      location.href = "./login.html";
+      return;
+    }
+
+    const ok = await isAdmin();
+    if(!ok){
+      await sb.auth.signOut();
+      alert("Acceso no autorizado");
+      location.href = "/";
+      return;
+    }
+
+    clearForm();
+    load();
+  });
+</script>
+</body>
+</html>
 
